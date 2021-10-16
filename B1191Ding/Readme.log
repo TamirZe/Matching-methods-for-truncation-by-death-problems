@@ -1,0 +1,34 @@
+Principal stratification analysis using principal scores
+P. Ding and J. Lu
+J. R. Statist. Soc. B, 79 (2017), 757 -- 777
+
+
+Description
+This folder contains contains several R code files for implementing the approaches proposed in the paper, and the two
+data sets from the empirical applications of the paper.
+
+R Code Files
+PS SM weighting.R Algorithm under Strong Monotonicity, with sensitivity analysis for PI
+
+PS M weighting.R Algorithm under Monotonicity, with sensitivity analysis for GPI
+
+PS M weighting SA.R Sensitivity analysis algorithm for Monotonicity
+
+flu.R R code for the u shot encouragement experiment in Section 8.1
+
+swog.R R code for the SWOG experiment in Section 8.2
+
+Datasets
+fludata.txt
+swogdata.txt
+
+
+Peng Ding
+Department of Statistics
+University of California at Berkeley
+425 Evans Hall
+Berkeley
+CA 94720
+USA
+
+E-mail: pengdingpku@berkeley.edu
