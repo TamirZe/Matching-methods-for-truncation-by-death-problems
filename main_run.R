@@ -88,8 +88,6 @@ rho_GPI_PO = 0.4 #0.4 #1
 ################ new values for gamma's 3X ####
 #TODO 25,50,75: large pi pro 3X
 mat_gamma = matrix(c(
-  #c(0.11, rep(-0.34, dim_x-1)), c(0.275, rep(-0.1, dim_x-1))
-  #,c(-0.1, rep(0.315, dim_x-1)), c(-0.27, rep(-0.5, dim_x-1))
   c(0.08, rep(-0.355, dim_x-1)), c(0.2, rep(-0.11, dim_x-1))
   ,c(-0.1, rep(0.27, dim_x-1)), c(-0.52, rep(-0.6, dim_x-1))
   ,c(0.6, rep(1.325, dim_x-1)), c(-0.25, rep(0.25, dim_x-1))
@@ -106,12 +104,9 @@ mat_gamma = matrix(c(
 
 #TODO 25,50,75: small pi pro 3X for smaller prop in misspec: @@@@
 mat_gamma = matrix(c(
-  # c(1, rep(0.84, dim_x-1)), c(0.7, rep(0.85, dim_x-1))
-  # ,c(1.5, rep(0.6, dim_x-1)), c(0.84, rep(0.8, dim_x-1))
   c(1.05, rep(-0.39, dim_x-1)), c(0.8, rep(0.72, dim_x-1))
   ,c(-0.07, rep(1.24, dim_x-1)), c(1.25, rep(0.24, dim_x-1)) # @@@@
   ,c(0.84, rep(1.2, dim_x-1)), c(0.32, rep(-0.2, dim_x-1))
-  #,c(1.05, rep(-0.2, dim_x-1)), c(0.5, rep(-0.3, dim_x-1))
 ) ,nrow = 3, byrow = T)
 #############################################################################################
 
@@ -137,55 +132,19 @@ mat_gamma = matrix(c(
 
 #TODO 25,50,75: small pi pro 5X:
 mat_gamma = matrix(c(
-                    # TODO 25,50,75 (take 2,5,7)
-                     # c(0.1, rep(-0.2, dim_x-1)), c(0.3, rep(-0.1, dim_x-1))
-                     #c(0.3, rep(-0.3, dim_x-1)), c(0.275, rep(-0.1, dim_x-1))
-                     # ,c(0.2, rep(0.2, dim_x-1)), c(0.25, rep(0.5, dim_x-1))
-                     # ,c(-0.12, rep(0.25, dim_x-1)), c(-0.25, rep(-0.1, dim_x-1))
-                     #  c(-0.25, rep(0.5, dim_x-1)), c(0.25, rep(0.1, dim_x-1))
-
-                     # TODO 0.5 as, 0.35 pro
-                    #,c(-0.6, rep(0.35, dim_x-1)), c(-0.27, rep(-0.5, dim_x-1))
-
-                     # ,c(-1.3, rep(1.25, dim_x-1)), c(-0.4, rep(0.75, dim_x-1))
-                     #,c(-0.5, rep(1.5, dim_x-1)), c(-0.25, rep(0.25, dim_x-1))
-
-                     # TODO 20,40,60 small pi pro
-                     # ,c(0.8, rep(-0.5, dim_x-1)), c(0.25, rep(0.5, dim_x-1))
-                     # ,c(0.15, rep(0.5, dim_x-1)), c(0.25, rep(0.5, dim_x-1))
-                     # ,c(-0.675, rep(0.675, dim_x-1)), c(-0.2, rep(-0.2, dim_x-1))
-
-                     # TODO 25,50,75: big pi pro:
-                     #  c(0.2, rep(-0.425, dim_x-1)), c(-0.3, rep(-0.2, dim_x-1)),
-                     #    c(-0.6, rep(0.375, dim_x-1)), c(0, rep(-0.5, dim_x-1)),
-                     #    c(-0.42, rep(1.25, dim_x-1)), c(-0.45, rep(-0.1, dim_x-1))
-
-                     # TODO 25,50,75: small pi pro:
-                      c(0.75, rep(0.125, dim_x-1)), c(0.6, rep(0.6, dim_x-1))
-                     ,c(0.45, rep(0.75, dim_x-1)), c(0.62, rep(0.6, dim_x-1))
-                     ,c(-0.12, rep(1.25, dim_x-1)), c(0.45, rep(-0.2, dim_x-1))
-                     )
-                   ,nrow = 3, byrow = T)
-
-# COVERAGE RATE proporions 50 20 
-mat_gamma = matrix(c(
-  c(-0.275, rep(0.5, dim_x-1)), c(0.235, rep(0.1, dim_x-1))
-  ,c(-1.31, rep(1.24, dim_x-1)), c(-0.42, rep(0.75, dim_x-1))
-  ,c(0.45, rep(0.75, dim_x-1)), c(0.625, rep(0.6, dim_x-1))
-)
-,nrow = 3, byrow = T)
+    c(0.75, rep(0.125, dim_x-1)), c(0.6, rep(0.6, dim_x-1))
+   ,c(0.45, rep(0.75, dim_x-1)), c(0.62, rep(0.6, dim_x-1))
+   ,c(-0.12, rep(1.25, dim_x-1)), c(0.45, rep(-0.2, dim_x-1))
+   )
+ ,nrow = 3, byrow = T)
 ###################################################################
 
-
-################ new values for gamma's 10X ################ 
+################ new values for gamma's 10X #### 
 #TODO 25,50,75: large pi pro 10X:
 mat_gamma = matrix(c(
   c(0.58, rep(-0.2, dim_x-1)), c(0.54, rep(-0.1, dim_x-1))
   ,c(-0.954, rep(0.25, dim_x-1)), c(-0.31, rep(-0.16, dim_x-1))
-  #,c(-0.19, rep(0.1, dim_x-1)), c(0.58, rep(-0.41, dim_x-1))
-  #,c(-0.3, rep(0.475, dim_x-1)), c(0, rep(-0.1, dim_x-1))
   ,c(-1.01, rep(0.8, dim_x-1)), c(-1.3, rep(0.45, dim_x-1))
-  #,c(-0.78, rep(0.6, dim_x-1)), c(0.14, rep(-0.2, dim_x-1))
 )
 ,nrow = 3, byrow = T)
 
@@ -245,7 +204,7 @@ big_mat_x_by_g_A = subset(big_mat_x_by_g_A, select = c(Scenar,A,g, grep("X", col
 big_mat_x_by_g_A = data.table(big_mat_x_by_g_A)[, lapply(.SD, mean), by=c("Scenar", "A", "g")] %>% arrange(Scenar, g, A)
 #############################################################################################
 
-param_n = 2000; param_n_sim = 500 # param_n = 2000; param_n_sim = 1000
+param_n = 2000; param_n_sim = 1000 # param_n = 2000; param_n_sim = 1000
 caliper = 0.25; pairmatch_bool = FALSE
 match_on = "O11_posterior_ratio" # NULL # Feller and Mialli: "EMest_p_as" # Ding Lu appendix: "O11_posterior_ratio"
 mu_x_fixed = FALSE; mat_x_as; x_as = mat_x_as[1,]
@@ -269,7 +228,6 @@ for ( k in c(1 : nrow(mat_gamma)) ){
   gamma_pro=gamma_pro
   start_time <- Sys.time()
   
-
   if(only_naive_bool == TRUE){
     EM_and_matching = simulate_data_run_EM_and_match(return_EM_PS = FALSE, index_set_of_params=k,
        gamma_as=gamma_as, gamma_ns=gamma_ns, gamma_pro=gamma_pro, misspec_PS=misspec_PS,
@@ -288,27 +246,14 @@ for ( k in c(1 : nrow(mat_gamma)) ){
     list_all_CI[[k]] = EM_and_matching$CI_mat
     next()
   }
-  
-  # sim1
-  if(sim == 1){
-    EM_and_matching = simulate_data_run_EM_and_match(index_set_of_params=k, 
-       gamma_as, gamma_ns, gamma_pro, 
-       misspec_PS, param_n, param_n_sim, iterations = iterations, epsilon_EM = epsilon_EM,
-       caliper, epsilon_1_GPI, match_on = match_on,
-       mu_x_fixed=mu_x_fixed, x_as=mat_x_as[k,])
-    #size_EM_and_matching=1
-  }
-  # sim2
-  if(sim == 2){
-    EM_and_matching = simulate_data_run_EM_and_match(return_EM_PS = FALSE, index_set_of_params=k,
-        gamma_as=gamma_as, gamma_ns=gamma_ns, gamma_pro=gamma_pro, misspec_PS=misspec_PS,
-        misspec_outcome_funcform=FALSE, U_factor=U_factor, funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log, 
-        match_and_reg_watch_true_X=FALSE, param_n=param_n, param_n_sim=param_n_sim,
-        iterations=iterations, epsilon_EM = epsilon_EM, caliper=caliper, epsilon_1_GPI=epsilon_1_GPI,
-        match_on = match_on, mu_x_fixed=mu_x_fixed, x_as=mat_x_as[k,], only_naive_bool=only_naive_bool)
-    #size_EM_and_matching=1
-  }
-  
+
+  EM_and_matching = simulate_data_run_EM_and_match(return_EM_PS = FALSE, index_set_of_params=k,
+      gamma_as=gamma_as, gamma_ns=gamma_ns, gamma_pro=gamma_pro, misspec_PS=misspec_PS,
+      misspec_outcome_funcform=FALSE, U_factor=U_factor, funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log, 
+      match_and_reg_watch_true_X=FALSE, param_n=param_n, param_n_sim=param_n_sim,
+      iterations=iterations, epsilon_EM = epsilon_EM, caliper=caliper, epsilon_1_GPI=epsilon_1_GPI,
+      match_on = match_on, mu_x_fixed=mu_x_fixed, x_as=mat_x_as[k,], only_naive_bool=only_naive_bool)
+
   mat_SACE_estimators = EM_and_matching[[1]]
   # nrow = nrow(mat_gamma) 
   df_parameters = matrix(rep(as.numeric(mat_gamma[k,])
@@ -352,12 +297,15 @@ for ( k in c(1 : nrow(mat_gamma)) ){
 }
 ########################################################################
 
+########################################################################
+# check ties in BC with caliper ####
 sum(abs(list.rbind(list_all_BCclpr[[1]])$trt_added_by_ties))
 sum(abs(list.rbind(list_all_BCclpr[[2]])$trt_added_by_ties))
 save(list_all_BCclpr, file = "list_all_BCclpr.RData")
-
-dsfsdfsd# save lists from simulation ####
 ########################################################################
+
+########################################################################
+# save lists from simulation ####
 save(list_all_mat_SACE_estimators, file = "list_all_mat_SACE_estimators.RData")
 save(list_all_WLS_NOint_regression_estimators, file = "list_all_WLS_NOint_regression_estimators.RData")
 save(list_all_WLS_YESint_regression_estimators, file = "list_all_WLS_YESint_regression_estimators.RData")
@@ -386,34 +334,9 @@ param_measures_computing = function(df, abs_bool = FALSE){
 }
 ########################################################################
 
-########################################################################
-# TODO calculate mean med and sd for pairmatch with small amount of na's
-# TODO if I want to come back to the original list list_all_mat_SACE_estimators, just load it from rdata
-param_measures_excluding_na = function(df, param_n_sim){
-  df[c("mean", "med", "SD"), ] = rbind(
-        apply(df[c(1:param_n_sim), ], 2, mean, na.rm=TRUE),
-        apply(df[c(1:param_n_sim), ], 2, median, na.rm=TRUE),
-        apply(df[c(1:param_n_sim), ], 2, sd, na.rm=TRUE)                                    
-        )
-  #tail(rownames(df),3) = c("mean", "med", "SD")
-  return(df)
-}
-
-df = list_all_mat_SACE_estimators[[1]]
-df = is.na(df)
-colSums(is.na(df))
-mat_nans = cbind(colSums(is.na(list_all_mat_SACE_estimators[[1]])), 
-                 colSums(is.na(list_all_mat_SACE_estimators[[2]])))
-
-list_all_mat_SACE_estimators_excluding_na = 
-  lapply(1:length(list_all_mat_SACE_estimators), function(l){
-    param_measures_excluding_na(list_all_mat_SACE_estimators[[l]], param_n_sim)
-})
-list_all_mat_SACE_estimators = list_all_mat_SACE_estimators_excluding_na
-########################################################################
 
 ########################################################################
-# function that changes rownames to A,B,C per each parameter (gammas) set
+# function that changes rownames to A,B,C per each parameter (gammas) set ####
 change_rownames_to_LETTERS_by_param_set = function(df, mat_params=mat_gamma,
                          num_of_param_measures=num_of_param_measures_per_param_set){
   rownames(df) = paste0(rep(LETTERS[1:nrow(mat_params)],each = num_of_param_measures), "_",
@@ -422,12 +345,6 @@ change_rownames_to_LETTERS_by_param_set = function(df, mat_params=mat_gamma,
 }
 ####################################LETTERS####################################
 
-# TODO calcultae MSE and coverage
-# a = list_all_mat_SACE_estimators[[1]]
-# a = a[1:6,]
-# RMSE <- function (x) sqrt(mean((x-mean(x))^2))
-# x <- list.cbind(lapply(a, FUN = RMSE)) %>% data.frame()
-# sqrt(mean((a$DING_est - mean(a$DING_est))^2))
 
 # TODO :) start calculating
 
@@ -470,14 +387,6 @@ rownames(summary_EM_coeffs) = paste0(rep(LETTERS[1:nrow(mat_gamma)],each = ncol(
 # summary of list_all_excluded_included_matching
 mean_excluded_included_matching = list.rbind(list_all_excluded_included_matching)
 mean_excluded_included_matching = mean_excluded_included_matching[grep(c("mean|sd"), rownames(mean_excluded_included_matching)), ]
-
-# mean_excluded_included_matching = mean_excluded_included_matching[
-# (as.numeric(rownames(mean_excluded_included_matching)) %% (param_n_sim + 2)) %in% c((param_n_sim + 1), 0) , ]
-
-# rownames(mean_excluded_included_matching) =
-#   paste0(rep(LETTERS[1:nrow(mat_gamma)], each = 2), "_", c("mean", "sd"))
-
-#colnames(mean_excluded_included_matching) = colnames(mat_excluded_included_matching)
 
 
 # list_all_repeated_as_and_pro
@@ -735,53 +644,4 @@ print(t(mat_all_std_mean_diff) %>% xtable(digits=c(3)), size="\\fontsize{5pt}{16
 ########################################################################
 
 
-########################################################################
-# for the matrix with many parameters
-round_table = round(mat_all_estimators, 2)
-View(round_table)
-pdf(file = "q.pdf")
-grid.table(t(round_table), theme=ttheme_minimal(base_size = 3.2))
-# ttheme_default(base_size = 12, base_colour = "black", base_family = "",
-# parse = FALSE, padding = unit(c(4, 4), "mm"), ...)
-dev.off()
-########################################################################
 
-
-data = data.frame(x=c(1:10), y=10*c(1:10))
-ggplot() +
-  stat_identity(data = data, aes(x, y), geom = "bar", alpha = 0.5)
-
-
-####################################################################
-df1 = data.frame(id=rep(c(1:10), each=20), day=rep(c(1:20), time=10),
-                 x1=rnorm(200,0,1), x2=rnorm(200,0,1), x3=rnorm(200,0,1))
-df1[,-c(1,2)][df1[,-c(1,2)]>1.25] = Inf
-df2 = df1; df2[sapply(df2, is.infinite)] <- -1000
-data.table(df2)[,lapply(.SD, max), by=id]
-
-# x<- df2[,2:7]
-# colMax <- function(x)apply(x, 2, max)
-# mymax<- t(sapply(unique(id), function(i)colMax(x[which(id==i), ])))
-
-replace_inf_with_max = function(x){
-  x[is.infinite(x)] = max(x[!is.infinite(x)])
-  return(x)
-}
-df_final = data.table(df1)[, lapply(.SD, replace_inf_with_max), by=id]
-####################################################################
-
-
-####################################################################
-n.sample <- 100000
-x <- rnorm(n.sample)
-beta0 <- -5
-beta1 <- log(1.5)
-pr <- expit(beta0 + beta1*x)
-hist(pr)
-mean(pr)
-y <- rbinom(n.sample, 1, pr)
-mean(y)
-
-#all.equal(pm1, pm2, check.attributes = FALSE)
-#identical()
-####################################################################
