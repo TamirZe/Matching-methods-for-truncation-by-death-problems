@@ -1,23 +1,6 @@
-# installing/loading the package:
-'''if(!require(installr)) { install.packages("installr"); require(installr)} #load / install+load installr
-# step by step functions:
-check.for.updates.R() # tells you if there is a new version of R or not.
-install.R() # download and run the latest R installer
-copy.packages.between.libraries()''' # copy your packages to the newest R installation from the one version before it (if ask=T, it will ask you between which two versions to perform the copying)
-
-'''devtools::install_github("shuyang1987/multilevelMatching")
-install.packages("rlist"); install.packages("locfit"); install.packages("plyr")
-install.packages("nnet"); install.packages("xtable"); install.packages("doParallel")
-install.packages("matrixStats"); install.packages("data.table"); install.packages("rlang")
-install.packages("dplyr"); install.packages("reshape"); install.packages("MASS"); install.packages("mgsub")
-install.packages("ggplot2"); install.packages("rockchalk"); install.packages("nnet")
-installed.packages("stats"); install.packages("optmatch"); install.packages("DOS"); install.packages("PerformanceAnalytics")
-install.packages("Matching"); install.packages("sandwich"); install.packages("rmutil")
-install.packages("sandwich"); install.packages("rmutil"); install.packages("caret")'''
-
-install.packages("BiocManager")
+'''install.packages("BiocManager")
 library("BiocManager")
-BiocManager::install("genefilter")
+BiocManager::install("genefilter")'''
 
 library(rlist); library(locfit); library(plyr); library(nnet); library(xtable); library(rlang);library(glue)
 # library(multilevelMatching); library(PerformanceAnalytics); library(lmtest)
@@ -28,49 +11,17 @@ library(sandwich); library(rmutil);  library(caret); library(splitstackshape); l
 
 source("matching_scripts/matching_PS_multiple.R")
 source("matching_scripts/matching_PS_basic.R")
-#source("matching_scripts/matching_from_real_data.R")
-#source("my_EM_V2.R")
-source("EM_V3_eps_stop.R"); source("OLS_WLS_estimator.R")
-#source("sim1.R")
-#source("simulations_scripts/sim2.R")
+source("EM_V3_eps_stop.R")
+source("OLS_WLS_estimator.R")
 source("simulations_scripts/sim2DingLuEst.R")
 source("DING_model_assisted_estimator.R")
 source("TABLES/table_design_multiple_func.R")
 source("TABLES/coverage_naive_est.R")
-#source("Extra code/TABLES/table_design_func.R"); source("Extra code/TABLES/table_design_w_BCest_func.R")
-#swog_path = "C:/Users/tamir/Documents/R projects/AA Thesis Causal inference/new papers data/B1191Ding/"
 source(paste0("B1191Ding/", "PS_M_weighting.R"))
 source(paste0("B1191Ding/", "PS_M_weighting_SA.R"))
 
-'''library(doParallel)
-cores=detectCores()
-cl <- makeCluster(cores[1]-3) #not to overload your computer
-registerDoParallel(cl)
-#foreach(j = seq_along(numeric(length(c(1:n_sim)))), .combine=c) %dopar%{
-stopCluster(cl)'''
 
 #############################################################################################
-# # simulate dependency between errors
-# rho <- cbind(c(1, 1), c(1, 1))
-# sds = 1
-# x <- mvrnorm(10, mu=mean_x, Sigma = diag(sd_x, cont_x))
-# var(x)
-#############################################################################################
-
-
-##########################################################
-# parameters for the linear regression Y(a,g) on X when GPI is viloated
-# shape: beta_ # of coefficient_stratum_treatment
-# beta0_as1 = 1; beta1_as1 = 4; sigma_square_as1 = 1; beta_as1 = c(beta0_as1, beta1_as1)
-# beta0_as0 = 0; beta1_as0 = 2; sigma_square_as0 = 1; beta_as0 = c(beta0_as0, beta1_as0)
-# beta0_pro1 = 1; beta1_pro1 = 2.5; sigma_square_pro1 = 1; beta_pro1 = c(beta0_pro1, beta1_pro1)
-# beta0_har0 = 0.5; beta1_har0 = 3; sigma_square_har0 = 1; beta_har0 = c(beta0_har0, beta1_har0)
-# betas = as.matrix(rbind(beta_as1, beta_as0, beta_pro1, beta0_har0))
-# sigma_square = as.matrix(rbind(sigma_square_as1, sigma_square_as0, sigma_square_pro1, sigma_square_har0))
-# ##########################################################
-
-#############################################################################################
-# parameters 
 
 # treatment probability
 prob_A = 0.5
@@ -104,8 +55,6 @@ sqrt(var_x)
 cov_x <- diag(sqrt(5),cont_x) + corr_x - diag(1,cont_x) * corr_x # cov_x is vcov and corr
 X = mvrnorm(param_n, mu = mean_x, Sigma =  cov_x)
 apply(X, 2, mean); apply(X, 2, var); cov(X); cor(X)'''
-
-
 #############################################################################################
 
 ##########################################################
@@ -121,27 +70,16 @@ betas_GPI = as.matrix(rbind(c(22,3,4,5,1,3), c(20,3,4,5,1,3)))
 betas_GPI = as.matrix(rbind(c(22,rep(c(5,2,1,3,5),2)), c(20,rep(c(5,2,1,3,5),2))))
 
 rownames(betas_GPI) = c("beta_treatment", "beta_control")
-
-# print beta
-###############################################################################################
-'''beta_print = rbind.fill(data.frame(betas_GPIwo1), data.frame(betas_GPIwo2), data.frame(betas_GPIwo3),
-                        data.frame(betas_GPIw1) , data.frame(betas_GPIw2), data.frame(betas_GPIw3)) 
-beta_print = apply(beta_print, 2, as.character)
-print(beta_print %>% xtable(), size="\\fontsize{15pt}{15pt}\\selectfont", include.rownames=F)'''
 ###############################################################################################
 
+
+##########################################################
 var_GPI = as.matrix(rbind(1, 1))
 rownames(var_GPI) = c("var_treatment", "var_control")
 rho_GPI_PO = 0.4 #0.4 #1
 #sds_GPI_PO = 1
 ##########################################################
 
-# add the harmed stratum parameters if needed
-# if (monotonicity_assumption == "nothing"){
-#   betas = rbind(betas, beta_har0)
-#   sigma_square = c(sigma_square, sigma_square_har0)
-# }
-#############################################################################################
 
 
 #############################################################################################
