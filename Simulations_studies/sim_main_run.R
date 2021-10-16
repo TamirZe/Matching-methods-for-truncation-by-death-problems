@@ -11,7 +11,7 @@ library(sandwich); library(rmutil);  library(caret); library(splitstackshape); l
 
 source("matching_scripts/matching_PS_multiple.R")
 source("matching_scripts/matching_PS_basic.R")
-source("OLS_WLS_estimator.R")
+source("sim_OLS_WLS_estimator.R")
 source("simulations_scripts/sim2DingLuEst.R")
 source("DING_model_assisted_estimator.R")
 source("TABLES/table_design_multiple_func.R")
