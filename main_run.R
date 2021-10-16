@@ -11,7 +11,6 @@ library(sandwich); library(rmutil);  library(caret); library(splitstackshape); l
 
 source("matching_scripts/matching_PS_multiple.R")
 source("matching_scripts/matching_PS_basic.R")
-source("EM_V3_eps_stop.R")
 source("OLS_WLS_estimator.R")
 source("simulations_scripts/sim2DingLuEst.R")
 source("DING_model_assisted_estimator.R")

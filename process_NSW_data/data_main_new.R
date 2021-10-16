@@ -9,24 +9,23 @@ library(tidyr); library(dplyr); library(data.table); library(tidyr); library(tab
 
 # sources for data analysis (from main)
 ########################################################################
-source("process NSW data/matching_data/matching_multiple_data_NEW.R")
-source("process NSW data/models_data/OLS_WLS_estimator_data.R")
-source("process NSW data/real_data_boot.R")
-source("process NSW data/process_and_eda_funcs_data.R")
-source("process NSW data/aligned_ranktest.R")
-source("EM_V3_eps_stop.R")
+setwd("~/A matching framework for truncation by death problems")
+source("process_NSW_data/data_matching/data_matching_multiple_NEW.R")
+source("process_NSW_data/data_models/data_OLS_WLS_estimator.R")
+source("process_NSW_data/data_boot.R")
+source("process_NSW_data/data_process/data_process_and_eda_funcs.R")
+source("process_NSW_data/data_aligned_ranktest.R")
 source("simulations_scripts/sim2DingLuEst.R")
-source("DING_model_assisted_estimator.R")
-source("TABLES/table_design_multiple_func.R")
-source(paste0("B1191Ding/", "PS_M_weighting.R"))
-source(paste0("B1191Ding/", "PS_M_weighting_SA.R"))
-source(paste0("B1191Ding/", "xi_PS_M_weighting_SA.R"))
+#source("TABLES/table_design_multiple_func.R")
+source(paste0("Ding_Lu/", "PS_M_weighting.R"))
+source(paste0("Ding_Lu/", "PS_M_weighting_SA.R"))
+source(paste0("Ding_Lu/", "xi_PS_M_weighting_SA.R"))
 ########################################################################
 
 # data files
 ########################################################################
 library(readstata13); library(cem)
-nsw <- read.dta13("process NSW data/data/nsw_dw.dta")
+nsw <- read.dta13("process_NSW_data/Data_files/nsw_dw.dta")
 data(LL, package = "cem")
 ########################################################################
 
