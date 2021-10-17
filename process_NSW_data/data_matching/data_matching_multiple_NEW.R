@@ -1,8 +1,8 @@
-#m_data = data_list[[1]]
+m_data = data_list[[1]]
 # caliper is in sd
-#w_mat_bool = "NON-INFO"; replace = TRUE; estimand = "ATC"; change_id = TRUE; mahal_match = 2; M=1
-#reg_cov = reg_after_match # c("age", "education", "black", "hispanic", "married", "re74" ,"re75", "emp74", "emp75")
-#X_sub_cols = variables
+w_mat_bool = "NON-INFO"; replace = TRUE; estimand = "ATC"; change_id = TRUE; mahal_match = 2; M=1
+reg_cov = reg_after_match # c("age", "education", "black", "hispanic", "married", "re74" ,"re75", "emp74", "emp75")
+X_sub_cols = variables
 
 matching_func_multiple_data = function(match_on = NULL,
            cont_cov_mahal = c("age", "education", "re74", "re75"),  reg_cov, X_sub_cols, 
@@ -64,30 +64,6 @@ matching_func_multiple_data = function(match_on = NULL,
     w_mat = w_mat / sum(diag(w_mat))
   }
   
-  # TODO 2. MAHALANOBIS WITHOUT PS CALIPER
-  print("MAHALANOBIS WITHOUT PS CALIPER")
-  #set.seed(102)
-  MATCH_MAHA_wout_PS  <- Match(Y=m_data[,Y], Tr=m_data[,A]
-                               #, X=m_data[,"est_p_as"]
-                               , X = subset(m_data, select = cont_cov_mahal)
-                               ,ties=FALSE
-                               #,caliper = vec_caliper ,Weight.matrix = w_mat
-                               ,M=M, replace = replace, estimand = estimand, Weight = mahal_match
-  )
-  mala_wout_cal_lst = arrange_dataset_after_matching_DATA(m_data=m_data, match_obj=MATCH_MAHA_wout_PS,
-                                                          replace_bool=replace, X_sub_cols=X_sub_cols)
-  dt_match_S1_maha_wout_cal = mala_wout_cal_lst$dt_match_S1; matched_pairs_mala_wout_cal = mala_wout_cal_lst$matched_pairs
-  diff_per_pair_maha_wout_cal = dt_match_S1_maha_wout_cal$Y - dt_match_S1_maha_wout_cal$A0_Y
-  matched_pairs_maha_wout_cal = mala_wout_cal_lst$matched_pairs
-  data_pairs_maha_wout_cal = merge(matched_pairs_maha_wout_cal, m_data, by="id", all.x = TRUE, all.y = FALSE) %>% arrange(pair, A)
-  crude_inference_lst_mala_wout_cal = 
-    crude_estimator_inference(match_obj=MATCH_MAHA_wout_PS, dt_match_S1_maha_wout_cal, diff_per_pair_maha_wout_cal, replace_bool=replace)
-  est_crude_maha_wout_cal = crude_inference_lst_mala_wout_cal$SACE_matching_est
-  se_crude_maha_wout_cal = crude_inference_lst_mala_wout_cal$SACE_matching_SE
-  CI_by_SE_and_Z_val_naive_maha_wout_cal = crude_inference_lst_mala_wout_cal$CI_by_SE_and_Z_val_crude
-  balance_maha_wout_cal = balance_after_matching(m_data=m_data, match_obj=MATCH_MAHA_wout_PS, dt_match=dt_match_S1_maha_wout_cal, 
-                                                 X_sub_cols=X_sub_cols, metric="Mahal", replace=replace, smd_se="not_weighted", vertical_table=vertical_table)
-  
   #TODO 1. MATCHING ONLY ONLY PS: EMest_p_as
   print(match_on)
   #set.seed(101)
@@ -115,6 +91,29 @@ matching_func_multiple_data = function(match_on = NULL,
   balance_only_ps = balance_after_matching(m_data=m_data, match_obj=MATCH_PS_only, dt_match=dt_match_S1_only_ps, 
      X_sub_cols=X_sub_cols, metric="PS", replace=replace, smd_se="not_weighted", vertical_table=vertical_table)
   
+  # TODO 2. MAHALANOBIS WITHOUT PS CALIPER
+  print("MAHALANOBIS WITHOUT PS CALIPER")
+  #set.seed(102)
+  MATCH_MAHA_wout_PS  <- Match(Y=m_data[,Y], Tr=m_data[,A]
+                               #, X=m_data[,"est_p_as"]
+                               , X = subset(m_data, select = cont_cov_mahal)
+                               ,ties=FALSE
+                               #,caliper = vec_caliper ,Weight.matrix = w_mat
+                               ,M=M, replace = replace, estimand = estimand, Weight = mahal_match
+  )
+  mala_wout_cal_lst = arrange_dataset_after_matching_DATA(m_data=m_data, match_obj=MATCH_MAHA_wout_PS,
+                                                          replace_bool=replace, X_sub_cols=X_sub_cols)
+  dt_match_S1_maha_wout_cal = mala_wout_cal_lst$dt_match_S1; matched_pairs_mala_wout_cal = mala_wout_cal_lst$matched_pairs
+  diff_per_pair_maha_wout_cal = dt_match_S1_maha_wout_cal$Y - dt_match_S1_maha_wout_cal$A0_Y
+  matched_pairs_maha_wout_cal = mala_wout_cal_lst$matched_pairs
+  data_pairs_maha_wout_cal = merge(matched_pairs_maha_wout_cal, m_data, by="id", all.x = TRUE, all.y = FALSE) %>% arrange(pair, A)
+  crude_inference_lst_mala_wout_cal = 
+    crude_estimator_inference(match_obj=MATCH_MAHA_wout_PS, dt_match_S1_maha_wout_cal, diff_per_pair_maha_wout_cal, replace_bool=replace)
+  est_crude_maha_wout_cal = crude_inference_lst_mala_wout_cal$SACE_matching_est
+  se_crude_maha_wout_cal = crude_inference_lst_mala_wout_cal$SACE_matching_SE
+  CI_by_SE_and_Z_val_naive_maha_wout_cal = crude_inference_lst_mala_wout_cal$CI_by_SE_and_Z_val_crude
+  balance_maha_wout_cal = balance_after_matching(m_data=m_data, match_obj=MATCH_MAHA_wout_PS, dt_match=dt_match_S1_maha_wout_cal, 
+                                                 X_sub_cols=X_sub_cols, metric="Mahal", replace=replace, smd_se="not_weighted", vertical_table=vertical_table)
   
   # TODO 3. MAHALANOBIS WITH PS CALIPER
   print("MAHALANOBIS WITH PS CALIPER")
@@ -142,7 +141,6 @@ matching_func_multiple_data = function(match_on = NULL,
   CI_by_SE_and_Z_val_naive = crude_inference_lst$CI_by_SE_and_Z_val_crude
   balance_maha_cal_PS = balance_after_matching(m_data=m_data, match_obj=ATE_MATCH_PS, dt_match=dt_match_S1,
      X_sub_cols=X_sub_cols, metric="Mahal cal", replace=replace, smd_se="not_weighted", vertical_table=vertical_table)
-  # MATCH_obj = ATE_MATCH_PS
   
   extract_matched_set = function(MATCH_obj, m_data){
     amount_ctr = nrow(m_data) - sum(m_data$A)
@@ -159,17 +157,6 @@ matching_func_multiple_data = function(match_on = NULL,
   }
   
   if(one_leraner_bool){
-    # amount_ctr = nrow(m_data) - sum(m_data$A)
-    # ind_ctr = ATE_MATCH_PS$index.control; ind_trt = ATE_MATCH_PS$index.treated
-    # ind_ctr_unq = unique(ind_ctr); ind_trt_unq = unique(ind_trt)
-    # print(paste0("len ctr_before match = ",amount_ctr, ", len ctr after match = ", length(ind_ctr), 
-    #              ", len ctr after match = ", length(ind_ctr_unq)))
-    # print(paste0("ind_ctr_unq and ind_ctr are identical: ", identical(ind_ctr_unq,ind_ctr)))
-    # weights = apply(data.frame(table(c(ind_ctr, ind_trt))), 2, as.numeric); 
-    # colnames(weights) = c("id", "w")
-    # matched_set = merge(weights, m_data, by = "id")
-    # print(paste0("unique weights for controla are really = ", unique(filter(matched_set, A==0)$w)))
-    
     matched_set_PS_only = extract_matched_set(MATCH_PS_only, m_data)
     matched_set_MAHA_wout_PS = extract_matched_set(MATCH_MAHA_wout_PS, m_data)
     matched_set = extract_matched_set(ATE_MATCH_PS, m_data) # mahal with caliper
@@ -185,18 +172,6 @@ matching_func_multiple_data = function(match_on = NULL,
                 reg_data_matched_lst=reg_data_matched_lst, matched_set_lst=matched_set_lst))
   }
   
-  # balance_maha_cal_PS = data.frame(
-  # rbind(apply(subset(dt_match_S1, 
-  #          select = paste0("A0_", c("A", "EMest_p_as", "EMest_p_pro", X_sub_cols[-1]))), 2, mean),
-  #         apply(subset(dt_match_S1, 
-  #          select = c("A", "EMest_p_as", "EMest_p_pro", X_sub_cols[-1])), 2, mean)) ) %>% round(3)
-  # colnames(balance_maha_cal_PS) = substr(colnames(balance_maha_cal_PS), 4, 100)
-  # balance_maha_cal_PS$N = c(nrow(filter(m_data, A==0)), nrow(filter(m_data, A==1)), "")
-  # balance_maha_cal_PS$N_match = rep(nrow(dt_match_S1),3)
-  # balance_maha_cal_PS$N_unq = c(length(unique(ATE_MATCH_PS$index.control)),length(unique(ATE_MATCH_PS$index.treated)))
-  # balance_maha_cal_PS = data.frame(Metric = "Mahal cal", subset(balance_maha_cal_PS, select = c(A, N, N_match, N_unq)), 
-  #                                  subset(balance_maha_cal_PS, select = -c(A, N, N_match, N_unq)))
-  
   if(vertical_table==TRUE){
     balance_table = data.frame(Replacements = replace, cbind(filter(balance_before_match, Variable != "S"),
                                                              balance_only_ps$balance_match, balance_maha_wout_cal$balance_match, balance_maha_cal_PS$balance_match))
@@ -210,8 +185,6 @@ matching_func_multiple_data = function(match_on = NULL,
     balance_table$Replacements = substr(balance_table$Replacements, 1, 1)
   }
   
-  #summary(ATE_MATCH_PS)
-  #ATE_MATCH_PS$est; ATE_MATCH_PS$se; ATE_MATCH_PS$nobs; ATE_MATCH_PS$index.dropped
   
   # TODO HL function
   func_wilcoxon_HL_est = function(boost_HL=FALSE, match_metric_lst, return_CI=FALSE){
@@ -219,22 +192,8 @@ matching_func_multiple_data = function(match_on = NULL,
     wilcoxon = wilcox.test(diff_per_pair, conf.int=T)
     SACE_matching_est_HL = as.numeric(wilcoxon$estimate) %>% round(3)
     SACE_matching_pval_HL = wilcoxon$p.value 
-    # bootstrap for HL se
-    if(boost_HL==TRUE){
-      HL_boost_vec = c()
-      for(i in 1:100){
-        print(paste0("bootstrap ", i))
-        d = match_metric_lst$dt_match_S1[sample(nrow(match_metric_lst$dt_match_S1), nrow(match_metric_lst$dt_match_S1), replace = T),]
-        diff_per_pair_boost = d$Y - d$A0_Y
-        HL_boost_vec[i] = wilcox.test(diff_per_pair_boost,conf.int=T)$estimate
-      }
-      SACE_matching_est_HL_bool = mean(HL_boost_vec)
-      SACE_matching_se_HL = sd(HL_boost_vec)
-    }else{
-      # FAKE SE
-      SACE_matching_se_HL = SACE_matching_pval_HL %>% round(3)
-    }
-    
+   # FAKE SE
+    SACE_matching_se_HL = SACE_matching_pval_HL %>% round(3)
     SACE_matching_CI_HL = c(as.character(as.numeric(round(wilcoxon$conf.int, 3))[1]), 
                             as.character(as.numeric(round(wilcoxon$conf.int, 3))[2]))
     SACE_matching_CI_HL = paste(SACE_matching_CI_HL, sep = ' ', collapse = " , ")
@@ -247,7 +206,7 @@ matching_func_multiple_data = function(match_on = NULL,
   }
   
   # for each type of distance metric, run HL and OLS/WLS
-  
+
   dt_and_pairs_match_lst = 
     list(only_ps=only_ps_lst, mala_wout_cal=mala_wout_cal_lst, mala_cal=ATE_MATCH_PS_lst)
   OLS_WLS_reg_lst <- coeffs_table <- HL_est_lst <- list()
@@ -395,7 +354,6 @@ matching_func_multiple_data = function(match_on = NULL,
   }
   
   #TODO summary of matching estimators
-  
   summary_table = data.frame( Replacements = replace, Metric = c("PS", "Mahal", "Mahal PS caliper"),                   
                              Crude_estimators = c(paste0(est_crude_only_ps %>% round(3), " (", se_crude_only_ps %>% round(3), ")"), 
                              paste0(est_crude_maha_wout_cal %>% round(3), " (", se_crude_maha_wout_cal %>% round(3), ")"),
@@ -413,16 +371,7 @@ matching_func_multiple_data = function(match_on = NULL,
                          c(replace, "BC caliper",  paste0(BCest_clpr, " (", BCse_clpr, ")"), rep("",3)),
                          c(replace, "BC caliper inter",  paste0(BCest_clpr_inter, " (", BCse_clpr_inter, ")"), rep("",3)))
                           
-
-  #TODO End of matching estimators!!!
-    
-  
-  #TODO distribution of the x's; before matching and after matching
-  # from now, see in the original function
-  # descriprive before matching
-  
-  
-  return(list(balance_table=balance_table, 
+    return(list(balance_table=balance_table, 
     balance_only_ps=balance_only_ps$balance_table1, balance_maha_wout_cal=balance_maha_wout_cal$balance_table1, balance_maha_cal_PS=balance_maha_cal_PS$balance_table1, 
     matched_data_mahalPScal=matched_data_mahalPScal, 
     data_pairs_lst = list(data_pairs_only_ps=data_pairs_only_ps, data_pairs_maha_wout_cal=data_pairs_maha_wout_cal, data_pairs_maha_cal_PS=data_pairs_maha_cal_PS),
@@ -515,18 +464,19 @@ balance_after_matching = function(m_data, match_obj, dt_match, X_sub_cols, metri
 
 arrange_dataset_after_matching_DATA = function(m_data, match_obj, replace_bool, X_sub_cols){
   ncols  = ncol(subset(m_data[match_obj$index.treated, ], 
-                       select = c("id"
-                                  #, "p_as"
-                                  , "EMest_p_as", "EMest_p_pro", "e_1_as", "Y", "A", "S", "g", X_sub_cols[-1]))) + 1
+     select = c("id"
+        #, "p_as"
+      , "EMest_p_as", "EMest_p_pro", "e_1_as", "Y", "A", "S", X_sub_cols[-1]))) + 1
   dt_match = data.table(subset(m_data[match_obj$index.treated, ], 
-                               select = c("id"
-                                          #, "p_as"
-                                          , "EMest_p_as", "EMest_p_pro", "e_1_as", "Y", "A", "S", "g", X_sub_cols[-1])),
-                        match_obj$index.treated, match_obj$index.control,
-                        subset(m_data[match_obj$index.control, ], 
-                               select = c("id"
-                                          #, "p_as"
-                                          ,"EMest_p_as", "EMest_p_pro", "e_1_as", "Y", "A", "S", "g", X_sub_cols[-1])))
+     select = c("id"
+      #, "p_as"
+      , "EMest_p_as", "EMest_p_pro", "e_1_as", "Y", "A", "S", X_sub_cols[-1])),
+              match_obj$index.treated, match_obj$index.control,
+              subset(m_data[match_obj$index.control, ], 
+     select = c("id"
+        #, "p_as"
+      , "EMest_p_as", "EMest_p_pro", "e_1_as", "Y", "A", "S", X_sub_cols[-1])))
+  
   colnames(dt_match)[(ncols + 1): (2 * ncols)] = 
     paste0("A0_", colnames(dt_match)[(ncols + 1): (2 * ncols)])
   colnames(dt_match)[c(ncols: (ncols+1))] = c("id_trt", "id_ctrl")
@@ -542,20 +492,10 @@ arrange_dataset_after_matching_DATA = function(m_data, match_obj, replace_bool, 
                           ctr = match_obj$index.control, trt = match_obj$index.treated)
   matched_pairs = rbind(data.frame(id=matched_pairs$ctr, pair=matched_pairs$pair), 
                           data.frame(id=matched_pairs$trt, pair=matched_pairs$pair)) %>% arrange(pair) 
-  #     
-  # if(replace_bool == FALSE){
-  #   matched_pairs = data.frame(pair = c(1:length(match_obj$index.control)), 
-  #                              ctr = match_obj$index.control, trt = match_obj$index.treated)
-  #   matched_pairs = rbind(data.frame(id=matched_pairs$ctr, pair=matched_pairs$pair), 
-  #                         data.frame(id=matched_pairs$trt, pair=matched_pairs$pair)) %>% arrange(pair) 
-  # }else{
-  #   matched_pairs = NULL 
-  # }
+
   return(list(dt_match_S1=dt_match_S1, matched_pairs=matched_pairs))
 }
 
-# crude_estimator_inference(match_obj=MATCH_PS_only, dt_match_S1=dt_match_S1_only_ps,
-#                           diff_per_pair=diff_per_pair_only_ps, replace_bool=replace)
 crude_estimator_inference = function(match_obj, dt_match_S1, diff_per_pair, replace_bool){
   # est
   SACE_matching_est = mean(dt_match_S1$Y) - mean(dt_match_S1$A0_Y)

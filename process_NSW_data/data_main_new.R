@@ -17,9 +17,9 @@ source("Process_NSW_data/data_process/data_process_and_eda_funcs.R")
 source("Process_NSW_data/data_aligned_ranktest.R")
 source("Simulations_studies/sim_simulations_scripts/sim2DingLuEst.R")
 #source("Simulations_studies/sim_TABLES/table_design_multiple_func.R")
-source(paste0("Ding_Lu/", "PS_M_weighting.R"))
-source(paste0("Ding_Lu/", "PS_M_weighting_SA.R"))
-source(paste0("Ding_Lu/", "xi_PS_M_weighting_SA.R"))
+source(paste0("Code/Ding_Lu/", "PS_M_weighting.R"))
+source(paste0("Code/Ding_Lu/", "PS_M_weighting_SA.R"))
+source(paste0("Code/Ding_Lu/", "xi_PS_M_weighting_SA.R"))
 ########################################################################
 
 # data files
@@ -33,9 +33,9 @@ set.seed(101)
 # parameters and variables for matching and regressions ####
 ########################################################################
 iterations = 400; epsilon_EM = 1e-06;
-match_on = "e_1_as"; caliper = 0.3 # Ding Lu appendix: "e_1_as", Feller and mealli: EMest_p_as
-mu_x_fixed = FALSE; x_as = mat_x_as[1,]
+match_on = "e_1_as"  # "e_1_as", # EMest_p_as 
 data_bool = "LL" # "DW" # "LL"
+caliper = 0.3
 
 covariates_PS = c("age", "black", "hispanic", "married", "re75", "emp75")
 cont_cov_mahal = c("age", "education", "re75")
@@ -71,48 +71,36 @@ colnames(CI_naives_before_matching) = c("naive_without_matching", "survivors_nai
 ######################################################################## 
 # EM algorithm ####
 #TODO EM with monotonicity
-
 beta.a = NULL; beta.n = NULL
 start_timeDing <- Sys.time()
 est_ding_lst = PSPS_M_weighting(Z=data$A, D=data$S,
         X=as.matrix(subset(data, select = covariates_PS)),  
         Y=data$Y, trc = TRUE, ep1 = 1, ep0 = 1, beta.a = beta.a, beta.n = beta.n,
         iter.max = iterations, error0 = epsilon_EM) 
-
-end_timeDing <- Sys.time()
-print(paste0("Ding EM lasts ", difftime(end_timeDing, start_timeDing)))
 # adjust the cols the same order as in myEM: my order is: as, ns, pro. ding order: c(prob.c, prob.a, prob.n)
 PS_est = data.frame(est_ding_lst$PROB[,2], est_ding_lst$PROB[,3], est_ding_lst$PROB[,1])
 colnames(PS_est) = c("EMest_p_as", "EMest_p_ns", "EMest_p_pro")
-data_with_PS = data.table(data, PS_est)
-which(is.na(data_with_PS)==TRUE)
-data_with_PS$e_1_as = data_with_PS$EMest_p_as / (data_with_PS$EMest_p_as + data_with_PS$EMest_p_pro)
 #EM coeffs
 EM_coeffs = c(est_ding_lst$beta.a, coeff_ns = est_ding_lst$beta.n)
 error = est_ding_lst$error
+# add the principal scores to the data
+data_with_PS = data.table(data, PS_est)
+#which(is.na(data_with_PS)==TRUE)
+data_with_PS$e_1_as = data_with_PS$EMest_p_as / (data_with_PS$EMest_p_as + data_with_PS$EMest_p_pro)
+
 ######################################################################## 
 
-# Ding Lu estimators ####
+# Ding and Lu estimators ####
 ######################################################################## 
 DING_est = est_ding_lst$AACE
 DING_model_assisted_est_ps = est_ding_lst$AACE.reg
 
 # BOOSTING for EM coefficients and DL estimators
-boosting_results = run_boosting(data, BS=500, seed=19, iter.max=iterations, error0=epsilon_EM)
-assign(paste0("boosting_results_", data_bool), boosting_results)
-tmp = get(paste0("boosting_results_",data_bool))
-#save(boosting_results, file = "boosting_results.RData")
-#View(boosting_results$DL_est[,BS:ncol(boosting_results$DL_est)])
+#boosting_results = run_boosting(data, BS=500, seed=19, iter.max=iterations, error0=epsilon_EM)
 ######################################################################## 
 
-#TODO matching esimators
 ######################################################################## 
-# fake G uner monotonicity (we do not use it)
-attach(data_with_PS)
-data_with_PS$g = ifelse( A==0 & S==1, "as", ifelse( A==1 & S==0, "ns", ifelse(A==1 & S==1, "pro", "pro") )  )
-data_with_PS = data.table(data_with_PS)
-
-#TODO main process for estimation within the data
+# matching procedure ####
 # match only among survivors  
 data_list = list(data_with_PS[S==1])
 #match_on = "e_1_as" # e_1_as # EMest_p_as
@@ -124,29 +112,30 @@ for(j in c(1:length(replace_vec))){
     lapply(1:length(data_list), function(l){
       set.seed(101)
       matching_func_multiple_data(match_on = match_on,
-          cont_cov_mahal = cont_cov_mahal,  reg_cov = reg_after_match, X_sub_cols = variables, 
-          reg_BC = reg_BC, m_data = data_list[[l]], 
-          w_mat_bool = "NON-INFO", M=1, replace=replace_vec[j], estimand = "ATC", mahal_match = 2, caliper = caliper # 0.3
+          cont_cov_mahal=cont_cov_mahal,  reg_cov=reg_after_match, X_sub_cols=variables, 
+          reg_BC=reg_BC, m_data=data_list[[l]], 
+          w_mat_bool="NON-INFO", M=1, replace=replace_vec[j], estimand="ATC", mahal_match=2, caliper=caliper 
           #,OBS_table = descrip_all_data_OBS$OBS_table
-          ,change_id=TRUE, boost_HL=FALSE, pass_tables_matched_units = FALSE, vertical_table = TRUE, rnd = 1)
+          ,change_id=TRUE, boost_HL=FALSE, pass_tables_matched_units=FALSE, vertical_table=TRUE, rnd=1)
     })
   }
-  ######################################################################## 
-#CI_normaol_calc = function(est, se){ est + c(-1,1) * 1.96 * se }
-# aligned_ranktets
+######################################################################## 
+
+# aligned_ranktets ####
 data_pairs_lst = lst_matching_estimators[[2]][[1]]$data_pairs_lst
 aligned_ranktets_heller_lst = list()
-for (measure in names(data_pairs_lst)) { # measure = names(data_pairs_lst)[3]
+for (measure in names(data_pairs_lst)) {
   data_new_grp = adjust_pairs_to_new_grp(data_pairs_lst[[measure]])
   aligned_ranktets_heller_lst[[measure]] = alignedranktest(outcome=data_new_grp$Y, matchedset=data_new_grp$trt_grp, treatment=data_new_grp$A)
 }
 
 matched_data_mahalPScal = lst_matching_estimators[[2]][[1]]$matched_data_mahalPScal
-coeffs_regression = lst_matching_estimators[[2]][[1]]$coeffs_table
-# vertically
+#coeffs_regression = lst_matching_estimators[[2]][[1]]$coeffs_table
+
+# balance and estimators ####
 ESTIMATORS_TABLE = rbind(lst_matching_estimators[[1]][[1]]$summary_table, 
-                         lst_matching_estimators[[2]][[1]]$summary_table) %>% data.frame() #[[5]]
-BALANCE_TABLE = rbind(lst_matching_estimators[[1]][[1]]$balance_table, lst_matching_estimators[[2]][[1]]$balance_table) # [[1]]
+                         lst_matching_estimators[[2]][[1]]$summary_table) %>% data.frame() 
+BALANCE_TABLE = rbind(lst_matching_estimators[[1]][[1]]$balance_table, lst_matching_estimators[[2]][[1]]$balance_table) 
 print(filter(BALANCE_TABLE, Replacements==FALSE)[-c(4:7),-c(1,3:5)][,c(1,5:7,2:4,8:10)] %>% 
         xtable(), size="\\fontsize{8pt}{8pt}\\selectfont", include.rownames=F)
 print(filter(BALANCE_TABLE, Replacements==TRUE)[-c(4:7),-c(1,3:5)][,c(1,5:7,2:4,8:10)] %>% 
@@ -163,33 +152,6 @@ EM_coeffs = rbind(coeff_as, coeff_ns); colnames(EM_coeffs)[-1] = sub(".*]", "", 
 print(BALANCE_TABLE[-c(4:6),] %>% xtable(caption = paste0("Matched data-set means, ", data_bool ," Sample.")),
       size="\\fontsize{6pt}{6pt}\\selectfont", include.rownames=F)
 print(EM_coeffs %>% xtable(), size="\\fontsize{9pt}{9pt}\\selectfont", include.rownames=F)
-
-# library(memisc)
-# toLatex(data.frame(EM_coeffs), digits=4)
-# horizontally
-ESTIMATORS_TABLE = rbind(lst_matching_estimators[[1]][[1]]$summary_table, lst_matching_estimators[[2]][[1]]$summary_table) %>% data.frame()
-BALANCE_TABLE = cbind(lst_matching_estimators[[1]][[1]]$balance_table, lst_matching_estimators[[2]][[1]]$balance_table)
-BALANCE_TABLE = subset(BALANCE_TABLE, select = -N)
-BALANCE_TABLE$A = as.character(BALANCE_TABLE$A)
-View(subset(BALANCE_TABLE
-            # %>% filter(Replacements=="F")
-            #, select = -grep("2", colnames(BALANCE_TABLE))
-))
-print(subset(BALANCE_TABLE[1:3,], select = -c(1:2,19)) %>% # BALANCE_TABLE[1:11,]
-        xtable(caption = paste0("Matched data-set means, ", data_bool ," Sample.")),
-      size="\\fontsize{9pt}{9pt}\\selectfont", include.rownames=F)
-# print(subset(BALANCE_TABLE, select = -c(N_match, N_unq)) %>% 
-#         xtable(caption = paste0("Matched data-set means, ", data_bool ," Sample.")),
-#       size="\\fontsize{9pt}{9pt}\\selectfont", include.rownames=F)
-print(subset(BALANCE_TABLE, select = -grep(paste0("EMest|", paste(variables, sep = '', collapse = "|"), data_bool ," Sample."),
-                                           colnames(BALANCE_TABLE))) %>% 
-        xtable(caption = "Matched data-set, number of matched participants, LaLonde Sample."),
-      size="\\fontsize{9pt}{9pt}\\selectfont", include.rownames=F)
-
-print(ESTIMATORS_TABLE %>% filter(Replacements==TRUE) %>%
-        xtable(digits=c(0), caption = "Matching estimators."),
-      size="\\fontsize{8pt}{8pt}\\selectfont", include.rownames=F)
-#########################################################################################
 
 
 
