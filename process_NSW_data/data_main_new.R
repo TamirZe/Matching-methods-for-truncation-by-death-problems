@@ -83,7 +83,6 @@ error = est_ding_lst$error
 coeff_as = est_ding_lst$beta.a; coeff_ns = est_ding_lst$beta.n
 EM_coeffs = rbind(coeff_as, coeff_ns)
 colnames(EM_coeffs)[-1] = sub(".*]", "", colnames(EM_coeffs)[-1])
-print(EM_coeffs %>% xtable(), size="\\fontsize{9pt}{9pt}\\selectfont", include.rownames=F)
 
 # adjust the cols the same order as in myEM: my order is: as, ns, pro. ding order: c(prob.c, prob.a, prob.n)
 PS_est = data.frame(est_ding_lst$PROB[,2], est_ding_lst$PROB[,3], est_ding_lst$PROB[,1])
@@ -99,12 +98,12 @@ DING_est = est_ding_lst$AACE
 DING_model_assisted_est_ps = est_ding_lst$AACE.reg
 
 # BOOSTING for DL estimator
-#boosting_results = run_boosting(data, BS=500, seed=19, iter.max=iterations, error0=epsilon_EM)
+'''boosting_results = run_boosting(data, BS=500, seed=19, iter.max=iterations, error0=epsilon_EM)'''
 ######################################################################## 
 
 ######################################################################## 
 # matching procedure ####
-# match only among survivors  
+# match only among the employed
 data_list = list(data_with_PS[S==1])
 #TODO MATCHING
 lst_matching_estimators = list()
@@ -130,6 +129,9 @@ for (measure in names(data_pairs_lst)) {
   data_new_grp = adjust_pairs_to_new_grp(data_pairs_lst[[measure]])
   aligned_ranktets_lst[[measure]] = alignedranktest(outcome=data_new_grp$Y, matchedset=data_new_grp$trt_grp, treatment=data_new_grp$A)
 }
+
+# EM_coeffs
+print(EM_coeffs %>% xtable(), size="\\fontsize{9pt}{9pt}\\selectfont", include.rownames=F)
 
 # balance  ####
 # balance in the full dataset

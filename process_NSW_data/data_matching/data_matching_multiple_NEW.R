@@ -1,8 +1,8 @@
-m_data = data_list[[1]]
+#m_data = data_list[[1]]
 # caliper is in sd
-w_mat_bool = "NON-INFO"; replace = TRUE; estimand = "ATC"; change_id = TRUE; mahal_match = 2; M=1
-reg_cov = reg_after_match # c("age", "education", "black", "hispanic", "married", "re74" ,"re75", "emp74", "emp75")
-X_sub_cols = variables
+#w_mat_bool = "NON-INFO"; replace = TRUE; estimand = "ATC"; change_id = TRUE; mahal_match = 2; M=1
+#reg_cov = reg_after_match # c("age", "education", "black", "hispanic", "married", "re74" ,"re75", "emp74", "emp75")
+#X_sub_cols = variables
 
 matching_func_multiple_data = function(match_on = NULL,
            cont_cov_mahal = c("age", "education", "re74", "re75"),  reg_cov, X_sub_cols, 
