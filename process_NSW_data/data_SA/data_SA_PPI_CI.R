@@ -212,21 +212,6 @@ ggplot(aes(x=eps_PPI, y=Estimate)) +
     ,legend.position="none" # remove legend
     ) + 
   geom_hline(yintercept = 0)
-
-plot_sensi_PPI_DW_LL = plot_sensi_PPI + facet_wrap(~ Estimator, ncol=3) + 
-  theme(strip.text.x = element_text(size=12, face="bold"), strip.text.y = element_text(size=10, face="bold"),
-        strip.background = element_rect(colour="black", fill="white"))
-
-plot_sensi_PPI_DW_LL = plot_sensi_PPI + facet_wrap(~ set, ncol=2) + 
-  theme(strip.text.x = element_text(size=12, face="bold"), strip.text.y = element_text(size=10, face="bold"),
-    strip.background = element_rect(colour="black", fill="white"))
-
-# EXTRACT LEGEND
-library(cowplot); library(ggpubr)
-lgnd_plt <- get_legend(plot_sensi_PPI)
-# Convert to a ggplot and print
-as_ggplot(lgnd_plt)
-plot_sensi_PPI_woutLGND = lgnd_plt + theme(legend.position = 'none') 
 #########################################################################################
 
 

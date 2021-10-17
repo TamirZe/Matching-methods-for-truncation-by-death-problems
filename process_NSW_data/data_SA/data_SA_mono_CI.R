@@ -212,9 +212,7 @@ reg_sensi_mono_se$Estimator = mgsub(reg_sensi_mono_se$Estimator, c("\\_se$"), ""
 reg_sensi_mono = merge(reg_sensi_mono_est, reg_sensi_mono_se, by=c("measure", "xi_mono", "alpha0_mono", "Estimator"))
 reg_sensi_mono$lower_CI = reg_sensi_mono$Estimate - 1.96 * reg_sensi_mono$SE
 reg_sensi_mono$upper_CI = reg_sensi_mono$Estimate + 1.96 * reg_sensi_mono$SE
-#########################################################################################
 
-#########################################################################################
 legend_levels = c("Crude", "WLS", "WLS inter")
 reg_sensi_mono$Estimator = mgsub(reg_sensi_mono$Estimator,
                                  c("crude_est_adj", "SACE_1LEARNER_adj", "SACE_1LEARNER_inter_adj"), legend_levels)
@@ -266,17 +264,6 @@ plot_sensi_mono_DW_LL = plot_sensi_mono +
     axis.text.x=element_text(size=10),  # X axis text
     axis.text.y=element_text(size=10)
   ) 
-
-# EXTRACT LEGEND
-library(cowplot); library(ggpubr)
-lgnd_plt <- get_legend(plot_sensi_mono)
-# Convert to a ggplot and print
-as_ggplot(lgnd_plt)
-plot_sensi_mono_woutLGND = lgnd_plt + theme(legend.position = 'none') 
-
-# ggarrange
-library(ggpubr)
-ggarrange(plot_sensi_mono_DW, plot_sensi_mono_LL)
 #########################################################################################
 
 
