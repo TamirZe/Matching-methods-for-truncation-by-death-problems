@@ -221,6 +221,7 @@ reg_sensi_mono$Estimator = mgsub(reg_sensi_mono$Estimator,
 reg_sensi_mono$Estimator = factor(reg_sensi_mono$Estimator, levels = legend_levels)
 reg_sensi_mono$set = data_bool
 
+
 #TODO plot monotonicity under SPPI or PPI
 #########################################################################################
 plot_sensi_mono <- ggplot(filter(reg_sensi_mono, measure == "Mahal_PS_cal" & Estimator %in% c("WLS")), 

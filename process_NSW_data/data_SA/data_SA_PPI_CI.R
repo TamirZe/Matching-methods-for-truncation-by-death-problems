@@ -169,7 +169,7 @@ for(ind_matched_set in c(1:length(reg_matched_lst))){
 
 # process for ggplot
 reg_sensi_PPI = data.frame(reg_sensi_PPI)
-reg_sensi_PPI = subset(reg_sensi_PPI, select = -c(SACE_1LEARNER, SACE_1LEARNER_inter)) %>% data.frame()
+#reg_sensi_PPI = subset(reg_sensi_PPI, select = -c(SACE_1LEARNER, SACE_1LEARNER_inter)) %>% data.frame()
 reg_sensi_PPI[,-1] = apply(reg_sensi_PPI[,-1] , 2, as.numeric) %>% data.frame
 reg_sensi_PPI[,-c(1,2)] = round(reg_sensi_PPI[,-c(1,2)]) 
 
