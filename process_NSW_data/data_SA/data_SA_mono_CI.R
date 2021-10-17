@@ -110,29 +110,16 @@ SACE_estimation_1LEARNER_mono = function(matched_data, reg_after_match, alpha0_m
 }
 #########################################################################################
 
-
-# matching for O(0,1), using parameters (reg_after_match for instance) from main
-# mahalanobis with PS caliper
 #########################################################################################
-#TODO \XI
-#TODO MY upper bound for xi/eta
+#TODO xi
+#bounds for xi
 p1 = mean(data[A==1,S]); p0 = mean(data[A==0,S])
 up_bound_xi = (1 - p1) / (p1 - 1 + p0)
-len = 5; win_len = up_bound_xi / len
-xi_sensi_mono_vec = seq(0, up_bound_xi, win_len) %>% round(2)
-xi_sensi_mono_vec = xi_sensi_mono_vec[1:5]
-# arrange
 xi_sensi_mono_vec = seq(0, 0.5, 0.1)
 xi_sensi_mono_vec[length(xi_sensi_mono_vec)] = 0.48 #round(up_bound_xi,2)
-# check
-last(xi_sensi_mono_vec) == up_bound_xi
-# names
 xi_sensi_mono_names = paste0("xi_mono_", round(xi_sensi_mono_vec, 2))
-
 # alpha0_mono
 alpha0_mono_vec = seq(0.5, 2, 0.25) 
-# SPPI: alpha0_mono_vec = 1
-# names
 alpha0_mono_vec_names = paste0("alpha0_mono_", alpha0_mono_vec)  
 
 reg_sensi_mono <- NULL
@@ -164,17 +151,16 @@ for (j in 1:length(xi_sensi_mono_names)) {
   
   # matching for the current xi
   #####################################
-  # 14.10.2021 SET SEED??
-  set.seed(101)
+  # seed because otherwise the matching procedure will not achieve the same results when alpha_0=1 under all values of xi, during the SA for monotonicity (for mahalanobis measure) 
+  # also, otherwise, when xi=0 in SA for monotonicity results will not be similar to results when alpha_1=1 in SA for PPI (for mahalanobis measure)
+  set.seed(101) 
   matching_lst = matching_func_multiple_data(match_on = match_on,
            cont_cov_mahal = cont_cov_mahal,  reg_cov = reg_after_match, X_sub_cols = variables, 
            reg_BC = reg_BC, m_data = tmp[S==1], 
            w_mat_bool = "NON-INFO", M=1, replace=TRUE, estimand = "ATC", mahal_match = 2, caliper = caliper
            #, OBS_table = descrip_all_data_OBS$OBS_table
            , change_id=TRUE, boost_HL=FALSE, pass_tables_matched_units=FALSE, one_leraner_bool=TRUE)
-  #m_dat = matching_lst$m_data; dt_match = matching_lst$ATE_MATCH_PS_lst
-  #matched_data = matching_lst$matched_set_lst$Mahal_PS_cal
-  
+ 
   #TODO matched_set_lst for all distance metrics
   matched_data_lst = matching_lst$matched_set_lst
   reg_matched_lst = matching_lst$reg_data_matched_lst
@@ -215,15 +201,11 @@ for (j in 1:length(xi_sensi_mono_names)) {
   }
 }
 
+# process for ggplot ####
+#########################################################################################\
 reg_sensi_mono = data.frame(reg_sensi_mono)
-assign(paste0(data_bool, "_TEMP") ,reg_sensi_mono)
-get(paste0(data_bool, "_TEMP"))
 reg_sensi_mono[,-1] = apply(reg_sensi_mono[,-1] , 2, as.numeric)
 reg_sensi_mono[,-c(1,2,3)] = round(reg_sensi_mono[,-c(1,2,3)])
-
-# process for ggplot
-#1. two models for interactions model
-#########################################################################################\
 reg_sensi_mono_est = reg_sensi_mono[,c(1:3,4,6,8)] %>% gather("Estimator", "Estimate", c(4:6)) %>% arrange(measure, xi_mono, alpha0_mono)
 reg_sensi_mono_se = reg_sensi_mono[,c(1:3,5,7,9)] %>% gather("Estimator", "SE", c(4:6)) %>% arrange(measure, xi_mono, alpha0_mono)
 reg_sensi_mono_se$Estimator = mgsub(reg_sensi_mono_se$Estimator, c("\\_se$"), "")
@@ -232,30 +214,13 @@ reg_sensi_mono$lower_CI = reg_sensi_mono$Estimate - 1.96 * reg_sensi_mono$SE
 reg_sensi_mono$upper_CI = reg_sensi_mono$Estimate + 1.96 * reg_sensi_mono$SE
 #########################################################################################
 
-#2. REGULAR one model for interactions model
-#########################################################################################
-'''reg_sensi_mono = subset(reg_sensi_mono, select = -c(SACE_1LEARNER, SACE_1LEARNER_inter)) %>% data.frame()
-reg_sensi_mono[,-c(1,2,3)] = round(reg_sensi_mono[,-c(1,2,3)])
-reg_sensi_mono$measure = factor(reg_sensi_mono$measure , levels = c("Mahal_PS_cal", "Mahal", "PS"))
-reg_sensi_mono = reg_sensi_mono %>% gather("Estimator", "Estimate", 4:6) %>% arrange(measure, xi_mono, alpha0_mono)'''
-#########################################################################################
-
 #########################################################################################
 legend_levels = c("Crude", "WLS", "WLS inter")
 reg_sensi_mono$Estimator = mgsub(reg_sensi_mono$Estimator,
                                  c("crude_est_adj", "SACE_1LEARNER_adj", "SACE_1LEARNER_inter_adj"), legend_levels)
 reg_sensi_mono$Estimator = factor(reg_sensi_mono$Estimator, levels = legend_levels)
 reg_sensi_mono$set = data_bool
-save(reg_sensi_mono, file = "reg_sensi_mono.RData")
 
-# combine DW LL
-#reg_sensi_mono = rbind(DW_sensi_mono_under_PPI, LL_sensi_mono_under_PPI)
-#reg_sensi_mono = reg_sensi_mono %>% filter(Estimator != "WLS inter")
-#save(reg_sensi_mono, file = "reg_sensi_mono.RData")
-#reg_sensi_mono = filter(reg_sensi_mono, measure == "Mahal_PS_cal")
-#########################################################################################
-
-#gsub("^0\\.", "\\.", gsub("^-0\\.", "-\\.", reg_sensi_mono$eps0_mono))
 #TODO plot monotonicity under SPPI or PPI
 #########################################################################################
 plot_sensi_mono <- ggplot(filter(reg_sensi_mono, measure == "Mahal_PS_cal" & Estimator %in% c("WLS")), 
@@ -283,38 +248,6 @@ plot_sensi_mono <- ggplot(filter(reg_sensi_mono, measure == "Mahal_PS_cal" & Est
     ,legend.position="none" # remove legend
     ) + 
   geom_hline(yintercept = 0)
-
-
-'''plot_sensi_mono = filter(reg_sensi_mono, measure == "Mahal_PS_cal" & Estimator %in% c("WLS")) %>% 
-  ggplot(aes(x=alpha0_mono, y=Estimate, 
-             ymin = lower_CI, ymax = upper_CI,
-             color = Estimator)) + 
-  geom_point(aes(col = Estimator, size = 7), size = 2) + theme_bw() + 
-  scale_color_manual(values = c("Crude" = "green3", "WLS" = "orangered2", "WLS inter" = "cornflowerblue")) + # WLS inter = "blue" # "WLS inter" = "cornflowerblue"
-  geom_line(aes(col = Estimator, size = 1.5), size=1.5) +
-  geom_errorbar(aes(ymin=lower_CI, ymax=upper_CI), width=.1, position = "dodge", linetype=3) + 
-  #geom_errorbar(aes(ymin=lower_CI, ymax=upper_CI), width=.1, position = "dodge", linetype="dotted") + # dashed # solid
-  labs(colour = "Estimator"
-       , size = 1
-       #, title=data_bool
-  ) + 
-  theme(plot.title = element_text(hjust = 0.5)) + 
-  ylab(label="Estimate") + xlab(label = bquote(alpha[0])) + # epsilon[0] # epsilon[PPI] # xi
-  #labs( y="Estimate", x=glue('esp[PPI]*" : {protected}"')) +
-  guides(colour = guide_legend(order = 1, override.aes = list(size=5))
-         , size=FALSE
-  ) + 
-  scale_x_continuous(breaks=c(.5, 1, 1.5, 2), labels = c(".5", "1", "1.5", "2")) +  # xi_sensi_mono_vec # breaks=c(.5, 1, 2)
-  theme(
-    axis.title.x = element_text(size = 18),
-    axis.text.x = element_text(size = 12),
-    axis.title.y = element_text(size = 16)
-    #,legend.position="none" # remove legend
-  ) + 
-  geom_hline(yintercept = 0)'''
-
-# plot_sensi_mono_DW_LL # plot_sensi_mono_DW # plot_sensi_mono_LL
-#  # facet_wrap(~ set, ncol=2) # glue('xi*" : {xi_mono}"') # xi_mono
 
 plot_sensi_mono_DW_LL = plot_sensi_mono +
   # facet_wrap(~ set, ncol=2) + #  facet_grid(~ glue('xi*" = {xi_mono}"')
@@ -344,6 +277,7 @@ plot_sensi_mono_woutLGND = lgnd_plt + theme(legend.position = 'none')
 library(ggpubr)
 ggarrange(plot_sensi_mono_DW, plot_sensi_mono_LL)
 #########################################################################################
+
 
 
 #########################################################################################

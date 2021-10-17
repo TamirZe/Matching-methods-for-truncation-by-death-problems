@@ -113,7 +113,8 @@ SACE_estimation_1LEARNER_PPI = function(matched_data, reg_after_match, eps_sensi
 }
 #########################################################################################
 
-set.seed(101) # seed because otherwise the matching procedure will not achieve the same results (for mahalanobis measure)
+# seed because otherwise, when xi=0 in SA for monotonicity results will not be similar to results when alpha_1=1 in SA for PPI (for mahalanobis measure)
+set.seed(101) 
 matching_lst = matching_func_multiple_data(match_on = match_on,
        cont_cov_mahal = cont_cov_mahal,  reg_cov = reg_after_match, X_sub_cols = variables, 
        reg_BC = reg_BC, m_data = data_with_PS[S==1], 
@@ -129,7 +130,7 @@ eps_sensi_PPI_vec = seq(0.5,2,0.25)
 eps_sensi_PPI_names = paste0("eps_PPI_",eps_sensi_PPI_vec)
 reg_sensi_PPI <- NULL
 
-#TODO run on all distance mterics
+#TODO run on all distance mesaures
 for(ind_matched_set in c(1:length(reg_matched_lst))){ 
   
   #m_dat = matching_lst$m_data; dt_match = matching_lst$ATE_MATCH_PS_lst$dt_match_S1; matching_lst$m_data 
@@ -172,7 +173,6 @@ reg_sensi_PPI = subset(reg_sensi_PPI, select = -c(SACE_1LEARNER, SACE_1LEARNER_i
 reg_sensi_PPI[,-1] = apply(reg_sensi_PPI[,-1] , 2, as.numeric) %>% data.frame
 reg_sensi_PPI[,-c(1,2)] = round(reg_sensi_PPI[,-c(1,2)]) 
 
-#1. two models for interactions model
 reg_sensi_PPI_est = reg_sensi_PPI[,c(1:2,3,5,7)] %>% gather("Estimator", "Estimate", c(3:5)) %>% arrange(measure, eps_PPI)
 reg_sensi_PPI_se = reg_sensi_PPI[,c(1:2,4,6,8)] %>% gather("Estimator", "SE", c(3:5)) %>% arrange(measure, eps_PPI)
 reg_sensi_PPI_se$Estimator = mgsub(reg_sensi_PPI_se$Estimator, c("\\_se$"), "")
@@ -182,7 +182,7 @@ reg_sensi_PPI$upper_CI = reg_sensi_PPI$Estimate + 1.96 * reg_sensi_PPI$SE
 
 legend_levels = c("Crude", "WLS", "WLS inter"); data_bool="LL"
 reg_sensi_PPI$Estimator = mgsub(reg_sensi_PPI$Estimator,
-                                c("crude_est_adj", "SACE_1LEARNER_adj", "SACE_1LEARNER_inter_adj"), legend_levels)
+          c("crude_est_adj", "SACE_1LEARNER_adj", "SACE_1LEARNER_inter_adj"), legend_levels)
 reg_sensi_PPI$Estimator = factor(reg_sensi_PPI$Estimator, levels = legend_levels)
 reg_sensi_PPI$set = data_bool
 #########################################################################################
