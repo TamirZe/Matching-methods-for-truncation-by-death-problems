@@ -86,15 +86,6 @@ est_ding_lst = PSPS_M_weighting(Z=data$A, D=data$S,
         X=as.matrix(subset(data, select = covariates_PS)),  
         Y=data$Y, trc = TRUE, ep1 = 1, ep0 = 1, beta.a = beta.a, beta.n = beta.n,
         iter.max = iterations , error0 = epsilon_EM) 
-# c(prob.c, prob.d, prob.a, prob.n)
-est_ding_lst = xi_PSPS_M_weighting_SA(Z=data$A, D=data$S,
-                       X=as.matrix(subset(data, select = covariates_PS)),  
-                       Y=data$Y, eta=0, # eta = 0 implies monotonicity
-                       beta.c = NULL, beta.n = NULL)
-# c(prob.c, prob.d, prob.a, prob.n)
-PS_est = data.frame(est_ding_lst$ps.score[,3], est_ding_lst$ps.score[,4],
-                    est_ding_lst$ps.score[,1], est_ding_lst$ps.score[,2])
-colnames(PS_est) = c("EMest_p_as", "EMest_p_ns", "EMest_p_pro", "EMest_p_har")
 
 end_timeDing <- Sys.time()
 print(paste0("Ding EM lasts ", difftime(end_timeDing, start_timeDing)))
