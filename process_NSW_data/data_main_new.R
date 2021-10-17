@@ -37,10 +37,10 @@ match_on = "e_1_as"; caliper = 0.3 # Ding Lu appendix: "e_1_as", Feller and meal
 mu_x_fixed = FALSE; x_as = mat_x_as[1,]
 data_bool = "LL" # "DW" # "LL"
 
-covariates_PS = c("age", "black", "hispanic", "married", "re75", "emp75") #TODO@@@@@@@@@@@@@@@@@@@@@@@
+covariates_PS = c("age", "black", "hispanic", "married", "re75", "emp75")
 cont_cov_mahal = c("age", "education", "re75")
-reg_after_match = c("age", "education", "black", "hispanic", "married", "re75")# formula?
-reg_BC =          c("age", "education", "black", "hispanic", "married", "re75") # "emp75"
+reg_after_match = c("age", "education", "black", "hispanic", "married", "re75")
+reg_BC =          c("age", "education", "black", "hispanic", "married", "re75") 
 ######################################################################## 
 
 # adjust data  ####
@@ -48,13 +48,12 @@ data = LL
 data = adjust_data(data, 1000, data_bool=data_bool) #DW #LL
 variables = setdiff(colnames(data), c("id", "A", "S", "Y", "OBS", "emp_74_75"))
 
-# naive estimators ####
 ######################################################################## 
-# naive
+# naive estimators ####
+# composite naive
 most_naive_est = mean(data[A==1, Y]) - mean(data[A==0, Y]) #1794
 most_naive_est_se = sqrt(  ( var(data[A==1, Y])  / nrow(data[A==1, ]) ) + 
                              ( var(data[A==0, Y])  / nrow(data[A==0, ]) )  )  
-#most_naive_est_se = sqrt(( var(data[A==1, Y]) + var(data[A==0, Y]) ) / nrow(data))
 CI_by_SE_and_Z_val_most_naive = round(most_naive_est + c(-1,1) * 1.96 * most_naive_est_se, 3)
 CI_by_SE_and_Z_val_most_naive = paste(CI_by_SE_and_Z_val_most_naive, sep = ' ', collapse = " , ")
 
@@ -62,7 +61,6 @@ CI_by_SE_and_Z_val_most_naive = paste(CI_by_SE_and_Z_val_most_naive, sep = ' ', 
 sur_naive_est = mean(data[A==1 & S == 1, Y]) - mean(data[A==0 & S == 1, Y]) #1340
 sur_naive_est_se = sqrt(  ( var(data[A==1 & S==1, Y])  / nrow(data[A==1 & S==1, ]) ) + 
                             ( var(data[A==0 & S==1, Y])  / nrow(data[A==0 & S==1, ]) )  )
-#sur_naive_est_se = sqrt(( var(data[A==1 & S==1, Y]) + var(data[A==0 & S==1, Y]) ) / nrow(data))
 CI_by_SE_and_Z_val_sur_naive = round(sur_naive_est + c(-1,1) * 1.96 * sur_naive_est_se, 3)
 CI_by_SE_and_Z_val_sur_naive = paste(CI_by_SE_and_Z_val_sur_naive, sep = ' ', collapse = " , ")
 
@@ -70,22 +68,16 @@ CI_naives_before_matching = data.frame(CI_by_SE_and_Z_val_most_naive, CI_by_SE_a
 colnames(CI_naives_before_matching) = c("naive_without_matching", "survivors_naive_without_matching")
 ######################################################################## 
 
-
-# EM
 ######################################################################## 
-#TODO in ding the pis order id PROB[i,] = c(prob.c, prob.a, prob.n)/sum
+# EM algorithm ####
 #TODO EM with monotonicity
 
-#beta.a =as.matrix(-0.4255587,0.05126507,0.3021128)
-#beta.n = as.matrix(0.9483195,-0.01148069,-0.2031922)
 beta.a = NULL; beta.n = NULL
 start_timeDing <- Sys.time()
-
-# est_ding_lst
 est_ding_lst = PSPS_M_weighting(Z=data$A, D=data$S,
         X=as.matrix(subset(data, select = covariates_PS)),  
         Y=data$Y, trc = TRUE, ep1 = 1, ep0 = 1, beta.a = beta.a, beta.n = beta.n,
-        iter.max = iterations , error0 = epsilon_EM) 
+        iter.max = iterations, error0 = epsilon_EM) 
 
 end_timeDing <- Sys.time()
 print(paste0("Ding EM lasts ", difftime(end_timeDing, start_timeDing)))
@@ -94,28 +86,23 @@ PS_est = data.frame(est_ding_lst$PROB[,2], est_ding_lst$PROB[,3], est_ding_lst$P
 colnames(PS_est) = c("EMest_p_as", "EMest_p_ns", "EMest_p_pro")
 data_with_PS = data.table(data, PS_est)
 which(is.na(data_with_PS)==TRUE)
-#data_with_PS = na.omit(data_with_PS)
 data_with_PS$e_1_as = data_with_PS$EMest_p_as / (data_with_PS$EMest_p_as + data_with_PS$EMest_p_pro)
-# mean P(G=as|X) of survivors and nono-survivors
-mean_p_as_S1 = mean(filter(data_with_PS, S==1)$EMest_p_as)
-mean_p_as_S0 = mean(filter(data_with_PS, S==0)$EMest_p_as)
 #EM coeffs
-coeff_as = est_ding_lst$beta.a ; coeff_ns = est_ding_lst$beta.n
+EM_coeffs = c(est_ding_lst$beta.a, coeff_ns = est_ding_lst$beta.n)
 error = est_ding_lst$error
 ######################################################################## 
 
-# Ding Lu estimators
+# Ding Lu estimators ####
 ######################################################################## 
 DING_est = est_ding_lst$AACE
 DING_model_assisted_est_ps = est_ding_lst$AACE.reg
 
 # BOOSTING for EM coefficients and DL estimators
-'''boosting_results = run_boosting(data, BS=500, seed=19, iter.max=iterations, error0=epsilon_EM)
-# save for LL and DW
+boosting_results = run_boosting(data, BS=500, seed=19, iter.max=iterations, error0=epsilon_EM)
 assign(paste0("boosting_results_", data_bool), boosting_results)
 tmp = get(paste0("boosting_results_",data_bool))
 #save(boosting_results, file = "boosting_results.RData")
-#View(boosting_results$DL_est[,BS:ncol(boosting_results$DL_est)])'''
+#View(boosting_results$DL_est[,BS:ncol(boosting_results$DL_est)])
 ######################################################################## 
 
 #TODO matching esimators
@@ -126,16 +113,15 @@ data_with_PS$g = ifelse( A==0 & S==1, "as", ifelse( A==1 & S==0, "ns", ifelse(A=
 data_with_PS = data.table(data_with_PS)
 
 #TODO main process for estimation within the data
-# match only among survivors or in all 3 dataset 
+# match only among survivors  
 data_list = list(data_with_PS[S==1])
-#match_on = "e_1_as" # Ding Lu appendix: "e_1_as", Feller and Mealli: EMest_p_as
+#match_on = "e_1_as" # e_1_as # EMest_p_as
 #TODO MATCHING
 lst_matching_estimators = list()
 replace_vec = c(FALSE, TRUE)
 for(j in c(1:length(replace_vec))){
   lst_matching_estimators[[j]] =
     lapply(1:length(data_list), function(l){
-      # my_matching_func_basic # my_matching_func_multiple
       set.seed(101)
       matching_func_multiple_data(match_on = match_on,
           cont_cov_mahal = cont_cov_mahal,  reg_cov = reg_after_match, X_sub_cols = variables, 

@@ -1,13 +1,13 @@
 #m_data = data_with_PS
 #m_data = data_with_PS[OBS != "O(0,0)"]
-m_data = data_PS_X[S==1]  # data_with_PS[S==1] # data_PS_X[S==1] 
+#m_data = data_PS_X[S==1]  # data_with_PS[S==1] # data_PS_X[S==1] 
 #m_data = data_list[[3]]
 # m_data = data_with_PS[1:3000,]
 # m_data = data_with_PS[1:3000,][S==1]
 # 
 # 
 # # caliper is in sd
-w_mat_bool = "NON-INFO"; replace = TRUE; estimand = "ATC"; change_id = TRUE; mahal_match = 2; M=1; caliper = 0.05
+#w_mat_bool = "NON-INFO"; replace = TRUE; estimand = "ATC"; change_id = TRUE; mahal_match = 2; M=1; caliper = 0.05
 # all.equal(dt_match_min_ps_w_scheme, dt_match_S1, check.attributes = FALSE)
 # match_on = "O11_posterior_ratio"
 
