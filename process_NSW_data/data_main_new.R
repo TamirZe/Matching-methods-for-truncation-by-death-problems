@@ -72,22 +72,24 @@ colnames(CI_naives_before_matching) = c("naive_without_matching", "survivors_nai
 # EM algorithm ####
 #TODO EM with monotonicity
 beta.a = NULL; beta.n = NULL
-start_timeDing <- Sys.time()
 est_ding_lst = PSPS_M_weighting(Z=data$A, D=data$S,
         X=as.matrix(subset(data, select = covariates_PS)),  
         Y=data$Y, trc = TRUE, ep1 = 1, ep0 = 1, beta.a = beta.a, beta.n = beta.n,
         iter.max = iterations, error0 = epsilon_EM) 
+#EM error
+error = est_ding_lst$error
+#EM coeffs
+coeff_as = est_ding_lst$beta.a; coeff_ns = est_ding_lst$beta.n
+EM_coeffs = rbind(coeff_as, coeff_ns)
+colnames(EM_coeffs)[-1] = sub(".*]", "", colnames(EM_coeffs)[-1])
+print(EM_coeffs %>% xtable(), size="\\fontsize{9pt}{9pt}\\selectfont", include.rownames=F)
+
 # adjust the cols the same order as in myEM: my order is: as, ns, pro. ding order: c(prob.c, prob.a, prob.n)
 PS_est = data.frame(est_ding_lst$PROB[,2], est_ding_lst$PROB[,3], est_ding_lst$PROB[,1])
 colnames(PS_est) = c("EMest_p_as", "EMest_p_ns", "EMest_p_pro")
-#EM coeffs
-EM_coeffs = c(est_ding_lst$beta.a, coeff_ns = est_ding_lst$beta.n)
-error = est_ding_lst$error
 # add the principal scores to the data
 data_with_PS = data.table(data, PS_est)
-#which(is.na(data_with_PS)==TRUE)
 data_with_PS$e_1_as = data_with_PS$EMest_p_as / (data_with_PS$EMest_p_as + data_with_PS$EMest_p_pro)
-
 ######################################################################## 
 
 # Ding and Lu estimators ####
@@ -95,7 +97,7 @@ data_with_PS$e_1_as = data_with_PS$EMest_p_as / (data_with_PS$EMest_p_as + data_
 DING_est = est_ding_lst$AACE
 DING_model_assisted_est_ps = est_ding_lst$AACE.reg
 
-# BOOSTING for EM coefficients and DL estimators
+# BOOSTING for DL estimator
 #boosting_results = run_boosting(data, BS=500, seed=19, iter.max=iterations, error0=epsilon_EM)
 ######################################################################## 
 
@@ -103,14 +105,13 @@ DING_model_assisted_est_ps = est_ding_lst$AACE.reg
 # matching procedure ####
 # match only among survivors  
 data_list = list(data_with_PS[S==1])
-#match_on = "e_1_as" # e_1_as # EMest_p_as
 #TODO MATCHING
 lst_matching_estimators = list()
 replace_vec = c(FALSE, TRUE)
 for(j in c(1:length(replace_vec))){
   lst_matching_estimators[[j]] =
     lapply(1:length(data_list), function(l){
-      set.seed(101)
+      #set.seed(101)
       matching_func_multiple_data(match_on = match_on,
           cont_cov_mahal=cont_cov_mahal,  reg_cov=reg_after_match, X_sub_cols=variables, 
           reg_BC=reg_BC, m_data=data_list[[l]], 
@@ -123,35 +124,36 @@ for(j in c(1:length(replace_vec))){
 
 # aligned_ranktets ####
 data_pairs_lst = lst_matching_estimators[[2]][[1]]$data_pairs_lst
-aligned_ranktets_heller_lst = list()
+aligned_ranktets_lst = list()
 for (measure in names(data_pairs_lst)) {
   data_new_grp = adjust_pairs_to_new_grp(data_pairs_lst[[measure]])
-  aligned_ranktets_heller_lst[[measure]] = alignedranktest(outcome=data_new_grp$Y, matchedset=data_new_grp$trt_grp, treatment=data_new_grp$A)
+  aligned_ranktets_lst[[measure]] = alignedranktest(outcome=data_new_grp$Y, matchedset=data_new_grp$trt_grp, treatment=data_new_grp$A)
 }
 
-matched_data_mahalPScal = lst_matching_estimators[[2]][[1]]$matched_data_mahalPScal
-#coeffs_regression = lst_matching_estimators[[2]][[1]]$coeffs_table
-
-# balance and estimators ####
-ESTIMATORS_TABLE = rbind(lst_matching_estimators[[1]][[1]]$summary_table, 
-                         lst_matching_estimators[[2]][[1]]$summary_table) %>% data.frame() 
+# balance  ####
+# balance in the full dataset
+balance_full_data = covarites_descriptive_table_cont_disc(dat = data_with_PS, cov_descr = variables)
+# balance in the employed and in the matched dataset, using 3 distance measures
 BALANCE_TABLE = rbind(lst_matching_estimators[[1]][[1]]$balance_table, lst_matching_estimators[[2]][[1]]$balance_table) 
 print(filter(BALANCE_TABLE, Replacements==FALSE)[-c(4:7),-c(1,3:5)][,c(1,5:7,2:4,8:10)] %>% 
         xtable(), size="\\fontsize{8pt}{8pt}\\selectfont", include.rownames=F)
 print(filter(BALANCE_TABLE, Replacements==TRUE)[-c(4:7),-c(1,3:5)][,c(1,5:7,2:4,8:10)] %>% 
         xtable(), size="\\fontsize{8pt}{8pt}\\selectfont", include.rownames=F)
-
-BALANCE_TABLE = filter(BALANCE_TABLE, Replacements==TRUE, Variable != "N") %>% subset(select = -grep(".1|.2|Replacements", colnames(BALANCE_TABLE)))
-cov_full_data = covarites_descriptive_table_cont_disc(dat = data_with_PS, cov_descr = variables)
-if(identical(BALANCE_TABLE$Variable, setdiff(cov_full_data$Variable, c("N","S")))){
-  BALANCE_TABLE = cbind(filter(cov_full_data, !Variable %in% c("N", "S")), subset(BALANCE_TABLE, select = -Variable))
+BALANCE_TABLE_with = filter(BALANCE_TABLE, Replacements==TRUE, Variable != "N") %>% subset(select = -grep(".1|.2|Replacements", colnames(BALANCE_TABLE)))
+# balance in the full dataset, employed and matched dataset using mahalanobis with caliper
+if(identical(BALANCE_TABLE_with$Variable, setdiff(balance_full_data$Variable, c("N","S")))){
+  BALANCE_TABLE_with = cbind(filter(balance_full_data, !Variable %in% c("N", "S")), subset(BALANCE_TABLE_with, select = -Variable))
 }
-colnames(BALANCE_TABLE) = gsub("\\..*","",colnames(BALANCE_TABLE))
-EM_coeffs = rbind(coeff_as, coeff_ns); colnames(EM_coeffs)[-1] = sub(".*]", "", colnames(EM_coeffs)[-1])
-
-print(BALANCE_TABLE[-c(4:6),] %>% xtable(caption = paste0("Matched data-set means, ", data_bool ," Sample.")),
+colnames(BALANCE_TABLE_with) = gsub("\\..*","", colnames(BALANCE_TABLE_with))
+print(BALANCE_TABLE_with[-c(4:6),] %>% xtable(caption = paste0("Matched data-set means, ", data_bool ," Sample.")),
       size="\\fontsize{6pt}{6pt}\\selectfont", include.rownames=F)
-print(EM_coeffs %>% xtable(), size="\\fontsize{9pt}{9pt}\\selectfont", include.rownames=F)
+
+# matching estimators ####
+ESTIMATORS_TABLE = rbind(lst_matching_estimators[[1]][[1]]$summary_table, 
+                         lst_matching_estimators[[2]][[1]]$summary_table) %>% data.frame() 
+print(ESTIMATORS_TABLE %>% filter(Replacements==TRUE) %>% xtable(digits=c(0), caption = "Matching estimators."),
+      size="\\fontsize{8pt}{8pt}\\selectfont", include.rownames=F)
+
 
 
 

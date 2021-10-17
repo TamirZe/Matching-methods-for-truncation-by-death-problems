@@ -1,61 +1,4 @@
-#cluster_coeffs = data.frame(coef_test(lin_reg_matched, vcov = "CR1", cluster = reg_data_matched$pair))
-#se_beta_est = cluster_coeffs["A", "SE"]
-
-#func: regression on the matched dataset with original Y
-#########################################################################################
-regression_function_one_model_old = function(reg_data_matched_SA=NULL, data_reg, reg_after_match, repl=TRUE){
-  
-   #TODO regression wout A-X interactions
-   f_wout_intercations = as.formula(paste0("Y ~ ", paste(c("A", reg_after_match), collapse = " + ")))
-   model_wout_intercations = lm(f_wout_intercations, data_reg, weights = w) 
-   coeffs_wout_intercations = model_wout_intercations$coefficients
-   if(repl){
-     se_wout_intercations = sqrt(diag(sandwich(model_wout_intercations)))
-     }else{
-     se_wout_intercations = sqrt(diag(vcov(model_wout_intercations)))
-     }
-   vcov_wout_interactions = vcov(model_wout_intercations)
-   TE_wout_intercations = coeffs_wout_intercations["A"]
-   
-   #TODO regression with A-X interactions
-   f_with_intercations = as.formula(paste0("Y ~ ", paste(c("A", reg_after_match), collapse = " + "), " + ",
-                          paste(rep("A*",5), reg_after_match, collapse=" + "))) 
-   model_with_intercations = lm(f_with_intercations, data_reg, weights = w) 
-   mean_x = apply(subset(filter(data_reg, A==0), select = reg_after_match),2, mean)
-   coeffs_with_interactions = model_with_intercations$coefficients
-   coeffs_interactions = coeffs_with_interactions[grep(":", names(coeffs_with_interactions))]
-   TE_with_intercations = coeffs_with_interactions["A"] + coeffs_interactions %*% mean_x
-   se_with_intercations = sqrt(diag(vcov(model_with_intercations))) # sandwich(model_with_intercations)
-   
-   
-   return(list(coeffs_wout_intercations=coeffs_wout_intercations, se_wout_intercations=se_wout_intercations, vcov_wout_interactions=vcov_wout_interactions,
-               coeffs_with_interactions=coeffs_with_interactions, se_with_intercations=se_with_intercations))
-}
-#########################################################################################
-
-#func: two separate regression models (trt and ctr) on the matched dataset with original Y
-#########################################################################################
-regression_function_two_models_old = function(reg_data_matched_SA, data_reg, reg_after_match, repl = TRUE){
-  f = as.formula(paste0("Y ~ ", paste(reg_after_match, collapse = " + ")))
-  
-  #TODO regression treated
-  model_trt = lm(f, filter(data_reg, A==1), weights = w) 
-  coeffs_trt = model_trt$coefficients; summ_trt = summary(model_trt)
-  #identical(vcovHC(model_trt, type = "HC"), sandwich(model_trt))
-  if(repl){vcov_beta_trt = sandwich(model_trt)}else{vcov_beta_trt = vcov(model_trt)}
-  
-  #TODO regression untreated
-  model_untrt = lm(f, filter(data_reg, A==0), weights = w) 
-  coeffs_untrt = model_untrt$coefficients; summ_untrt = summary(model_untrt)
-  vcov_beta_untrt = vcov(model_untrt)
-  
-  return(list(coeffs_trt=coeffs_trt, vcov_beta_trt=vcov_beta_trt, coeffs_untrt=coeffs_untrt, vcov_beta_untrt=vcov_beta_untrt))
-}
-#########################################################################################
-
-#func: regression on the matched dataset with original Y
-#TODO check this func
-#########################################################################################
+#func: regression on the matched dataset with original Y ####
 regression_function_one_model = function(reg_data_matched_SA, data_reg, reg_after_match, repl = TRUE){
   
   #TODO regression wout A-X interactions
@@ -91,10 +34,8 @@ regression_function_one_model = function(reg_data_matched_SA, data_reg, reg_afte
               vcov_wout_interactions=vcov_wout_interactions,
               coeffs_with_interactions=coeffs_with_interactions, se_with_intercations=se_with_intercations))
 }
-#########################################################################################
 
-#TODO NEW func: two separate regression models (trt and ctr) on the matched dataset with original Y
-#########################################################################################
+#TODO func: two separate regression models (trt and ctr) on the matched dataset with original Y ####
 regression_function_two_models = function(reg_data_matched_SA, data_reg, reg_after_match, repl = TRUE){
   f = as.formula(paste0("Y ~ ", paste(reg_after_match, collapse = " + ")))
   
@@ -118,11 +59,8 @@ regression_function_two_models = function(reg_data_matched_SA, data_reg, reg_aft
   return(list(coeffs_trt=coeffs_trt, vcov_beta_trt=vcov_beta_trt,
               coeffs_untrt=coeffs_untrt, vcov_beta_untrt=vcov_beta_untrt))
 }
-#########################################################################################
 
-
-#func: predictions for units from O(0,1), plugging A={0,1}
-#########################################################################################
+#func: predictions for units from O(0,1), plugging A={0,1} ####
 SACE_estimation_1LEARNER_PPI = function(matched_data, reg_after_match, eps_sensi_PPI=1, 
           coeffs_regression_one_model, coeffs_regression_two_models, two_models_bool = TRUE){
   # func: weighted SE with replacements
@@ -234,20 +172,8 @@ SACE_estimation_1LEARNER_PPI = function(matched_data, reg_after_match, eps_sensi
       crude_est_adj=crude_est_adj, crude_est_adj_se=crude_est_adj_se))
   }
 }
-#########################################################################################
 
-
-# matching for O(0,1), using parameters (reg_after_match for instance) from main
-# mahalanobis with PS caliper
-#########################################################################################
-#####################################
-'''for SA for mono, data_with_PS need to be to be calculated again,
-but probably it should happen within the for loop, since in every iteration xi is changing,
-thus the EM estimates are changing.
-In other words, step 1 need to be implemenmted repeatedly if the PS is involved in the matching process
-thus, we cant implement only 1 regression model and than adjust the outcomes'''
-#####################################
-set.seed(101)
+set.seed(101) # seed because otherwise the matching procedure will not achieve the same results (for mahalanobis measure)
 matching_lst = matching_func_multiple_data(match_on = match_on,
        cont_cov_mahal = cont_cov_mahal,  reg_cov = reg_after_match, X_sub_cols = variables, 
        reg_BC = reg_BC, m_data = data_with_PS[S==1], 
@@ -314,22 +240,15 @@ reg_sensi_PPI = merge(reg_sensi_PPI_est, reg_sensi_PPI_se, by=c("measure", "eps_
 reg_sensi_PPI$lower_CI = reg_sensi_PPI$Estimate - 1.96 * reg_sensi_PPI$SE
 reg_sensi_PPI$upper_CI = reg_sensi_PPI$Estimate + 1.96 * reg_sensi_PPI$SE
 
-#2. REGULAR one model for interactions model
-'''reg_sensi_PPI = reg_sensi_PPI %>% gather("Estimator", "Estimate", 2:4) %>% arrange(eps_PPI)'''
-
-
 legend_levels = c("Crude", "WLS", "WLS inter"); data_bool="LL"
 reg_sensi_PPI$Estimator = mgsub(reg_sensi_PPI$Estimator,
                                 c("crude_est_adj", "SACE_1LEARNER_adj", "SACE_1LEARNER_inter_adj"), legend_levels)
 reg_sensi_PPI$Estimator = factor(reg_sensi_PPI$Estimator, levels = legend_levels)
 reg_sensi_PPI$set = data_bool
-#DW_sensi_PPI = reg_sensi_PPI # LL_sensi_PPI = reg_sensi_PPI 
-#reg_sensi_PPI = rbind(DW_sensi_PPI, LL_sensi_PPI)
-save(reg_sensi_PPI, file = "reg_sensi_PPI.RData")
 #########################################################################################
 
-#TODO plot
 #########################################################################################
+#TODO plot ####
 plot_sensi_PPI = reg_sensi_PPI %>% filter(measure == "Mahal_PS_cal" & Estimator %in% c("WLS")) %>%
 ggplot(aes(x=eps_PPI, y=Estimate)) + 
   geom_point(aes(col = Estimator, size = 7), size = 4) + theme_bw() + 
@@ -370,57 +289,4 @@ as_ggplot(lgnd_plt)
 plot_sensi_PPI_woutLGND = lgnd_plt + theme(legend.position = 'none') 
 #########################################################################################
 
-#func: old _one_model, predictions for units from O(0,1), plugging A={0,1}
-#########################################################################################
-SACE_estimation_1LEARNER_PPI_one_model = function(matched_data, reg_after_match, eps_sensi_PPI=1, coeffs_regression_one_model){
-  # coefficients
-  # wout interactions
-  coeffs_regression_wout_inter = coeffs_regression_one_model$coeffs_wout_intercations
-  coeff_A_wout_inter = coeffs_regression_wout_inter["A"]
-  coeffs_wout_inter = coeffs_regression_wout_inter[-grep("A", names(coeffs_regression_wout_inter))]
-  # with interactions
-  coeffs_regression_with_inter = coeffs_regression_one_model$coeffs_with_interactions
-  coeff_A_with_inter = coeffs_regression_with_inter["A"]; intercept_with_inter = coeffs_regression_with_inter["(Intercept)"]
-  coeffs_with_inter_A1 = coeffs_regression_with_inter[-grep("A|(Intercept)", names(coeffs_regression_wout_inter))]
-  coeffs_with_inter_A0 = coeffs_regression_with_inter[-grep(":|A", names(coeffs_regression_with_inter))]
-  
-  # predictions
-  A0_S1_data = filter(matched_data, A==0 & S==1)
-  #attach(A0_S1_data)
-  
-  # wout interactions
-  A0_S1_data$Y1_pred = coeff_A_wout_inter + 
-    as.matrix(subset(A0_S1_data, select = c("intercept", reg_after_match))) %*% coeffs_wout_inter
-  A0_S1_data$Y1_pred_adj =  A0_S1_data$Y1_pred / 
-    ( A0_S1_data$e_1_as + ((1 - A0_S1_data$e_1_as) * eps_sensi_PPI) )
-  
-  A0_S1_data$Y0_pred = as.matrix(subset(A0_S1_data, select = c("intercept", reg_after_match))) %*% coeffs_wout_inter
-  SACE_1LEARNER = mean(A0_S1_data$Y1_pred) - mean(A0_S1_data$Y0_pred) 
-  SACE_1LEARNER_adj = mean(A0_S1_data$Y1_pred_adj) - mean(A0_S1_data$Y0_pred) 
-  
-  # with interactions
-  #mean_x = apply(subset(A0_S1_data, select = reg_after_match),2, mean)
-  A0_S1_data$Y1_pred_inter = intercept_with_inter + coeff_A_with_inter +
-    as.matrix(subset(A0_S1_data, select = reg_after_match)) %*% 
-    (coeffs_with_inter_A1[-grep(":",names(coeffs_with_inter_A1))] + coeffs_with_inter_A1[grep(":",names(coeffs_with_inter_A1))])
-  A0_S1_data$Y1_pred_inter_adj =  A0_S1_data$Y1_pred_inter / 
-    ( A0_S1_data$e_1_as + ((1 - A0_S1_data$e_1_as) * eps_sensi_PPI) )
-  A0_S1_data$Y0_pred_inter = as.matrix(subset(A0_S1_data, select=c("intercept", reg_after_match))) %*% coeffs_with_inter_A0
-  
-  #SACE_1LEARNER_inter_chck = coeff_A_with_inter +
-  #  sum( apply(subset(A0_S1_data, select = reg_after_match), 2, mean) * coeffs_with_inter_A1[grep(":",names(coeffs_with_inter_A1))] ) 
-  SACE_1LEARNER_inter = mean(A0_S1_data$Y1_pred_inter) - mean(A0_S1_data$Y0_pred_inter) 
-  SACE_1LEARNER_inter_adj = mean(A0_S1_data$Y1_pred_inter_adj) - mean(A0_S1_data$Y0_pred_inter)
-  
-  # crude diff estimator, adjusted by eps_PPI
-  crude_Y1_adj = matched_data$Y[matched_data$A==1] / 
-    ( matched_data$e_1_as[matched_data$A==1] + ((1 - matched_data$e_1_as[matched_data$A==1]) * eps_sensi_PPI) )
-  crude_est_adj = mean(crude_Y1_adj) - mean(matched_data$Y[matched_data$A==0])
-  
-  return(c(SACE_1LEARNER_adj=SACE_1LEARNER_adj, SACE_1LEARNER_inter_adj=SACE_1LEARNER_inter_adj, crude_est_adj=crude_est_adj,
-           SACE_1LEARNER=SACE_1LEARNER, SACE_1LEARNER_inter=SACE_1LEARNER_inter))
-}
-identical(SACE_estimation_1LEARNER_PPI_one_model(matched_data, reg_after_match, eps_sensi_PPI=eps_sensi_PPI_vec[i], coeffs_regression_one_model),
-          SACE_estimation_1LEARNER_PPI(matched_data=matched_data, reg_after_match=reg_after_match, eps_sensi_PPI=eps_sensi_PPI_vec[i],
-                                   coeffs_regression_one_model, coeffs_regression_two_models, two_models_bool=FALSE))
-#########################################################################################
+
