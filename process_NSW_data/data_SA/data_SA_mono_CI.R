@@ -220,26 +220,22 @@ reg_sensi_mono$Estimator = factor(reg_sensi_mono$Estimator, levels = legend_leve
 reg_sensi_mono$set = data_bool
 
 
-#TODO plot monotonicity under SPPI or PPI
 #########################################################################################
+# plot SA for monotonicity under PPI ####
 plot_sensi_mono <- ggplot(filter(reg_sensi_mono, measure == "Mahal_PS_cal" & Estimator %in% c("WLS")), 
-                          aes(x=alpha0_mono, y=Estimate)) + # alpha0_mono # xi_mono
+                          aes(x=alpha0_mono, y=Estimate)) + 
   geom_point(aes(col = Estimator, size = 7), size = 3) + theme_bw() + 
-  scale_color_manual(values = c("Crude" = "green3", "WLS" = "orangered2", "WLS inter" = "cornflowerblue")) + # WLS inter = "blue" # "WLS inter" = "cornflowerblue"
+  scale_color_manual(values = c("Crude" = "green3", "WLS" = "orangered2", "WLS inter" = "cornflowerblue")) + 
   geom_line(aes(col = Estimator, size = 1.5), size=1.5) + 
   geom_errorbar(aes(ymin=lower_CI, ymax=upper_CI), width=.1, position = "dodge", linetype="solid", color = "gray53") + 
-  #xlim("0.25", "0.5", "0.75", "1", "1.25", "1.5", "1.75") +
   labs(colour = "Estimator"
-       , size = 1
-       #, title=data_bool
-  ) + 
+       , size = 1) + 
   theme(plot.title = element_text(hjust = 0.5)) + 
-  ylab(label="Estimate") + xlab(label = bquote(alpha[0])) + # epsilon[0] # epsilon[PPI] # xi
-  #labs( y="Estimate", x=glue('esp[PPI]*" : {protected}"')) +
+  ylab(label="Estimate") + xlab(label = bquote(alpha[0])) + 
   guides(colour = guide_legend(order = 1, override.aes = list(size=5))
          , size=FALSE
   ) + 
-  scale_x_continuous(breaks=c(.5, 1, 1.5, 2), labels = c(".5", "1", "1.5", "2")) +  # xi_sensi_mono_vec # breaks=c(.5, 1, 2)
+  scale_x_continuous(breaks=c(.5, 1, 1.5, 2), labels = c(".5", "1", "1.5", "2")) +  
   theme(
     axis.title.x = element_text(size = 18),
     axis.text.x = element_text(size = 12),
@@ -249,14 +245,8 @@ plot_sensi_mono <- ggplot(filter(reg_sensi_mono, measure == "Mahal_PS_cal" & Est
   geom_hline(yintercept = 0)
 
 plot_sensi_mono_DW_LL = plot_sensi_mono +
-  # facet_wrap(~ set, ncol=2) + #  facet_grid(~ glue('xi*" = {xi_mono}"')
-  #facet_grid(glue('xi*" = {xi_mono}"') ~ "Estimator", labeller = label_parsed) + # set ~ glue('xi*" = {xi_mono}"') # ~ glue('xi*" = {xi_mono}"') # facet_wrap(~ set, ncol=2) +
   facet_grid(~ glue('xi*" = {xi_mono}"'), labeller = label_parsed) +
-  #facet_grid(Estimator ~ glue('xi*" = {xi_mono}"')) + # , labeller = label_parsed
-  # theme(strip.text.x = element_text(size=12, face="bold"), strip.text.y = element_text(size=10, face="bold"),
-  #       strip.background = element_rect(colour="black", fill="white")) +
   theme(
-    #legend.direction = "horizontal",
     strip.text.x = element_text(size=12, face="bold"), strip.text.y = element_text(size=12, face="bold"),
     strip.background = element_rect(colour="black", fill="white"), 
     axis.title.x=element_text(size=14),  # X axis title
