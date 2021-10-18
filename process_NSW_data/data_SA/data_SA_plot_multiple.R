@@ -4,7 +4,7 @@
 # PPI
 plot_sensi_PPI_by_est <- ggplot(filter(reg_sensi_PPI, measure == "Mahal_PS_cal"), aes(x=eps_PPI, y=Estimate)) +
   geom_point(aes(col = Estimator, size = 7), size = 4) + theme_bw() + 
-  scale_colour_manual(name="Estimator", breaks = c("Crude", "WLS", "WLS inter"),
+  scale_colour_manual(name="Estimator:", breaks = c("Crude", "WLS", "WLS inter"),
                       labels = c("Crude", "WLS", "WLS inter"),
                       values = c("green3","orangered2", "cornflowerblue")) +
   geom_line(aes(col = Estimator, size = 2.5), size=2.5) + 
@@ -18,6 +18,7 @@ plot_sensi_PPI_by_est <- ggplot(filter(reg_sensi_PPI, measure == "Mahal_PS_cal")
   theme(
     legend.position = "bottom",
     legend.key.size = unit(0.625, 'cm'),
+    strip.text.x = element_text(size=12, face="bold"), strip.text.y = element_text(size=12, face="bold"),
     axis.title.x = element_text(size = 18),
     axis.text.x = element_text(size = 12),
     axis.title.y = element_text(size = 16)) + 
