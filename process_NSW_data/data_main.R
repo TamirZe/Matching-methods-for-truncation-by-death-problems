@@ -11,7 +11,6 @@ library(tidyr); library(dplyr); library(data.table); library(tidyr); library(tab
 ########################################################################
 setwd("~/A matching framework for truncation by death problems")
 source("Process_NSW_data/data_process/data_process_and_eda_funcs.R")
-source("Process_NSW_data/data_boot.R")
 source("Process_NSW_data/data_matching/data_matching_multiple_NEW.R")
 source("Process_NSW_data/data_models/data_OLS_WLS_estimator.R")
 source("Process_NSW_data/data_aligned_ranktest.R")
@@ -21,6 +20,7 @@ source("Simulations_studies/sim_simulations_scripts/sim2DingLuEst.R")
 source(paste0("Code/Ding_Lu/", "PS_M_weighting.R"))
 source(paste0("Code/Ding_Lu/", "PS_M_weighting_SA.R"))
 source(paste0("Code/Ding_Lu/", "xi_PS_M_weighting_SA.R"))
+source(paste0("Code/Ding_Lu/", "DL_SE_boot.R"))
 ########################################################################
 
 # data files
