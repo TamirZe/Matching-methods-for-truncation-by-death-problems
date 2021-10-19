@@ -52,8 +52,8 @@ variables = setdiff(colnames(data), c("id", "A", "S", "Y", "OBS", "emp_74_75"))
 ######################################################################## 
 # pi estimation ####
 pi_as_est = mean(filter(data, A==0)$S)
-pi_ns_est = 1 - mean(filter(data, A==1)$S)
 pi_pro_est = mean(filter(data, A==1)$S) - mean(filter(data, A==0)$S)
+pi_ns_est = 1 - mean(filter(data, A==1)$S)
 pis_est = c(pi_as_est = pi_as_est, pi_pro_est = pi_pro_est, pi_ns_est = pi_ns_est)
 # effect of A on S
 S_on_A_test = prop.test(x = c( sum(filter(data, A==1)$S), sum(filter(data, A==0)$S)),
