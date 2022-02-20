@@ -1,4 +1,4 @@
-#m_data = data_with_PS
+m_data = data_with_PS
 #m_data = data_with_PS[OBS != "O(0,0)"]
 # TODO
 #m_data = data_with_PS[S==1]  # data_with_PS[S==1] # data_PS_X[S==1] 
@@ -8,7 +8,7 @@
 #m_data = data_with_PS[S==1,]
  
 # TODO caliper is in sd
-#replace = T; estimand = "ATC"; change_id = TRUE; mahal_match = 2; M=1; caliper = 0.25
+replace = F; estimand = "ATC"; change_id = TRUE; mahal_match = 2; M=1; caliper = 0.25
 
 # all.equal(dt_match_min_ps_w_scheme, dt_match_S1, check.attributes = FALSE)
 # match_on = "O11_posterior_ratio"
@@ -154,32 +154,30 @@ my_matching_func_multiple = function(match_on = NULL, X_sub_cols, m_data, weight
       BCest_clpr <- BCse_clpr <- CI_by_SE_and_Z_val_BCclpr <- BCest_clpr_inter <- BCse_clpr_inter <- 
       CI_by_SE_and_Z_val_BCclpr_inter <- BCclpr_untrt_surv_matched_untrt_matched_trt <- NO_BC_WOUT_REP
      
-    }
+  }
   
   
-  #if(replace==FALSE){
-    wilcoxon = wilcox.test(diff_per_pair,conf.int=T)
-    SACE_matching_est_HL = wilcoxon$estimate
-    SACE_matching_pval_HL = wilcoxon$p.value 
-    # bootstrap for HL se
-    if(boost_HL==TRUE){
-      HL_boost_vec = c()
-      for(i in 1:100){
-        print(paste0("bootstrap ", i))
-        d = dt_match_S1[sample(nrow(dt_match_S1), nrow(dt_match_S1), replace = T),]
-        diff_per_pair_boost = d$Y - d$A0_Y
-        HL_boost_vec[i] = wilcox.test(diff_per_pair_boost,conf.int=T)$estimate
-      }
-      SACE_matching_est_HL_bool = mean(HL_boost_vec)
-      SACE_matching_se_HL = sd(HL_boost_vec)
-    }else{
-      SACE_matching_se_HL = SACE_matching_pval_HL
+  wilcoxon = wilcox.test(diff_per_pair,conf.int=T)
+  SACE_matching_est_HL = wilcoxon$estimate
+  SACE_matching_pval_HL = wilcoxon$p.value 
+  # bootstrap for HL se
+  if(boost_HL==TRUE){
+    HL_boost_vec = c()
+    for(i in 1:100){
+      print(paste0("bootstrap ", i))
+      d = dt_match_S1[sample(nrow(dt_match_S1), nrow(dt_match_S1), replace = T),]
+      diff_per_pair_boost = d$Y - d$A0_Y
+      HL_boost_vec[i] = wilcox.test(diff_per_pair_boost,conf.int=T)$estimate
     }
-    
-    SACE_matching_CI_HL = c(as.character(as.numeric(round(wilcoxon$conf.int, 3))[1]), 
-                            as.character(as.numeric(round(wilcoxon$conf.int, 3))[2]))
-    SACE_matching_CI_HL = paste(SACE_matching_CI_HL, sep = ' ', collapse = " , ")
-  #}
+    SACE_matching_est_HL_bool = mean(HL_boost_vec)
+    SACE_matching_se_HL = sd(HL_boost_vec)
+  }else{
+    SACE_matching_se_HL = SACE_matching_pval_HL
+  }
+  
+  SACE_matching_CI_HL = c(as.character(as.numeric(round(wilcoxon$conf.int, 3))[1]), 
+                          as.character(as.numeric(round(wilcoxon$conf.int, 3))[2]))
+  SACE_matching_CI_HL = paste(SACE_matching_CI_HL, sep = ' ', collapse = " , ")
     
   #####################################################################
   # TODO adjust for replacements and with more than 1 to 1 matching
@@ -267,12 +265,7 @@ my_matching_func_multiple = function(match_on = NULL, X_sub_cols, m_data, weight
   colnames(befS1_table_treated_subjects)[1] = "id_n"
   befS1_trt_matched_unq = merge(befS1_table_treated_subjects, subset(m_data, select = c(id_n, g)),
                                 all.x = TRUE, all.y = FALSE, by = "id_n")
-  befS1_trt_matched_total_by_g = ddply(befS1_trt_matched_unq, .(g), summarize, total_re = sum(N))
-  # matched_treated_S1 = subset(dt_match_S1, select = c(id_trt, g))
-  # matched_treated_S1 = arrange(matched_treated_S1[!duplicated(matched_treated_S1),], by=id_trt)
-  # matched_treated_S1_repeats = merge(matched_treated_S1, table_treated_subjects,
-  #                                   all.x = TRUE, all.y = FALSE, by = "id_trt")
-  
+  #befS1_trt_matched_total_by_g = ddply(befS1_trt_matched_unq, .(g), summarize, total_re = sum(N))
   
   table_treated_subjects = data.table(table(dt_match_S1$id_trt))
   list_table_treated = tables_repeated(table_treated_subjects)
@@ -542,46 +535,4 @@ crude_estimator_inference = function(match_obj, dt_match_S1, diff_per_pair, repl
   return(list(SACE_matching_est=SACE_matching_est, SACE_matching_SE=SACE_matching_SE, 
               CI_by_SE_and_Z_val_crude=CI_by_SE_and_Z_val_crude))
 }
-
-
-
-#TODO tables_matched_units OLD WAY
-# # after excluding pairs with nonsurvivor
-# unq_after_S1 = filter(m_data, id %in%
-#                         c(unique(dt_match_S1$id), unique(dt_match_S1$A0_id)) )
-# table(unq_after_S1$A, unq_after_S1$g)
-# trt_tab_after_S1 = t(table(filter(unq_after_S1, A==1)$g))
-# ctr_tab_after_S1 = t(table(filter(unq_after_S1, A==0)$g))
-# 
-# # including replacements, the total weights of each stratum
-# # in the histogram (repeated as_pro) its the amount of re (1,2...) times how many (per stratum)
-# # replaced this amounts (sum over all the amount of re (1,2...))
-# d = data.table(befS1_trt_matched_total_by_g)
-# d[g=="as",total_re]
-# trt_total_as_Be = d[g=="as",total_re]; trt_total_pro_Be = ifelse("pro" %in% as.character(d$g), d[g=="pro",total_re], 0)
-# trt_tab_after_S1 = c(as=trt_tab_after_S1[1], ns=0, pro=ifelse(length(trt_tab_after_S1)==1,0, trt_tab_after_S1[2]))
-# ctr_tab_after_S1 = c(as=ctr_tab_after_S1[1], ns=0, pro=ifelse(length(ctr_tab_after_S1)==1,0, ctr_tab_after_S1[2]))
-# # if there is no ns in mathced treated before excluding non-survivors, it implies we in S1 MATCH
-# if("ns" %in% as.character(d$g)){
-#   trt_total_ns_Be = d[g=="ns",total_re]
-# }else{ # S1 MATCH
-#   trt_total_ns_Be=0
-#   trt_tab_after_match_bef_S1 = data.frame(as=trt_tab_after_match_bef_S1[1], ns=0,
-#                                           pro=ifelse("pro" %in% as.character(d$g), trt_tab_after_match_bef_S1[2], 0))
-#   ctr_tab_after_match_bef_S1 = data.frame(as=ctr_tab_after_match_bef_S1[1], ns=0, pro=0)
-#   # pro=ifelse(is.na(ctr_tab_after_match_bef_S1[2]), 0, ctr_tab_after_match_bef_S1[2])
-# }
-# # FOR WOUT O(0,0)
-# if(names(ctr_tab_after_match_bef_S1)[1] == 'as'){
-#   ctr_tab_after_match_bef_S1 = c(ctr_tab_after_match_bef_S1[1], ns=0, pro=0)
-# }
-# 
-# trt_total_as_Af = sum(as$Freq*c(1:length(as$Freq)))
-# trt_total_pro_Af = sum(pro$Freq*c(1:length(pro$Freq)))
-# 
-# tables_matched_units = data.frame(cbind(t(trt_tab_after_match_bef_S1), t(ctr_tab_after_match_bef_S1),
-#                                         t(trt_tab_after_S1), t(ctr_tab_after_S1),
-#                                         trt_total_as_Be, trt_total_ns_Be, trt_total_pro_Be, trt_total_as_Af, trt_total_pro_Af))
-# tables_matched_units[which(is.na(tables_matched_units)==TRUE)] = 0
-
 

@@ -1,11 +1,8 @@
-#gamma_pro = rep(0, dim_x)
-#gamma_as = as.numeric(mat_gamma[1, c(1:dim_x)])
-#gamma_ns =  as.numeric(mat_gamma[1, (dim_x+1): (2*dim_x)])
+gamma_pro = rep(0, dim_x)
+gamma_as = as.numeric(mat_gamma[1, c(1:dim_x)])
+gamma_ns =  as.numeric(mat_gamma[1, (dim_x+1): (2*dim_x)])
 
-# TODO misspec_PS: 0 <- NO, 1:add 2 new U's to PS model and to outcome model
-# 2: add transformations to PS model, and remain original X's in ourcome model.
-# when misspec_PS = 1 & U_factor=0, there is no misspecification. U_factor=1 means the coeffs of U are the same as X, in the PS model
-
+# misspec_PS: 0 <- NO mis, 2: add transformations to PS model, and remain original X's in ourcome model.
 simulate_data_function = function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, param_n,
                                   misspec_PS, misspec_outcome_funcform=FALSE,
                                   U_factor=0, funcform_factor_sqr=0, funcform_factor_log=0,
@@ -245,7 +242,7 @@ simulate_data_run_EM_and_match = function(seed = 101, return_EM_PS = FALSE, inde
     colnames(PS_est) = c("EMest_p_as", "EMest_p_ns", "EMest_p_pro")
     data_with_PS = data.table(data_for_EM, PS_est)
     
-    # IF PS_est contains NAS, it probably implies that the EM process diverged
+    # if PS_est contains NAS, it probably implies that the EM process diverged, skip this iteration and go to the next
     if( sum(is.na(PS_est)) > 0){
       index_EM_not_conv = index_EM_not_conv + 1
       list_EM_not_conv$probs[[index_EM_not_conv]] = PS_est
@@ -267,41 +264,25 @@ simulate_data_run_EM_and_match = function(seed = 101, return_EM_PS = FALSE, inde
     if(return_EM_PS == TRUE){
       PS_true_EM_compr = subset( data_with_PS, select = grep("^id$|^g$|prob.|EM",colnames(data_with_PS)) )
       PS_true_EM_compr = rapply(object = PS_true_EM_compr, f = round, classes = "numeric", how = "replace", digits = 3)
-      colnames(PS_true_EM_compr) = mgsub(colnames(PS_true_EM_compr), c("prob.1", "prob.2", "prob.3"),
-                                         c("prob_as", "prob_pro", "prob_ns"))
+      colnames(PS_true_EM_compr) = mgsub(colnames(PS_true_EM_compr), c("prob.1", "prob.2", "prob.3"), c("prob_as", "prob_pro", "prob_ns"))
       PS_true_EM_compr = data.frame(id = PS_true_EM_compr$id, g = PS_true_EM_compr$g,
-                                    prob_as = PS_true_EM_compr$prob_as, EMest_p_as=PS_true_EM_compr$EMest_p_as, 
-                                    diff = PS_true_EM_compr$prob_as - PS_true_EM_compr$EMest_p_as,
-                                    prob_pro = PS_true_EM_compr$prob_pro, EMest_p_pro=PS_true_EM_compr$EMest_p_pro, 
-                                    prob_ns = PS_true_EM_compr$prob_ns, EMest_p_ns=PS_true_EM_compr$EMest_p_ns)
+        prob_as = PS_true_EM_compr$prob_as, EMest_p_as=PS_true_EM_compr$EMest_p_as, diff = PS_true_EM_compr$prob_as - PS_true_EM_compr$EMest_p_as,
+        prob_pro = PS_true_EM_compr$prob_pro, EMest_p_pro=PS_true_EM_compr$EMest_p_pro, prob_ns = PS_true_EM_compr$prob_ns, EMest_p_ns=PS_true_EM_compr$EMest_p_ns)
       return(list(PS_true_EM_compr=PS_true_EM_compr,OBS_table=OBS_table, pis=pis, EM_coeffs=EM_coeffs))
     }
     
-    
-    # TODO my proces DING estimator
+    # calculate O11_posterior_ratio and O11_prior_ratio
     # pis order: as, ns, pro
-    pis = data.frame(pis)
+    pis = data.frame(pis) 
     O11_prior_ratio = pis[which(names(pis)=="pi_as")] / (pis[which(names(pis)=="pi_as")] + pis[which(names(pis)=="pi_pro")]) 
     data_with_PS$O11_prior_ratio = O11_prior_ratio
-    data_with_PS[, `:=` (O11_posterior_ratio = EMest_p_as / (EMest_p_as + EMest_p_pro)
-                          , W_1_as = ( EMest_p_as / (EMest_p_as + EMest_p_pro) ) / O11_prior_ratio)]
-     
-    # MATCHING and estimation 
-    # TODO if I want to allow matching (mahalanobis, euclead) and rfegression to see the true x
-    # TODO i.e. misspecification ONLY in the PS model!!!
-    # TODO usually, it should be FALSE.
-    # TODO @@@ CHECK THAT IT DOES WHAT I MEANT TO
-    if(match_and_reg_watch_true_X == TRUE & misspec_PS==1){
-      data_with_PS = data.table(subset(data_with_PS, 
-               select = -grep(paste(X_sub_cols, collapse="|"), colnames(data_with_PS))), x_PS)
-    }
+    data_with_PS[, `:=` (O11_posterior_ratio = EMest_p_as / (EMest_p_as + EMest_p_pro),
+                         W_1_as = ( EMest_p_as / (EMest_p_as + EMest_p_pro) ) / O11_prior_ratio)]
     
-    # run for all options (3 options)
+    # run for all options (3 options - full dataset, wout A=0,S=0, only S=1)
     data_list = list(data_with_PS, data_with_PS[OBS != "O(0,0)"], data_with_PS[S==1]) 
-    
     lst_matching_estimators_end_excluded_included = list()
     replace_vec = c(FALSE, TRUE)
-    #set.seed(105)
     for(j in c(1:length(replace_vec))){
       lst_matching_estimators_end_excluded_included[[j]] =
         lapply(1:length(data_list), function(l){

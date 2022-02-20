@@ -131,7 +131,7 @@ big_mat_x_by_g_A = subset(big_mat_x_by_g_A, select = c(Scenar,A,g, grep("X", col
 big_mat_x_by_g_A = data.table(big_mat_x_by_g_A)[, lapply(.SD, mean), by=c("Scenar", "A", "g")] %>% arrange(Scenar, g, A)
 
 
-param_n = 2000; param_n_sim = 10 # param_n = 2000; param_n_sim = 1000
+param_n = 2000; param_n_sim = 5 # param_n = 2000; param_n_sim = 1000
 caliper = 0.25; match_on = "O11_posterior_ratio" 
 mu_x_fixed = FALSE; mat_x_as; x_as = mat_x_as[1,]
 
@@ -144,9 +144,10 @@ list_all_std_mean_diff <- list_all_means_by_subset  <- list_all_EM_not_conv <- l
 # for naive estimators and their SE and CI
 only_naive_bool = F
 
-#mat_gamma = mat_gamma[c(2,3),]
+
 # run over different values of gamma's: 1:nrow(mat_gamma)
 # param_n_sim * time per run * nrow(mat_gamma)
+set.seed(101)
 for ( k in c(1 : nrow(mat_gamma)) ){
   print(paste0("in the outer for loop ", k))
   gamma_as=as.numeric(mat_gamma[k, c(1:dim_x)])
@@ -190,7 +191,6 @@ for ( k in c(1 : nrow(mat_gamma)) ){
   list_all_EM_not_conv[[k]] = EM_and_matching[["list_EM_not_conv"]]
   if(! is_empty(list_all_EM_not_conv[[k]])){names(list_all_EM_not_conv[[k]]) = paste0("s", k, names(list_all_EM_not_conv[[k]]))}
   list_all_BCclpr[[k]] = EM_and_matching[["list_BCclpr"]]
-  print(paste0("sim is ", sim))
 
   end_time <- Sys.time()
   print(paste0("in the end of outer for loop ", k, ", ", difftime(end_time, start_time)))
@@ -201,54 +201,21 @@ for ( k in c(1 : nrow(mat_gamma)) ){
 # check ties in BC with caliper ####
 sum(abs(list.rbind(list_all_BCclpr[[1]])$trt_added_by_ties))
 sum(abs(list.rbind(list_all_BCclpr[[2]])$trt_added_by_ties))
-save(list_all_BCclpr, file = "list_all_BCclpr.RData")
 ########################################################################
 
 ########################################################################
-# save lists from simulation ####
-save(list_all_mat_SACE_estimators, file = "list_all_mat_SACE_estimators.RData")
-save(list_all_WLS_NOint_regression_estimators, file = "list_all_WLS_NOint_regression_estimators.RData")
-save(list_all_WLS_YESint_regression_estimators, file = "list_all_WLS_YESint_regression_estimators.RData")
-save(list_all_OLS_NOint_regression_estimators, file = "list_all_OLS_NOint_regression_estimators.RData")
-save(list_all_OLS_YESint_regression_estimators, file = "list_all_OLS_YESint_regression_estimators.RData")
-save(list_all_CI, file = "list_all_CI.RData")
-save(list_all_EM_coeffs, file = "list_all_EM_coeffs.RData")
-save(list_all_excluded_included_matching, file = "list_all_excluded_included_matching.RData")
-save(list_all_repeated_as_and_pro, file = "list_all_repeated_as_and_pro.RData")
-save(list_all_matched_units, file = "list_all_matched_units.RData")
-# TODO list_all_diff_distance_aspr_asas is already in mat_SACE_estimators,
-save(list_all_diff_distance_aspr_asas, file = "list_all_diff_distance_aspr_asas.RData")
-save(list_all_std_mean_diff, file = "list_all_std_mean_diff.RData")
-save(list_all_means_by_subset, file = "list_all_means_by_subset.RData")
-save(list_all_EM_not_conv, file = "list_all_EM_not_conv.RData")
-########################################################################
-
-
-########################################################################
-param_measures_computing = function(df, abs_bool = FALSE){
-  if(abs_bool == TRUE){df = abs(df)}
-  df[c("mean", "med", "SD"), ] = rbind(
-    apply(df, 2, mean), apply(df, 2, median), apply(df, 2, sd)                                    
-  )
-  return(df)
-}
-########################################################################
-
-
-########################################################################
-# function that changes rownames to A,B,C per each parameter (gammas) set ####
+# function that changes rownames to LETTERS per each parameter (gammas) set ####
 change_rownames_to_LETTERS_by_param_set = function(df, mat_params=mat_gamma,
                          num_of_param_measures=num_of_param_measures_per_param_set){
   rownames(df) = paste0(rep(LETTERS[1:nrow(mat_params)],each = num_of_param_measures), "_",
           rep(rownames(df)[1:num_of_param_measures], times = nrow(mat_params)))
   return(df)
 }
-####################################LETTERS####################################
+########################################################################
 
 
-# TODO :) start calculating
-
-# summary of SACE estimators 
+########################################################################
+# summary of SACE estimators ####
 mat_all_estimators = list.rbind(lapply(list_all_mat_SACE_estimators, tail, length(param_measures)))
 #num_of_param_measures_per_param_set = nrow(mat_all_estimators) / nrow(mat_gamma) # = length(param_measures)
 mat_all_estimators = data.frame(subset(mat_all_estimators,
@@ -257,16 +224,9 @@ mat_all_estimators = data.frame(subset(mat_all_estimators,
            select = -grep("gamma", colnames(mat_all_estimators))))
 mat_all_estimators = change_rownames_to_LETTERS_by_param_set(mat_all_estimators)
 pi_from_mat_all_estimators = subset(mat_all_estimators, select = grep("pi_", colnames(mat_all_estimators))) %>% round(3)
-# if I want to delete weights est
-# mat_all_estimators = subset(mat_all_estimators,
-#                     select = -grep("MATCH_w_", colnames(mat_all_estimators)))
 
-mean_all_estimators = mat_all_estimators[grep("mean", rownames(mat_all_estimators)) , ]
-mean_estimators_over_all_parameters = 
-  rbind(apply(mean_all_estimators, 2, mean), apply(mean_all_estimators, 2, sd))
 
 # list_all_regression_estimators
-#mat_regression_estimators = list.rbind(lapply(list_all_regression_estimators, tail, 3))
 WLS_NOint_mat_regression_estimators = list.rbind(lapply(list_all_WLS_NOint_regression_estimators, tail, length(param_measures)))
 WLS_NOint_mat_regression_estimators = change_rownames_to_LETTERS_by_param_set(WLS_NOint_mat_regression_estimators)
 WLS_YESint_mat_regression_estimators = list.rbind(lapply(list_all_WLS_YESint_regression_estimators, tail, length(param_measures)))
@@ -277,42 +237,12 @@ OLS_YESint_mat_regression_estimators = list.rbind(lapply(list_all_OLS_YESint_reg
 OLS_YESint_mat_regression_estimators = change_rownames_to_LETTERS_by_param_set(OLS_YESint_mat_regression_estimators)
 
 
-
 # summary of EM estimators for the gamms's- the PS coefficient- logistic reg of stratum on X
-#sapply(list_all_EM_coeffs, `[[`, 1001)
 summary_EM_coeffs = list.rbind(lapply(list_all_EM_coeffs, function(x) x[c((param_n_sim + 1):(param_n_sim + 5))]))
 rownames(summary_EM_coeffs) = paste0(rep(LETTERS[1:nrow(mat_gamma)],each = ncol(mat_gamma)), "_",
                      rep(rownames(summary_EM_coeffs)[1:ncol(mat_gamma)],times = nrow(mat_gamma)))
 
-# summary of list_all_excluded_included_matching
-mean_excluded_included_matching = list.rbind(list_all_excluded_included_matching)
-mean_excluded_included_matching = mean_excluded_included_matching[grep(c("mean|sd"), rownames(mean_excluded_included_matching)), ]
-
-
-# list_all_repeated_as_and_pro
-mat_all_repeated_as_and_pro = list.rbind(list_all_repeated_as_and_pro)
-# hist
-repeated_histogram(mat_all_repeated_as_and_pro)
-mat_all_repeated_as_and_pro_t = t(mat_all_repeated_as_and_pro)
-reT_mat_all_repeated_as_and_pro = subset(mat_all_repeated_as_and_pro_t,
-               select = -grep("repF_", colnames(mat_all_repeated_as_and_pro_t)))
-
-
-# list_all_matched_units
-mat_all_matched_units = list.rbind(list_all_matched_units)
-
-# list_all_std_mean_diff
-mat_all_std_mean_diff = list.rbind(list_all_std_mean_diff)
-
-#list_all_std_mean_diff
-# list_abs_std_mean_diff = lapply(1:length(list_all_std_mean_diff), function(l){
-#   param_measures_computing(list_all_std_mean_diff[[l]], abs_bool = TRUE)
-# })
-# mat_abs_std_mean_diff = list.rbind(lapply(list_abs_std_mean_diff, tail, 3))
-
-
-# list_all_means_by_subset
-#mat_all_means_by_subset = list.rbind(list_all_means_by_subset)
+# covariates means by A and S, before and after matching (+ mean of as)
 mat_all_means_by_subset = NULL
 first_3_rows = c("mean_as", "mean_A0_S1", "mean_A1_S1_as")
 for(i in c(1:length(list_all_means_by_subset))){
@@ -322,24 +252,6 @@ for(i in c(1:length(list_all_means_by_subset))){
 }
 ########################################################################
 
-########################################################################
-# save summaries
-save(mat_all_estimators, file = "mat_all_estimators.RData")
-save(mean_estimators_over_all_parameters, file = "mean_estimators_over_all_parameters.RData")
-save(WLS_NOint_mat_regression_estimators, file = "WLS_NOint_mat_regression_estimators.RData")
-save(WLS_YESint_mat_regression_estimators, file = "WLS_YESint_mat_regression_estimators.RData")
-save(OLS_NOint_mat_regression_estimators, file = "OLS_NOint_mat_regression_estimators.RData")
-save(OLS_YESint_mat_regression_estimators, file = "OLS_YESint_mat_regression_estimators.RData")
-
-save(summary_EM_coeffs, file = "summary_EM_coeffs.RData")
-save(mean_excluded_included_matching, file = "mean_excluded_included_matching.RData")
-#save(mat_abs_std_mean_diff, file = "mat_abs_std_mean_diff.RData")
-save(mat_all_repeated_as_and_pro, file = "mat_all_repeated_as_and_pro.RData")
-save(reT_mat_all_repeated_as_and_pro, file = "reT_mat_all_repeated_as_and_pro.RData")
-save(mat_all_matched_units, file = "mat_all_matched_units.RData")
-save(mat_all_std_mean_diff, file = "mat_all_std_mean_diff.RData")
-save(mat_all_means_by_subset, file = "mat_all_means_by_subset.RData")
-########################################################################
 
 ########################################################################
 # initial summaries
@@ -350,18 +262,12 @@ means_by_subset_sum = means_by_subset_sum[-grep("_approx", rownames(means_by_sub
 ctr_as_matched_after = sum(mat_all_repeated_as_and_pro["s1repT_S1",-c(29,30)] * c(c(1:14), c(1:14)))
 mat_all_matched_units_S1 = data.frame(t(mat_all_matched_units[grep("F_S1|T_S1", rownames(mat_all_matched_units)),]))
 ctr_as_matched_after - mat_all_matched_units_S1["ctr_asAfS1","s1repT_S1"]
-
 pis = mat_all_estimators[grep("_mean",rownames(mat_all_estimators)),grep("pi",colnames(mat_all_estimators))] %>% round(3)
 pis = data.frame(pi_as=pis$pi_as, pi_pro=pis$pi_pro, pi_ns=pis$pi_ns)
-#mat_pis
-
-saveRDS(pi_from_mat_all_estimators, file = "pi_from_mat_all_estimators.rds")
-saveRDS(means_by_subset_sum, file = "means_by_subset_sum.rds")
-saveRDS(mat_all_matched_units_S1, file = "mat_all_matched_units_S1.rds")
 ########################################################################
 
-#TODO NAIVE estimators ####
 ########################################################################
+# NAIVE estimators ####
 if(only_naive_bool == TRUE){
   scenarios = rownames(mat_all_estimators) %>% substr(1,1) %>% unique
   length(list_all_CI) == length(scenarios)
@@ -507,7 +413,6 @@ print(naive_estimators_sum %>% xtable(digits=c(2)),
 
 # print(t(mat_all_estimators) %>% xtable(caption = 
 #  "nsim = 1000, 5 continous covariates, PM matching on PS, PA = 0.5"), include.rownames = FALSE)
-# print(t(mean_estimators_over_all_parameters) %>% xtable(), include.rownames = FALSE)
 # print(t(mat_regression_estimators) %>% xtable(), include.rownames = FALSE)
 # print(summary_EM_coeffs %>% xtable(), include.rownames = FALSE)
 # print(t(mean_excluded_included_matching) %>% xtable(), include.rownames = FALSE)
@@ -518,7 +423,6 @@ print(naive_estimators_sum %>% xtable(digits=c(2)),
 t(mat_all_estimators) %>% xtable(digits=c(3), caption = paste0("True Model with interactions. ",
  cont_x, " continous covariates, nsim=", param_n_sim, " n=", param_n, 
  ", 1 over var matching on X with caliper ", caliper, " sd PS, PA = ", prob_A))
-t(mean_estimators_over_all_parameters) %>% xtable(digits=c(3))
 print(mat_all_means_by_subset %>% xtable(digits=c(4)), size="\\fontsize{9pt}{11pt}\\selectfont")
 t(WLS_NOint_mat_regression_estimators) %>% xtable(digits=c(3), caption = "WLS wout interactions")
 t(WLS_YESint_mat_regression_estimators) %>% xtable(digits=c(3), caption = "WLS with interactions")
