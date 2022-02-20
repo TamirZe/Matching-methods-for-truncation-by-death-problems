@@ -6,7 +6,7 @@ library(optmatch); library(DOS); library(Matching); library(sandwich); library(r
 library(sandwich); library(lmtest); library(rmutil); library(splitstackshape); library(PerformanceAnalytics)
 
 source("Simulations_studies/sim_matching_scripts/matching_PS_multiple.R")
-source("Simulations_studies/sim_matching_scripts/matching_PS_basic.R")
+#source("Simulations_studies/sim_matching_scripts/matching_PS_basic.R")
 source("Simulations_studies/sim_models/sim_OLS_WLS_estimator.R")
 source("Simulations_studies/sim_simulations_scripts/simulation_run.R")
 #source("DING_model_assisted_estimator.R")

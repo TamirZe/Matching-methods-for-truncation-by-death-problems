@@ -198,7 +198,6 @@ simulate_data_run_EM_and_match = function(seed = 101, return_EM_PS = FALSE, inde
     pi_pro_est = mean(filter(data_for_EM, A==1)$S) - mean(filter(data_for_EM, A==0)$S)
     pis_est = c(pi_as_est = pi_as_est, pi_ns_est = pi_ns_est, pi_pro_est = pi_pro_est)
     
-    ###########################################################
     # real parameter
     SACE = mean(data_for_EM[g_num==1 , Y1]) - mean(data_for_EM[g_num==1, Y0])
     SACE_conditional = mean(data_for_EM[A==1 & g_num==1 , Y]) - mean(data_for_EM[A==0 & g_num==1, Y])
@@ -230,7 +229,6 @@ simulate_data_run_EM_and_match = function(seed = 101, return_EM_PS = FALSE, inde
       i = i + 1
       next()
     }
-    ###########################################################
     
     # Ding estimator
     #TODO in ding the pis order id PROB[i,] = c(prob.c, prob.a, prob.n)/sum
@@ -262,38 +260,8 @@ simulate_data_run_EM_and_match = function(seed = 101, return_EM_PS = FALSE, inde
     
     DING_est = est_ding_lst$AACE
     DING_model_assisted_est_ps = est_ding_lst$AACE.reg
-    
-    # TODO my EM
-    # start_time2 <- Sys.time()
-    # # epsilon_EM # 10^-6
-    # EM_list = function_my_EM(data_for_EM, iterations=iterations, epsilon=epsilon_EM, dim_x=dim_x)
-    # end_time2 <- Sys.time()
-    # print(paste0("function_my_EM lasts ", difftime(end_time2, start_time2)))
-    # dat_EM = EM_list[[1]]
-    # # after running EM, merge both data tables
-    # data_with_PS = data.table(merge(x = data_for_EM,
-    #                                 y = subset(dat_EM, select = c(id, p_as, p_ns, p_pro, max_strata_per_subj)),
-    #                                 by = "id", all.x = TRUE))
-    
-    # EM EM coeffs
-    # TODO my coeffs
-    # coeff_as, coeff_ns, coeff_pro
-    #coeff_as = EM_list$last_coeff_as ; coeff_ns = EM_list$last_coeff_ns
-  
     coeff_as = est_ding_lst$beta.a ; coeff_ns = est_ding_lst$beta.n
     list_coeff_as[[i]] = coeff_as; list_coeff_ns[[i]] = coeff_ns
-    
-    #########################################################################################
-    # TODO my EM PROBS- individual PS
-    # calculating PS from the M step in the EM, not from the E step
-    # the E step takes into account also the cells, and we don't want to do such thing here yet
-    
-    # EM_coeffs = cbind(coeff_as=coeff_as, coeff_ns=coeff_ns)
-    # PS_est = cbind(exp(x%*%coeff_as), exp(x%*%coeff_ns), exp(x%*%gamma_pro))
-    # #PS_est = cbind( PS_est[,1], PS_est[,2], (1 - PS_est[,1] - PS_est[,2]) )
-    # PS_est = PS_est / apply(PS_est, 1, sum)
-    # colnames(PS_est) = c("EMest_p_as", "EMest_p_ns", "EMest_p_pro")
-    # data_with_PS = data.table(data_with_PS, PS_est)
     
     # EM summary
     if(return_EM_PS == TRUE){
@@ -330,219 +298,161 @@ simulate_data_run_EM_and_match = function(seed = 101, return_EM_PS = FALSE, inde
     }
     
     # run for all options (3 options)
-    # m_data = data_with_PS; data_with_PS[OBS != "O(0,0)"]; m_data = data_with_PS[S==1]
     data_list = list(data_with_PS, data_with_PS[OBS != "O(0,0)"], data_with_PS[S==1]) 
-    #save(data_list50, file = "data_list50.RData")
     
-    if(!exists("one_type_replace")){
-      lst_matching_estimators_end_excluded_included = list()
-      replace_vec = c(FALSE, TRUE)
-      #set.seed(105)
-      for(j in c(1:length(replace_vec))){
-        lst_matching_estimators_end_excluded_included[[j]] =
-          lapply(1:length(data_list), function(l){
-            # my_matching_func_basic # my_matching_func_multiple
-            my_matching_func_multiple(match_on = match_on, X_sub_cols, data_list[[l]],
-                weighting = FALSE, M=1, replace = replace_vec[j], estimand = "ATC", mahal_match = 2,
-                min_PS = min_PS, min_diff_PS = min_diff_PS,
-                caliper = caliper, OBS_table, change_id = TRUE, mu_x_fixed=mu_x_fixed, x_as=x_as, pass_tables_matched_units=FALSE)
-          })
-      }
-      
-      
-      # TODO 1.
-      # matching estimators from all data sets, with and wout replacements
-      
-      # TODO @@@ WOUT bias correction
-      # matching_estimators = lapply(1:length(replace_vec), function(j){
-      #   data.frame(t(unlist(list.rbind(lapply(lst_matching_estimators_end_excluded_included[[j]], head, 2)))))
-      # })
-      #matching_estimators = list.cbind(matching_estimators)
-      #colnames(matching_estimators) = paste0(rep(paste0( "rep", rep(substr(replace_vec,1,1), each=6), "_",
-      #               paste0(rep(c("MATCH", "MATCH"), each = 3),
-      #               "_", c("all", "wout_O_0_0", "S1")),
-      #               rep(c(rep("", 3), rep("_HL", 3)), 2)), each = length(c("EST","SE"))), "_", 
-      #               rep(c("est","SE"), times=length(matching_estimators)/2))
-      
-      
-      # with bias correction
-      #TODO order: for each replace type-  matching type (PS, maha, calpr) -> dataset (3 types) -> est, SE
-      #unlist(list.rbind(list(list(1,4,7), list(2,5,8), list(3,6,9))))
+    lst_matching_estimators_end_excluded_included = list()
+    replace_vec = c(FALSE, TRUE)
+    #set.seed(105)
+    for(j in c(1:length(replace_vec))){
+      lst_matching_estimators_end_excluded_included[[j]] =
+        lapply(1:length(data_list), function(l){
+          my_matching_func_multiple(match_on = match_on, X_sub_cols, data_list[[l]],
+              weighting = FALSE, M=1, replace = replace_vec[j], estimand = "ATC", mahal_match = 2,
+              min_PS = min_PS, min_diff_PS = min_diff_PS,
+              caliper = caliper, OBS_table, change_id = TRUE, mu_x_fixed=mu_x_fixed, x_as=x_as, pass_tables_matched_units=FALSE)
+        })
+    }
     
-      matching_estimators = lapply(1:length(replace_vec), function(j){
-        data.frame(t(unlist(list.rbind(lapply(lst_matching_estimators_end_excluded_included[[j]], head, 8))))) # 8
-      })
-      
-      
-      # TODO BASIC MATCHING, with only 1 matching type and BC
-      # matching_estimators = list.cbind(matching_estimators)
-      # colnames(matching_estimators) = paste0(paste0("rep", rep(substr(replace_vec,1,1), each=length(matching_estimators)/2)),
-      #             "_", "MATCH_", rep(c("all", "wout_O_0_0", "S1"), each=2, times=3*2),
-      #             rep(c("","_HL","_BC","_BCclpr"), each=6, times=2),
-      #             rep(c("_est","_SE"), times=length(matching_estimators)/2))
-      
-      # MULTIPLE MATCHING WITH BC
-      matching_estimators = list.cbind(matching_estimators)
-      colnames(matching_estimators) = paste0(paste0("rep", rep(substr(replace_vec,1,1), each=length(matching_estimators)/2)),
-                 "_", "MATCH_", rep(c("all", "wout_O_0_0", "S1"), each=2, times=3*2*2),
-                 rep(c("_PS", "_maha", "","_HL","_BC","_BCclpr", "_BC_inter","_BCclpr_inter"), each=6, times=2),
-                 rep(c("_est","_SE"), times=length(matching_estimators)/2)) 
-      
-      
-      # CI naive and HL
-      # CI_matching_estimators_lst = lapply(1:length(replace_vec), function(j){
-      #   lapply(lst_matching_estimators_end_excluded_included[[j]], "[[", "CI_crude_HL_BC")})
-      # 
-      # CI_matching_estimators = lapply(1:length(replace_vec), function(j){
-      #   data.frame(t(unlist(list.rbind(lapply(lst_matching_estimators_end_excluded_included[[j]],
-      #                                         "[[", "CI_crude_HL_BC")))))
-      # })
-      # 
-      
-      CI_matching_estimators = lapply(1:length(replace_vec), function(j){
-        as.vector(t(t(unlist(list.rbind(lapply(lst_matching_estimators_end_excluded_included[[j]],
-                                               "[[", "CI_crude_HL_BC"))))))
-      })
-      CI_matching_estimators = data.frame((unlist(CI_matching_estimators))) %>% t
-      rownames(CI_matching_estimators) = ""
-      
-      # TODO WOUT BC
-      # colnames(CI_matching_estimators) = paste0( "rep", rep(substr(replace_vec,1,1), each=6), "_",
-      #            paste0(rep(c("MATCH", "MATCH"), each = 3), "_", c("all", "wout_O_0_0", "S1")), rep(c(rep("", 3), rep("_HL", 3)), 2))
-      # 
-      
-      # TODO BASIC MATCHING WITH BC
-      # colnames(CI_matching_estimators) = paste0(paste0("rep", rep(substr(replace_vec,1,1), each=length(CI_matching_estimators)/2)),
-      #   "_", "MATCH_", rep(c("all", "wout_O_0_0", "S1"), times=3*2), rep(c("","_HL","_BC","_BCclpr"), each=3, times=2))
-      
-      # MULTIPLE MATCHING WITH BC
-      # with and wout BC inter
-      colnames(CI_matching_estimators) = paste0(paste0("rep", 
-           rep(substr(replace_vec,1,1), each=length(CI_matching_estimators)/2)),
-            "_", "MATCH_", rep(c("all", "wout_O_0_0", "S1"), times=3*2),
-            rep(c("_PS", "_maha","","_HL","_BC","_BCclpr"
-                  , "_BC_inter","_BCclpr_inter" # remove if we dont have BC with interactions
-                  ), each=3, times=2))
-      
-      
-      # rep_bool_false_true = 2 for WLS and 1 for OLS
-      #CI_or_TABLE_EST_SE = "CI_LS"
-      # rep_bool_false_true = 2; estimator_str = "WLS_NOinteractions_reg_adj_estimators_and_se"
-      arrange_lin_reg_estimators = function(rep_bool_false_true, estimator_str,
-                                            CI_or_TABLE_EST_SE="estimator_and_se", name=""){
-        LS_lin_reg_estimators = lapply(rep_bool_false_true:rep_bool_false_true, function(j){
-          lapply(lst_matching_estimators_end_excluded_included[[j]], "[[",
-                 estimator_str)})
-        LS_lin_reg_estimators = lapply(LS_lin_reg_estimators[[1]], "[[", CI_or_TABLE_EST_SE)
-        if(CI_or_TABLE_EST_SE=="estimator_and_se"){
-          colnas = paste0(rep(colnames(LS_lin_reg_estimators[[1]]), times=3), "_",
-                          rep(c("all", "wout_O_0_0", "S1"), each=length(LS_lin_reg_estimators[[1]])))
-          LS_lin_reg_estimators = list.cbind(LS_lin_reg_estimators)
-          colnames(LS_lin_reg_estimators) = colnas
-          
-        }else{
-          colnas = name
-          LS_lin_reg_estimators = list.cbind(LS_lin_reg_estimators)
-          colnames(LS_lin_reg_estimators) =  paste0(colnas, "_", c("all", "wout_O_0_0", "S1"))
-        }
+    
+    # TODO 1.
+    matching_estimators = lapply(1:length(replace_vec), function(j){
+      data.frame(t(unlist(list.rbind(lapply(lst_matching_estimators_end_excluded_included[[j]], head, 8))))) # 8
+    })
+    
+    # MULTIPLE MATCHING WITH BC
+    matching_estimators = list.cbind(matching_estimators)
+    colnames(matching_estimators) = paste0(paste0("rep", rep(substr(replace_vec,1,1), each=length(matching_estimators)/2)),
+               "_", "MATCH_", rep(c("all", "wout_O_0_0", "S1"), each=2, times=3*2*2),
+               rep(c("_PS", "_maha", "","_HL","_BC","_BCclpr", "_BC_inter","_BCclpr_inter"), each=6, times=2),
+               rep(c("_est","_SE"), times=length(matching_estimators)/2)) 
+    
+    CI_matching_estimators = lapply(1:length(replace_vec), function(j){
+      as.vector(t(t(unlist(list.rbind(lapply(lst_matching_estimators_end_excluded_included[[j]],
+                                             "[[", "CI_crude_HL_BC"))))))
+    })
+    CI_matching_estimators = data.frame((unlist(CI_matching_estimators))) %>% t
+    rownames(CI_matching_estimators) = ""
+    
+    # MULTIPLE MATCHING WITH BC
+    # with and wout BC inter
+    colnames(CI_matching_estimators) = paste0(paste0("rep", 
+         rep(substr(replace_vec,1,1), each=length(CI_matching_estimators)/2)),
+          "_", "MATCH_", rep(c("all", "wout_O_0_0", "S1"), times=3*2),
+          rep(c("_PS", "_maha","","_HL","_BC","_BCclpr"
+                , "_BC_inter","_BCclpr_inter" # remove if we dont have BC with interactions
+                ), each=3, times=2))
+    
+    
+    # rep_bool_false_true = 2 for WLS and 1 for OLS
+    arrange_lin_reg_estimators = function(rep_bool_false_true, estimator_str,
+                                          CI_or_TABLE_EST_SE="estimator_and_se", name=""){
+      LS_lin_reg_estimators = lapply(rep_bool_false_true:rep_bool_false_true, function(j){
+        lapply(lst_matching_estimators_end_excluded_included[[j]], "[[",
+               estimator_str)})
+      LS_lin_reg_estimators = lapply(LS_lin_reg_estimators[[1]], "[[", CI_or_TABLE_EST_SE)
+      if(CI_or_TABLE_EST_SE=="estimator_and_se"){
+        colnas = paste0(rep(colnames(LS_lin_reg_estimators[[1]]), times=3), "_",
+                        rep(c("all", "wout_O_0_0", "S1"), each=length(LS_lin_reg_estimators[[1]])))
+        LS_lin_reg_estimators = list.cbind(LS_lin_reg_estimators)
+        colnames(LS_lin_reg_estimators) = colnas
         
-        return(LS_lin_reg_estimators)
+      }else{
+        colnas = name
+        LS_lin_reg_estimators = list.cbind(LS_lin_reg_estimators)
+        colnames(LS_lin_reg_estimators) =  paste0(colnas, "_", c("all", "wout_O_0_0", "S1"))
       }
       
-      # WLS ONLY FOR replace_vec == TRUE
-      # WLS wout interactions
-      WLS_NOint_matching_reg_estimators = arrange_lin_reg_estimators(2, "WLS_NOinteractions_reg_adj_estimators_and_se")
-      WLS_NOint_matching_reg_estimators_CI = arrange_lin_reg_estimators(2, "WLS_NOinteractions_reg_adj_estimators_and_se", "CI_LS", name="WLS_NOint")
-      # WLS with interactions
-      WLS_YESint_matching_reg_estimators = arrange_lin_reg_estimators(2, "WLS_YESinteractions_reg_adj_estimators_and_se")
-      WLS_YESint_matching_reg_estimators_CI = arrange_lin_reg_estimators(2, "WLS_YESinteractions_reg_adj_estimators_and_se", "CI_LS", name="WLS_YESint")
-      # OLS ONLY FOR replace_vec == FALSE
-      # OLS wout interactions
-      OLS_NOint_matching_reg_estimators = arrange_lin_reg_estimators(1, "OLS_NOinteractions_reg_adj_estimators_and_se")
-      OLS_NOint_matching_reg_estimators_CI = arrange_lin_reg_estimators(1, "OLS_NOinteractions_reg_adj_estimators_and_se", "CI_LS", name="OLS_NOint")
-      # OLS with interactions
-      OLS_YESint_matching_reg_estimators = arrange_lin_reg_estimators(1, "OLS_YESinteractions_reg_adj_estimators_and_se")
-      OLS_YESint_matching_reg_estimators_CI = arrange_lin_reg_estimators(1, "OLS_YESinteractions_reg_adj_estimators_and_se", "CI_LS", name="OLS_YESint")
-      
-      
-      # TODO Coverage CI
-      
-      
-      # TODO 2.
-      # excluded_included_matching from matching function
-      # if we have replace FALSE or TRUE, use only the FALSE replace,
-      # since when replacing this info is not informative
-      excluded_included_matching = 
-        as.numeric(sapply(lst_matching_estimators_end_excluded_included[[1]], 
-                          "[[", "included_excluded_in_matching"))
-      names(excluded_included_matching) = 
-        paste0(rep(c("all", "wout_O_0_0", "S1" ), each = 5), "_", 
-               rep(colnames(t(sapply(lst_matching_estimators_end_excluded_included[[1]],
-                                     "[[", "included_excluded_in_matching")))))
-      
-      # TODO 3.
-      # repeated_as_and_pro
-      repeated_as_and_pro_lst = lapply(1:length(replace_vec), function(j){
-        lapply(lst_matching_estimators_end_excluded_included[[j]], "[[", "repeated_as_and_pro")})
-      repeated_as_and_pro_lst = unlist(repeated_as_and_pro_lst, recursive = FALSE)
-      
-      # TODO 6. tables_matched_units
-      matched_units_lst = lapply(1:length(replace_vec), function(j){
-        lapply(lst_matching_estimators_end_excluded_included[[j]],  
-               "[[", "tables_matched_units")})
-      matched_units_lst = unlist(matched_units_lst, recursive = FALSE)
-      
-      # TODO 4.
-      # diff_distance_aspr_asas, 1 number per each part, so we have 6 numbers in total
-      diff_distance = lapply(1:length(replace_vec), function(j){
-        data.frame(t(unlist(list.rbind(lapply(lst_matching_estimators_end_excluded_included[[j]],
-                                              "[[", "diff_distance_aspr_asas")))))
-      })
-      diff_distance = list.cbind(diff_distance)
-      colnames(diff_distance) = paste0("d_", paste0( "rep", rep(substr(replace_vec,1,1), each=3), "_",
-                                                     paste0(rep(c("MATCH", "MATCH"), each = 3),
-                                                            "_", c("all", "wout_O_0_0", "S1"))))
-      
-      
-      # TODO 5.
-      # standardized mean diff as2pro, as2as per each data set, with and wout replacements
-      # each element in  the list is a matrix
-      # with all covariates std diff per each part, 6 parts in total
-      #std_diff_2_cols
-      std_mean_diff_lst = lapply(1:length(replace_vec), function(j){
-          lapply(lst_matching_estimators_end_excluded_included[[j]], "[[", "std_diff_2_cols")})
-      std_mean_diff_lst = unlist(std_mean_diff_lst, recursive = FALSE)
-      
-      # TODO 7. means_by_subset
-      means_by_subset_lst = lapply(1:length(replace_vec), function(j){
-        lapply(lst_matching_estimators_end_excluded_included[[j]], "[[", "means_by_subset")})
-      means_by_subset_mat = list.rbind(unlist(means_by_subset_lst, recursive = FALSE))
-      rownames(means_by_subset_mat) = paste0(rep(c("reF_", "reT_"), each=18), 
-               rep(c("all", "wout_0_0", "S1"), each=6), "_", rownames(means_by_subset_mat))
-      
+      return(LS_lin_reg_estimators)
+    }
     
-      # check ties in BC caliper
-      BCclpr_untrt_surv_matched_untrt_matched_trt = lapply(1:length(replace_vec), function(j){
-             list.rbind(lapply(lst_matching_estimators_end_excluded_included[[j]],
-                 "[[", "BCclpr_untrt_surv_matched_untrt_matched_trt"))
-         })
-      
-      
-      }
+    # WLS ONLY FOR replace_vec == TRUE
+    # WLS wout interactions
+    WLS_NOint_matching_reg_estimators = arrange_lin_reg_estimators(2, "WLS_NOinteractions_reg_adj_estimators_and_se")
+    WLS_NOint_matching_reg_estimators_CI = arrange_lin_reg_estimators(2, "WLS_NOinteractions_reg_adj_estimators_and_se", "CI_LS", name="WLS_NOint")
+    # WLS with interactions
+    WLS_YESint_matching_reg_estimators = arrange_lin_reg_estimators(2, "WLS_YESinteractions_reg_adj_estimators_and_se")
+    WLS_YESint_matching_reg_estimators_CI = arrange_lin_reg_estimators(2, "WLS_YESinteractions_reg_adj_estimators_and_se", "CI_LS", name="WLS_YESint")
+    # OLS ONLY FOR replace_vec == FALSE
+    # OLS wout interactions
+    OLS_NOint_matching_reg_estimators = arrange_lin_reg_estimators(1, "OLS_NOinteractions_reg_adj_estimators_and_se")
+    OLS_NOint_matching_reg_estimators_CI = arrange_lin_reg_estimators(1, "OLS_NOinteractions_reg_adj_estimators_and_se", "CI_LS", name="OLS_NOint")
+    # OLS with interactions
+    OLS_YESint_matching_reg_estimators = arrange_lin_reg_estimators(1, "OLS_YESinteractions_reg_adj_estimators_and_se")
+    OLS_YESint_matching_reg_estimators_CI = arrange_lin_reg_estimators(1, "OLS_YESinteractions_reg_adj_estimators_and_se", "CI_LS", name="OLS_YESint")
+    
+    
+    # TODO Coverage CI
+    
+    
+    # TODO 2.
+    # excluded_included_matching from matching function
+    # if we have replace FALSE or TRUE, use only the FALSE replace,
+    # since when replacing this info is not informative
+    excluded_included_matching = 
+      as.numeric(sapply(lst_matching_estimators_end_excluded_included[[1]], 
+                        "[[", "included_excluded_in_matching"))
+    names(excluded_included_matching) = 
+      paste0(rep(c("all", "wout_O_0_0", "S1" ), each = 5), "_", 
+             rep(colnames(t(sapply(lst_matching_estimators_end_excluded_included[[1]],
+                                   "[[", "included_excluded_in_matching")))))
+    
+    # TODO 3.
+    # repeated_as_and_pro
+    repeated_as_and_pro_lst = lapply(1:length(replace_vec), function(j){
+      lapply(lst_matching_estimators_end_excluded_included[[j]], "[[", "repeated_as_and_pro")})
+    repeated_as_and_pro_lst = unlist(repeated_as_and_pro_lst, recursive = FALSE)
+    
+    # TODO 6. tables_matched_units
+    matched_units_lst = lapply(1:length(replace_vec), function(j){
+      lapply(lst_matching_estimators_end_excluded_included[[j]],  
+             "[[", "tables_matched_units")})
+    matched_units_lst = unlist(matched_units_lst, recursive = FALSE)
+    
+    # TODO 4.
+    # diff_distance_aspr_asas, 1 number per each part, so we have 6 numbers in total
+    diff_distance = lapply(1:length(replace_vec), function(j){
+      data.frame(t(unlist(list.rbind(lapply(lst_matching_estimators_end_excluded_included[[j]],
+                                            "[[", "diff_distance_aspr_asas")))))
+    })
+    diff_distance = list.cbind(diff_distance)
+    colnames(diff_distance) = paste0("d_", paste0( "rep", rep(substr(replace_vec,1,1), each=3), "_",
+                                                   paste0(rep(c("MATCH", "MATCH"), each = 3),
+                                                          "_", c("all", "wout_O_0_0", "S1"))))
+    
+    
+    # TODO 5.
+    # standardized mean diff as2pro, as2as per each data set, with and wout replacements
+    # each element in  the list is a matrix. with all covariates std diff per each part, 6 parts in total
+    std_mean_diff_lst = lapply(1:length(replace_vec), function(j){
+        lapply(lst_matching_estimators_end_excluded_included[[j]], "[[", "std_diff_2_cols")})
+    std_mean_diff_lst = unlist(std_mean_diff_lst, recursive = FALSE)
+    
+    # TODO 7. means_by_subset
+    means_by_subset_lst = lapply(1:length(replace_vec), function(j){
+      lapply(lst_matching_estimators_end_excluded_included[[j]], "[[", "means_by_subset")})
+    means_by_subset_mat = list.rbind(unlist(means_by_subset_lst, recursive = FALSE))
+    rownames(means_by_subset_mat) = paste0(rep(c("reF_", "reT_"), each=18), 
+             rep(c("all", "wout_0_0", "S1"), each=6), "_", rownames(means_by_subset_mat))
+    
+  
+    # check ties in BC caliper
+    BCclpr_untrt_surv_matched_untrt_matched_trt = lapply(1:length(replace_vec), function(j){
+           list.rbind(lapply(lst_matching_estimators_end_excluded_included[[j]],
+               "[[", "BCclpr_untrt_surv_matched_untrt_matched_trt"))
+       })
+    
     
     # TODO 1. put all results together in the current row of mat_param_estimators
     mat_param_estimators = rbind( mat_param_estimators,
       data.frame(SACE, SACE_conditional,
        DING_est, DING_model_assisted_est_ps
-       #,matching_estimators_pairmatch
        ,matching_estimators
        , diff_distance,
        most_naive_est, most_naive_est_se, sur_naive_est, sur_naive_est_se,
        pis, t(pis_est), t(pis_est_from_func), vec_OBS_table
                                   ))
     
-    # TODO 1. b
-    
+    # TODO regression estimators
     WLS_NOint_mat_reg_estimators = rbind(WLS_NOint_mat_reg_estimators,
                                          data.frame(SACE, SACE_conditional, WLS_NOint_matching_reg_estimators) )
     
@@ -596,7 +506,7 @@ simulate_data_run_EM_and_match = function(seed = 101, return_EM_PS = FALSE, inde
     print(paste0("one iteration lasts ", difftime(end_time1, start_time1)))
     print(difftime(end_time1, start_time1))
   }
-  ################# out of for loop for all the samples (all in all: param_n_sim samples) #######
+  # out of for loop for all the samples (all in all: param_n_sim samples)
   
   
   # TODO 1.
@@ -612,8 +522,6 @@ simulate_data_run_EM_and_match = function(seed = 101, return_EM_PS = FALSE, inde
   
   rownames(mat_param_estimators) = 
     c(c(1:param_n_sim),c("mean","med","sd","MSE"))
-  # c(c(1:param_n_sim),c("mean","med","sd","MSE))
-  #rownames(mat_param_estimators)[(nrow(mat_param_estimators) - 1): nrow(mat_param_estimators)] = c("mean", "sd")
   
   #TODO if only_naive_bool==TRUE, i.e. we ant only naive, stop here
   if(only_naive_bool==TRUE){
@@ -637,8 +545,6 @@ simulate_data_run_EM_and_match = function(seed = 101, return_EM_PS = FALSE, inde
   }
   
   apply(CI_mat[,c(1:2)], 2, as.numeric)
-  #CI_mat = data.frame(rbind(CI_mat, apply(CI_mat, 2, function (x) if(is.numeric(x)){mean(x)}else{0})))
-  #CI_mat[(param_n_sim + 1),] = c(mean(CI_mat$SACE), mean(CI_mat$SACE_conditional))
   CI_mat$SACE = mean(CI_mat$SACE); CI_mat$SACE_conditional  = mean(CI_mat$SACE_conditional )
   
   # calculating EM estimators and arrange in a data frame
@@ -650,11 +556,6 @@ simulate_data_run_EM_and_match = function(seed = 101, return_EM_PS = FALSE, inde
     sapply(list_coeff_ns, "[[", l)
   })
   coeffs = data.table( rbind( list.rbind(coeffs_as), list.rbind(coeffs_ns) ) )
-  
-  # coeff_as_0 = sapply(list_coeff_as, "[[", 1); coeff_as_1 = sapply(list_coeff_as, "[[", 2)
-  # coeff_as_2 = sapply(list_coeff_as, "[[", 3); coeff_as_3 = sapply(list_coeff_as, "[[", 4)
-  # coeff_ns_0 = sapply(list_coeff_ns, "[[", 1); coeff_ns_1 = sapply(list_coeff_ns, "[[", 2)
-  # coeffs = data.table(rbind(coeff_as_0, coeff_as_1, coeff_ns_0, coeff_ns_1))
   
   #TODO FIX THIS HERE
   print("mean and sd")
@@ -680,10 +581,6 @@ simulate_data_run_EM_and_match = function(seed = 101, return_EM_PS = FALSE, inde
   
   
   # TODO 3. list of repeated_as_and_pro
-  # TODO could be nice to check this strait after the matching (before removing pairs with non-survivor) 
-  # and the change before and after
-  # TODO and also by proportion: if pi_as = 0.6, pi_pro = 0.3, so adjust to that, and then check
-  # repeated_as_and_pro_lst
   mean_list_repeated_as_and_pro = 
     calculate_mean_repeated_as_and_pro(list_repeated_as_and_pro, TRUE)
   
@@ -785,7 +682,7 @@ calculate_mean_repeated_as_and_pro = function(list_of_lists, mean_repeated_as_an
   }
   return(mean_repeated_as_and_pro)
 }
-########################################################################
+
 
 
 
