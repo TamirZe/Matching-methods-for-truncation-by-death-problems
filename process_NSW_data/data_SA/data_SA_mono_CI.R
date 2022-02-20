@@ -114,7 +114,7 @@ SACE_estimation_1LEARNER_mono = function(matched_data, reg_after_match, alpha0_m
 #TODO xi
 #bounds for xi
 p1 = mean(data[A==1,S]); p0 = mean(data[A==0,S])
-up_bound_xi = (1 - p1) / (p1 - 1 + p0)
+up_bound_xi = (1 - p1) / (p0 - (1 - p1))
 xi_sensi_mono_vec = seq(0, 0.5, 0.1)
 xi_sensi_mono_vec[length(xi_sensi_mono_vec)] = 0.48 #round(up_bound_xi,2)
 xi_sensi_mono_names = paste0("xi_mono_", round(xi_sensi_mono_vec, 2))

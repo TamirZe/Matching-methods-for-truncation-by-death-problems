@@ -1,23 +1,19 @@
-'''install.packages("BiocManager")
-library("BiocManager")
-BiocManager::install("genefilter")'''
-
 library(rlist); library(locfit); library(plyr); library(nnet); library(xtable); library(rlang);library(glue)
-# library(multilevelMatching); library(PerformanceAnalytics); library(lmtest)
-library(matrixStats); library(data.table); library(dplyr); library(reshape); library(MASS); library(Hmisc); library(lmtest)
+# library(multilevelMatching); library(PerformanceAnalytics); library(lmtest); library(caret);
+library(matrixStats); library(data.table); library(dplyr); library(reshape); library(MASS); library(Hmisc); 
 library(ggplot2); library(rockchalk); library(stats); library(rlist); library(mgsub); library(reshape2); library(gridExtra)
 library(optmatch); library(DOS); library(Matching); library(sandwich); library(rmutil); library(clubSandwich); library(tableone)
-library(sandwich); library(rmutil);  library(caret); library(splitstackshape); library(MatchIt); library(PerformanceAnalytics)
+library(sandwich); library(lmtest); library(rmutil); library(splitstackshape); library(PerformanceAnalytics)
 
-source("matching_scripts/matching_PS_multiple.R")
-source("matching_scripts/matching_PS_basic.R")
-source("sim_OLS_WLS_estimator.R")
-source("simulations_scripts/sim2DingLuEst.R")
-source("DING_model_assisted_estimator.R")
-source("TABLES/table_design_multiple_func.R")
-source("TABLES/coverage_naive_est.R")
-source(paste0("B1191Ding/", "PS_M_weighting.R"))
-source(paste0("B1191Ding/", "PS_M_weighting_SA.R"))
+source("Simulations_studies/sim_matching_scripts/matching_PS_multiple.R")
+source("Simulations_studies/sim_matching_scripts/matching_PS_basic.R")
+source("Simulations_studies/sim_models/sim_OLS_WLS_estimator.R")
+source("Simulations_studies/sim_simulations_scripts/simulation_run.R")
+#source("DING_model_assisted_estimator.R")
+source("Simulations_studies/sim_TABLES/table_design_multiple_func.R")
+source("Simulations_studies/sim_TABLES/coverage_naive_est.R")
+source("Ding_Lu/PS_M_weighting.R")
+source("Ding_Lu/PS_M_weighting_SA.R")
 
 
 #############################################################################################
