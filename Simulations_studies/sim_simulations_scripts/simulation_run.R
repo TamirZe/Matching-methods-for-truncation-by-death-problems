@@ -1,6 +1,6 @@
-gamma_pro = rep(0, dim_x)
-gamma_as = as.numeric(mat_gamma[1, c(1:dim_x)])
-gamma_ns =  as.numeric(mat_gamma[1, (dim_x+1): (2*dim_x)])
+#gamma_pro = rep(0, dim_x)
+#gamma_as = as.numeric(mat_gamma[1, c(1:dim_x)])
+#gamma_ns =  as.numeric(mat_gamma[1, (dim_x+1): (2*dim_x)])
 
 # misspec_PS: 0 <- NO mis, 2: add transformations to PS model, and remain original X's in ourcome model.
 simulate_data_function = function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, param_n,

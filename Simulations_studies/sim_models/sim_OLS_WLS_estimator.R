@@ -1,18 +1,5 @@
-# TODO Regression adjusted matching_from_real_data on the matched set
-# TODO adjust for replacements
+# for now we use covariates. we dont really use reg_covariates
 
-# WLS_NOinteractions_reg_adj_estimators_and_se =
-#   regression_adjusted_function(rep_bool = replace, dt_match_S1=dt_match_S1, m_data=m_data, matched_pairs=matched_pairs,
-#                                covariates = X_sub_cols[-1], reg_covariates = X_sub_cols[-1],
-#                                interactions_bool = FALSE, LS="WLS", mu_x_fixed=mu_x_fixed, x_as=x_as)
-# 
-# 
-# estimation_with_interactions(lin_reg_fit_matched=lin_reg_matched, coeffs_table=coeffs_table, data_matched_reg=reg_data_matched,
-#                              lin_reg_fit_wls_matched=lin_reg_matched_wls, coeffs_table_wls=coeffs_table_wls,
-#                              LS_for_estimation="WLS", x_as=x_as)
-
-# TODO for now I use covariates. I dont really use reg_covariates.
-# TODO change it for the general case where the model is misspecified, so we dont use the same x's as the true model
 regression_adjusted_function = function(rep_bool, dt_match_S1, m_data, matched_pairs,
                                         covariates = X_sub_cols[-1], reg_covariates = X_sub_cols[-1],
                                         interactions_bool = TRUE, LS="OLS", mu_x_fixed = FALSE, x_as){
@@ -80,11 +67,6 @@ regression_adjusted_function = function(rep_bool, dt_match_S1, m_data, matched_p
       se_beta_est_sand_DM = sqrt( se_beta_est_sand^2 + sum( (coeffs_interactions[-1])^2 * var_mu_x ) )
     
       estimators = c(beta_est, se_beta_est_naive_DM, se_beta_est_sand_DM, se_beta_est_clstr_DM) 
-      # estimators = data.frame(t(c(beta_est, se_beta_est_naive)))
-      # colnames(estimators) = c("OLS_estimator", "OLS_se")
-      # estimators = data.frame(t(c(estimators, se_beta_est_sand)))
-      # colnames(estimators) = paste0(rep(c("appearance_over_unq"), each=ncol(estimators)),
-      #                                    "_", c("estimator", "naive_se", "sandwi_se"))
   }
     return(estimators)
 }
@@ -148,9 +130,7 @@ regression_adjusted_function = function(rep_bool, dt_match_S1, m_data, matched_p
   # WLS
   if(LS=="WLS"){
     print("WLS")
-    # TODO adjust for replacements
-    # TODO Regression adjusted matching_from_real_data on the matched set
-    # TODO regression_adjusted_function(dt_match_S1, reg_covariates = X_sub_cols[-1])
+    # adjust for replacements
     
     weights_trt = data.frame(table(dt_match_S1$id_trt))
     colnames(weights_trt) = c("id", "weight")
@@ -158,16 +138,8 @@ regression_adjusted_function = function(rep_bool, dt_match_S1, m_data, matched_p
     weights_ctr = data.frame(id = dt_match_S1$id_ctrl , weight = rep(1, length(dt_match_S1$id_ctrl)))
     weights = rbind(weights_trt, weights_ctr)
     reg_data_matched_weights = merge(weights, reg_data_matched_wout_pairs, by= "id") #%>% arrange(pair, A)
-    #weights$appearance_over_unique_id = weights$weight / nrow(weights)
-    #weights$AbadieImbens785_overN0 = weights$weight / length(weights_ctr$weight) #  length(weights_ctr$weight) = sum(weights_ctr$weight)
-    #weights$AbadieImbens785_over_matched_units = weights$AbadieImbens785_overN0 / 2
     
-    # random effect model
-    # RE_data = merge(matched_pairs, expandRows(reg_data_matched_weigts, count = "weight"), by="id") %>% arrange(pair, A)
-    # library(nlme)
-    # fit1 = lme(f, random = ~1|pair, data=RE_data, method = "REML")
-    
-    # TODO? reg covariares instead of covariates
+    #TODO reg covariares instead of covariates
     lin_reg_matched = lm(formula = f , data = reg_data_matched)
     lin_reg_matched_wls = lm(formula = f , data = reg_data_matched_weights, weights = reg_data_matched_weights$weight)
     # WLS regression treatment coefficients estimator
@@ -178,7 +150,6 @@ regression_adjusted_function = function(rep_bool, dt_match_S1, m_data, matched_p
       se_beta_est_naive <- summary(lin_reg_matched)$coefficients[2, 2]
       # robust sandwich SE estimator
       se_beta_est_sand <- sqrt(sandwich(lin_reg_matched_wls)[2,2]) # robust is actually sandwich
-      
       # robust clustered SE estimator
       se_beta_est_clstr <- coeftest(lin_reg_matched, vcov. = vcovCL, cluster = ~ pair + id)["A","Std. Error",drop = FALSE]
       estimator_and_se <- c(beta_est, se_beta_est_naive, se_beta_est_sand, se_beta_est_clstr)
