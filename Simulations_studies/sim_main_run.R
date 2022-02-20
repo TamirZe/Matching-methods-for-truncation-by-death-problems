@@ -9,7 +9,6 @@ source("Simulations_studies/sim_matching_scripts/matching_PS_multiple.R")
 #source("Simulations_studies/sim_matching_scripts/matching_PS_basic.R")
 source("Simulations_studies/sim_models/sim_OLS_WLS_estimator.R")
 source("Simulations_studies/sim_simulations_scripts/simulation_run.R")
-#source("DING_model_assisted_estimator.R")
 source("Simulations_studies/sim_TABLES/table_design_multiple_func.R")
 source("Simulations_studies/sim_TABLES/coverage_naive_est.R")
 source("Ding_Lu/PS_M_weighting.R")
@@ -133,8 +132,7 @@ big_mat_x_by_g_A = data.table(big_mat_x_by_g_A)[, lapply(.SD, mean), by=c("Scena
 
 
 param_n = 2000; param_n_sim = 10 # param_n = 2000; param_n_sim = 1000
-caliper = 0.25; pairmatch_bool = FALSE
-match_on = "O11_posterior_ratio" # NULL # Feller and Mialli: "EMest_p_as" # Ding Lu appendix: "O11_posterior_ratio"
+caliper = 0.25; match_on = "O11_posterior_ratio" 
 mu_x_fixed = FALSE; mat_x_as; x_as = mat_x_as[1,]
 
 param_measures = c("mean","med","sd","MSE"); num_of_param_measures_per_param_set = length(param_measures)
