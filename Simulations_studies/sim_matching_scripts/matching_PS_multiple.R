@@ -1,17 +1,13 @@
-m_data = data_with_PS
+#m_data = data_with_PS
 #m_data = data_with_PS[OBS != "O(0,0)"]
-# TODO
-#m_data = data_with_PS[S==1]  # data_with_PS[S==1] # data_PS_X[S==1] 
+#m_data = data_with_PS[S==1]
 
 #m_data = data_list[[3]]
 # m_data = data_with_PS[1:3000,]
 #m_data = data_with_PS[S==1,]
  
 # TODO caliper is in sd
-replace = F; estimand = "ATC"; change_id = TRUE; mahal_match = 2; M=1; caliper = 0.25
-
-# all.equal(dt_match_min_ps_w_scheme, dt_match_S1, check.attributes = FALSE)
-# match_on = "O11_posterior_ratio"
+#replace = F; estimand = "ATC"; change_id = TRUE; mahal_match = 2; M=1; caliper = 0.25
 
 
 my_matching_func_multiple = function(match_on = NULL, X_sub_cols, m_data, weighting = FALSE,
@@ -24,9 +20,7 @@ my_matching_func_multiple = function(match_on = NULL, X_sub_cols, m_data, weight
     m_data$id = c(1:nrow(m_data))
   }
   print(paste0("replace is ", replace, " nrows is ", nrow(m_data)))
-  #X_sub_cols = paste0("X", c(1:(dim_x)))
   # mahal_match for Weight = 2 for mahalanobis distance. 1 for inverse of variance
-  # TODO find a way to use caliper on the PS in the matching function
   vec_caliper = c(rep(1000, length(X_sub_cols[-1])), caliper)
   # w_mat = diag(length(X_sub_cols[-1]) + 1) / 
   #   length(X_sub_cols[-1])  * c(apply(subset(m_data, select = X_sub_cols[-1]), 2, var), 1)
@@ -39,12 +33,8 @@ my_matching_func_multiple = function(match_on = NULL, X_sub_cols, m_data, weight
   print("MATCHING ON PS")
   MATCH_PS_only  <- Match(Y=m_data[,Y], Tr=m_data[,A]
                           , X = subset(m_data, select = match_on)
-                          #, X=m_data[,"EMest_p_as"]         
-                          #, X = subset(m_data, select = c(X_sub_cols[-1], "EMest_p_as"))
                           ,ties=FALSE
-                          #,caliper = vec_caliper
                           ,M=M, replace = replace, estimand = estimand, Weight = mahal_match
-                          #,Weight.matrix = w_mat
   )
   only_ps_lst = arrange_dataset_after_matching(match_obj=MATCH_PS_only, m_data, replace_bool = replace, X_sub_cols)
   dt_match_S1_only_ps = only_ps_lst$dt_match_S1; matched_pairs_only_ps = only_ps_lst$matched_pairs
@@ -58,10 +48,8 @@ my_matching_func_multiple = function(match_on = NULL, X_sub_cols, m_data, weight
   # TODO MAHALANOBIS WITHOUT PS CALIPER
   print("MAHALANOBIS WITHOUT PS CALIPER")
   MATCH_MAHA_wout_PS  <- Match(Y=m_data[,Y], Tr=m_data[,A]
-                               #, X=m_data[,"est_p_as"]
                                , X = subset(m_data, select = c(X_sub_cols[-1]))
                                ,ties=FALSE
-                               #,caliper = vec_caliper ,Weight.matrix = w_mat
                                ,M=M, replace = replace, estimand = estimand, Weight = mahal_match
   )
   mala_wout_cal_lst = arrange_dataset_after_matching(match_obj=MATCH_MAHA_wout_PS, m_data, replace_bool = replace, X_sub_cols)
@@ -76,7 +64,6 @@ my_matching_func_multiple = function(match_on = NULL, X_sub_cols, m_data, weight
   # TODO MAHALANOBIS WITH PS CALIPER
   print("MAHALANOBIS WITH PS CALIPER")
   ATE_MATCH_PS  <- Match(Y=m_data[,Y], Tr=m_data[,A]
-                         #, X=m_data[,"est_p_as"]
                          , X = subset(m_data, select = c(X_sub_cols[-1], match_on))
                          ,ties=FALSE
                          ,caliper = vec_caliper ,Weight.matrix = w_mat
@@ -203,7 +190,7 @@ my_matching_func_multiple = function(match_on = NULL, X_sub_cols, m_data, weight
                                  covariates = X_sub_cols[-1], reg_covariates = X_sub_cols[-1],
                                  interactions_bool = TRUE, LS="OLS", mu_x_fixed=mu_x_fixed, x_as=x_as)
   
-  print("finish lin reg!")
+  print("finish lin reg")
   
   #TODO distribution of the x's; before matching and after matching
   # descriprive before matching
@@ -225,8 +212,7 @@ my_matching_func_multiple = function(match_on = NULL, X_sub_cols, m_data, weight
   means_by_subset = 
     rbind(mean_as, mean_A0_S1, mean_A1_S1_as, mean_match_A0, mean_match_A1, approx_mean_x)
   
-  
-  ######## calculating the amount of as the matching process excluded
+  # calculating the amount of as the matching process excluded
   OBS_table * param_n
   as_A0_matched = length(which(dt_match_S1$A0_g == "as"))
   # OBS_table[1,2] are the (A=0, S=1), thereare only as in this cell
@@ -255,7 +241,7 @@ my_matching_func_multiple = function(match_on = NULL, X_sub_cols, m_data, weight
   
   # TODO repeated summary
   print("repeated summary")
-  # TODO %%%%%%%%% NEXT LINE IS REALLY VERY IMPORTANT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  # TODO %%%%%%%%% NEXT LINE IS REALLY VERY IMPORTANT
   m_data$id_n = c(1:nrow(m_data))
   m_data = data.frame(id_n = m_data$id_n, subset(m_data, select = -id_n))
   befS1_table_treated_subjects = data.table(table(ATE_MATCH_PS$index.treated))
@@ -281,18 +267,14 @@ my_matching_func_multiple = function(match_on = NULL, X_sub_cols, m_data, weight
   
   S1_matched_distinguish_by_g =  
     ddply(matched_treated_S1_repeats, .(g), summarize, amount_of_subjects = length(id_trt))
-  #m = m_data[unique(ATE_MATCH_PS$index.treated), c("id_n", "id", "g")]
-  #S1_matched_distinguish_by_g_2 = ddply(m, .(g), summarize, total_re = length(id_n))
   
   #print("before repeated3")
   S1_matched_as = filter(matched_treated_S1_repeats, g=="as")
   list_table_treated_as = tables_repeated(subset(S1_matched_as, select = -g))
   repeated_treated_as = data.frame(list_table_treated_as[[2]])
-  
   S1_matched_pro = filter(matched_treated_S1_repeats, g=="pro") 
   list_table_treated_pro = tables_repeated(subset(S1_matched_pro, select = -g))
   repeated_treated_pro = data.frame(list_table_treated_pro[[2]])
-  
   print("two")
   as = repeated_treated_as; pro = repeated_treated_pro
   as = data.frame(Var1 = c(1:14), Freq = 0)
@@ -300,26 +282,13 @@ my_matching_func_multiple = function(match_on = NULL, X_sub_cols, m_data, weight
   as$Freq[REPS_as[REPS_as<=14]] = repeated_treated_as$Freq
   as$Var1 = paste0("as_", as$Var1)
   rownames(as) = as$Var1
-  
   pro = data.frame(Var1 = c(1:14), Freq = 0)
   REPS_pro = as.numeric(as.character(repeated_treated_pro$Var1))
   pro$Freq[REPS_pro[REPS_pro<=14]] = repeated_treated_pro$Freq
   pro$Var1 = paste0("pro_", pro$Var1)
   rownames(pro) = pro$Var1
-  
   repeated_as_and_pro = data.frame(t(as), t(pro))
   repeated_as_and_pro = repeated_as_and_pro[-1,]
-  
-  #histogram 
-  # hist(rep(as.numeric(repeated_treated_as$Var1), times = repeated_treated_as$Freq), 
-  #      col='skyblue', border=F, xlab = "X2", main = colnames(d1)[i])
-  # hist(rep(as.numeric(repeated_treated_pro$Var1), times = repeated_treated_pro$Freq),
-  #      add=T, col=scales::alpha('green',.5), border=F, breaks = 10)
-  #  legend('topright',c('as','pro'),
-  #         fill = c('skyblue', 'green'), bty = 'n',
-  #         border = NA)
-  
-  # }
   
   
   # checking covariates balance between treated and untreated 
@@ -338,8 +307,8 @@ my_matching_func_multiple = function(match_on = NULL, X_sub_cols, m_data, weight
   
   print("tables_matched_units")
   if(pass_tables_matched_units == FALSE){
-    # TODO 18.10.2020 I'm here- problems. need to better understand this part
-    # TODO number of matchd units:
+      # TODO NEW I'm here- problems. need to better understand this part
+    # TODO number of matched units:
     # summary immediately after matching
     # m_data= only S1
     n_trt = nrow(filter(m_data, A==1)); n_ctr = nrow(filter(m_data, A==0))
@@ -408,50 +377,17 @@ my_matching_func_multiple = function(match_on = NULL, X_sub_cols, m_data, weight
     tables_matched_units = data.frame(t(c(91:101)),t(c(-91:-101)))
   }
   
-  # TODO histogram with ggplot
-  # dt_match_min_ps_A0_n = dt_match_min_ps_A0
-  # colnames(dt_match_min_ps_A0_n) = colnames(dt_match_min_ps_A1)
-  # dt_match_compare = rbind(dt_match_min_ps_A0_n, dt_match_min_ps_A1)
-  
-  # ggplot(subset(dt_match_compare, select = c(A, X2)), aes(length, fill = A)) +
-  #   geom_histogram(alpha = 0.5, aes(y = ..density..), position = 'identity')
-  
-  # install.packages("stddif")
-  # library(stddif)
-  # stddiff.numeric(dt_match_compare, gcol = "A")
-  
-  # par(mfrow = c(1, length(X_sub_cols[-1])))
-  # d0 = subset(dt_match_min_ps_A0, select = -A0_A);  d1 = subset(dt_match_min_ps_A1, select = -A)
-  # for(i in c(1:length(X_sub_cols[-1]))){
-  # hist(d0[,i], col='skyblue', border=F, xlab = "X2", main = colnames(d1)[i])
-  # hist(d1[,i], add=T, col=scales::alpha('green',.5), border=F  )
-  # legend('topleft',c('control','treatment'),
-  #        fill = c('skyblue', 'green'), bty = 'n',
-  #        border = NA)
-  # }
-  
-  # SACE_matching_est_HL instead of SACE_matching_est_CI_HL
   return(list(SACE_matching_est_SE_ps = c(est_crude_only_ps, se_crude_only_ps)
               ,SACE_matching_est_SE_maha = c(est_crude_maha_wout_cal,se_crude_maha_wout_cal)
               ,SACE_matching_est_SE_naive = c(SACE_matching_est, SACE_matching_SE)
               ,SACE_matching_est_HL = c(SACE_matching_est_HL, SACE_matching_se_HL)
-              
-              #TODO BC est WITH interactions
               ,SACE_matching_est_SE_BC = c(BCest, BCse)
               ,SACE_matching_est_SE_BCclpr = c(BCest_clpr, BCse_clpr)
               ,SACE_matching_est_SE_BC_inter = c(BCest_inter, BCse_inter)
               ,SACE_matching_est_SE_BCclpr_inter = c(BCest_clpr_inter, BCse_clpr_inter)
               ,CI_crude_HL_BC = c(CI_by_SE_and_Z_val_naive_only_ps,CI_by_SE_and_Z_val_naive_maha_wout_cal,
-                CI_by_SE_and_Z_val_naive, SACE_matching_CI_HL, CI_by_SE_and_Z_val_BC, CI_by_SE_and_Z_val_BCclpr,
-                CI_by_SE_and_Z_val_BC_inter, CI_by_SE_and_Z_val_BCclpr_inter)
-              
-              #TODO BC est WOUT interactions
-              # ,SACE_matching_est_SE_BC = c(BCest, BCse)
-              # ,SACE_matching_est_SE_BCclpr = c(BCest_clpr, BCse_clpr)
-              # ,CI_crude_HL_BC = c(CI_by_SE_and_Z_val_naive_only_ps,CI_by_SE_and_Z_val_naive_maha_wout_cal, 
-              #   CI_by_SE_and_Z_val_naive,SACE_matching_CI_HL,CI_by_SE_and_Z_val_BC,CI_by_SE_and_Z_val_BCclpr)
-              
-              #,CI_by_SE_and_Z_val_naive = CI_by_SE_and_Z_val_naive
+              CI_by_SE_and_Z_val_naive, SACE_matching_CI_HL, CI_by_SE_and_Z_val_BC, CI_by_SE_and_Z_val_BCclpr,
+              CI_by_SE_and_Z_val_BC_inter, CI_by_SE_and_Z_val_BCclpr_inter)
               ,WLS_NOinteractions_reg_adj_estimators_and_se = WLS_NOinteractions_reg_adj_estimators_and_se
               ,WLS_YESinteractions_reg_adj_estimators_and_se = WLS_YESinteractions_reg_adj_estimators_and_se
               ,OLS_NOinteractions_reg_adj_estimators_and_se = OLS_NOinteractions_reg_adj_estimators_and_se
@@ -511,7 +447,6 @@ arrange_dataset_after_matching = function(match_obj, m_data, replace_bool, X_sub
   return(list(dt_match_S1=dt_match_S1, matched_pairs=matched_pairs))
 }
 
-#crude_estimator_inference(match_obj=MATCH_PS_only, dt_match_S1=dt_match_S1_only_ps, replace_bool=replace)
 crude_estimator_inference = function(match_obj, dt_match_S1, diff_per_pair, replace_bool){
   # est
   SACE_matching_est = mean(dt_match_S1$Y) - mean(dt_match_S1$A0_Y)

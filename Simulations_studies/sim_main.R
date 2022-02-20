@@ -6,7 +6,6 @@ library(optmatch); library(DOS); library(Matching); library(sandwich); library(r
 library(sandwich); library(lmtest); library(rmutil); library(splitstackshape); library(PerformanceAnalytics)
 
 source("Simulations_studies/sim_matching_scripts/matching_PS_multiple.R")
-#source("Simulations_studies/sim_matching_scripts/matching_PS_basic.R")
 source("Simulations_studies/sim_models/sim_OLS_WLS_estimator.R")
 source("Simulations_studies/sim_simulations_scripts/simulation_run.R")
 source("Simulations_studies/sim_TABLES/table_design_multiple_func.R")
@@ -258,79 +257,14 @@ for(i in c(1:length(list_all_means_by_subset))){
 means_by_subset_sum = mat_all_means_by_subset[grep("S1|mean_as", 
      rownames(mat_all_means_by_subset), ignore.case = F) , ] %>% round(3)
 means_by_subset_sum = means_by_subset_sum[-grep("_approx", rownames(means_by_subset_sum)),]
-#pi_from_mat_all_estimators
-ctr_as_matched_after = sum(mat_all_repeated_as_and_pro["s1repT_S1",-c(29,30)] * c(c(1:14), c(1:14)))
-mat_all_matched_units_S1 = data.frame(t(mat_all_matched_units[grep("F_S1|T_S1", rownames(mat_all_matched_units)),]))
-ctr_as_matched_after - mat_all_matched_units_S1["ctr_asAfS1","s1repT_S1"]
+#pi_from_mat_all_estimators VS 
 pis = mat_all_estimators[grep("_mean",rownames(mat_all_estimators)),grep("pi",colnames(mat_all_estimators))] %>% round(3)
 pis = data.frame(pi_as=pis$pi_as, pi_pro=pis$pi_pro, pi_ns=pis$pi_ns)
 ########################################################################
 
-########################################################################
-# NAIVE estimators ####
-if(only_naive_bool == TRUE){
-  scenarios = rownames(mat_all_estimators) %>% substr(1,1) %>% unique
-  length(list_all_CI) == length(scenarios)
-  list_coverage = list(); coverage_mat = NULL
-  tmp = mat_all_estimators
-  for (i in 1:length(scenarios)) {
-    # i is the index for the scenario, A, B and C
-    list_coverage[[i]] = calculate_coverage(list_all_CI[[i]])
-    coverage = list_coverage[[i]]$coverage
-    rownames(coverage) = paste0(scenarios[i], "_coverage")
-    coverage_mat = rbind(coverage_mat, coverage)
-  }
-  if(only_naive_bool == TRUE){
-  est_mean = tmp[-grep("_med", rownames(tmp)), setdiff(grep("*\\_est$|SACE",colnames(tmp)), grep("^pi_",colnames(tmp)))]
-  est_se = tmp[,setdiff(grep("*\\_est_se$",colnames(tmp)), grep("^pi_",colnames(tmp)))]
-  est_se = est_se[grep("mean", rownames(est_se)),]
-  colnames(est_se) = setdiff(colnames(est_mean), "SACE")
-  rownames(est_se) = paste0(scenarios, "_se_est")
-  #scenario_ind = which(substr(rownames(est_mean),1,1)==scenarios[i])
-  colnames(coverage_mat) = mgsub(colnames(coverage_mat), c("Coverage_naive_without_matching",
-       "Coverage_survivors_naive_without_matching"), setdiff(colnames(est_mean), "SACE")) 
-  naive_estimators_sum = rbind(est_mean, data.frame(SACE = 101, est_se), 
-        data.frame(SACE = 101, coverage_mat)) %>% round(3) # rbind.fill
-  naive_estimators_sum[-grep("MSE", rownames(naive_estimators_sum)),] = round(naive_estimators_sum[-grep("MSE", rownames(naive_estimators_sum)),], 3)
-  naive_estimators_sum = naive_estimators_sum[order(rownames(naive_estimators_sum)),]
-  rownames(naive_estimators_sum) = mgsub(rownames(naive_estimators_sum), c("_mean", "_sd"), c("_est", "_sd_emp"))
-  naive_estimators_sum = data.frame(Scenario = substr(rownames(naive_estimators_sum),1,1), 
-      Value = substr(rownames(naive_estimators_sum),3,100), naive_estimators_sum)
-  target <- paste0(rep(scenarios, each = length(c("est", "sd_emp", "se_est", "MSE", "coverage"))),
-                   "_", rep(c("est", "sd_emp", "se_est", "MSE", "coverage"), length(scenarios)))
-  naive_estimators_sum = naive_estimators_sum[match(target, rownames(naive_estimators_sum)),]
-  save(naive_estimators_sum, file = "naive_estimators_sum.RData")
-  }
-  
-  # apply this even when only_naive_bool = FALSE if we need to compute coverage and MSE for naives after actuall simulation.
-  if(only_naive_bool == FALSE){
-    coverage_mat = subset(coverage_mat, select = grep("Naive", colnames(coverage_mat), ignore.case = T))
-    est_se = tmp[,setdiff(grep("*\\_est_se$",colnames(tmp)), grep("^pi_",colnames(tmp)))]
-    est_se = est_se[grep("mean", rownames(est_se)),]
-    rownames(est_se) = paste0(scenarios, "_se_est")
-    est_mean = tmp[grep("mean|sd|MSE", rownames(tmp)), 
-                   setdiff( grep("SACE|naive", colnames(tmp), ignore.case = T), grep(paste(colnames(est_se), collapse="|") , colnames(tmp)) )] 
-    #scenario_ind = which(substr(rownames(est_mean),1,1)==scenarios[i])
-    colnames(coverage_mat) = mgsub(colnames(coverage_mat), c("Coverage_naive_without_matching", "Coverage_survivors_naive_without_matching"), 
-                         colnames(est_mean)[-grep("SACE", colnames(est_mean), ignore.case = T)]) 
-    colnames(est_se) = colnames(coverage_mat)
-    naive_estimators_sum = rbind(est_mean[,-grep("SACE", colnames(est_mean), ignore.case = T)], 
-                                 est_se, coverage_mat) %>% round(3) # rbind.fill
-    #naive_estimators_sum[-grep("MSE", rownames(naive_estimators_sum)),] = round(naive_estimators_sum[-grep("MSE", rownames(naive_estimators_sum)),], 2)
-    naive_estimators_sum = naive_estimators_sum[order(rownames(naive_estimators_sum)),]
-    naive_estimators_sum = merge(naive_estimators_sum, round(est_mean,3), by=0, all.x = TRUE) %>% subset(select = -SACE_conditional)
-    sum(naive_estimators_sum$most_naive_est.x - naive_estimators_sum$most_naive_est.y, na.rm = T)
-    naive_estimators_sum$Row.names <- mgsub( naive_estimators_sum$Row.names, c("_mean", "_sd"), c("_est", "_sd_emp"))
-    colnames(naive_estimators_sum) = mgsub(colnames(naive_estimators_sum), ".x", "")
-    naive_estimators_sum = subset(naive_estimators_sum, select = -grep("*\\.y$", colnames(naive_estimators_sum)))
-    save(naive_estimators_sum, file = "naive_estimators_sum.RData")
-  }
-}
-########################################################################
-
 
 ########################################################################
-# TABLE DESIGN
+# TABLE DESIGN ####
 list_all_CI_temp = list_all_CI # list_all_CI from main
 data_set_names_vec = c("_all", "_wout_O_0_0", "_S1")
 
@@ -343,109 +277,4 @@ naives_before_matching_coverage = lst_final_tables_ALL_est_ALL_dataset_PLUS_naiv
 final_tables = TABLES_add_naive_and_ding(data_set_names_vec, lst_final_tables_ALL_est_ALL_dataset, naives_before_matching_coverage)
 final_tables_general = adjustments_for_final_tables(final_tables)
 final_tables_crude = adjustments_for_final_tables_crude_est(final_tables)
-save(final_tables_general, file = "final_tables_general.RData")
-save(final_tables_crude, file = "final_tables_crude.RData")
-
-print(means_by_subset_sum %>% xtable(digits=c(3),
-        caption = "no misspec, small pi pro, 3X"), size="\\fontsize{11pt}{11pt}\\selectfont")
-
-# TODO print
-print(adjustments_for_tables_before_present(final_tables_crude$`_S1`) %>% xtable(digits=c(2),
-    caption = paste0("True model with interactions. ", ifelse(misspec_PS==1, "misspecefication: Unobserved in PS and Y",
-        ifelse(misspec_PS==2, "misspecefication: functional form of PS, no misspecification in Y", "No misspecification")), 
-                     ". ", (dim_x-1) ," X's, Delta Method, ",
-                     param_n_sim, " replications, ", "N=", param_n, ", pA = ", prob_A, ". OLS clustered SE")),
-      size="\\fontsize{11pt}{11pt}\\selectfont", include.rownames=F)
-print(pis %>% xtable(digits=2), size="\\fontsize{15pt}{15pt}\\selectfont", include.rownames=F)
-if(misspec_PS != 0){
-  if(misspec_PS == 1){
-    # beta interactions of U in Y ~ X + U is: # c(5,2), c(2,1)) # c(1,1), c(1,1)
-    print(cbind(beta_U1=c(1,1), beta_U2= c(1,1)) %>% 
-            xtable, size="\\fontsize{12pt}{12pt}\\selectfont", include.rownames=F)
-  }
-  print(cbind(U_factor=U_factor, funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log) %>% 
-          xtable, size="\\fontsize{12pt}{12pt}\\selectfont", include.rownames=F) 
-}
-
-print(adjustments_for_tables_before_present(final_tables_crude$`_S1`) %>% xtable(digits=c(2),
-  caption = paste0("True model with interactions. ", ifelse(misspec_PS==1, "misspecefication: Unobserved in PS and Y",
-      ifelse(misspec_PS==2, "misspecefication: functional form of PS, no misspecification in Y", "No misspecification")), 
-                   ". ", (dim_x-1) ," X's, Delta Method, ",
-                   param_n_sim, " replications, ", "N=", param_n, ", pA = ", prob_A, ". OLS clustered SE")),
-      size="\\fontsize{11pt}{11pt}\\selectfont", include.rownames=F)
-print(pis %>% xtable(digits=2), size="\\fontsize{15pt}{15pt}\\selectfont", include.rownames=F)
-print(mat_gamma[,c(1,2,dim_x+1,dim_x+2)] %>% xtable(digits=3), size="\\fontsize{10pt}{10pt}\\selectfont", include.rownames=F)
-print(betas_GPI %>% xtable, size="\\fontsize{12pt}{12pt}\\selectfont", include.rownames=F)
-
-
-# for summary of each scenario, including EM coeffs
-#print(mat_gamma[,c(1,2,7,8)] %>% xtable(digits=3), size="\\fontsize{10pt}{10pt}\\selectfont", include.rownames=F)
-#print(pis %>% xtable(digits=2), size="\\fontsize{12pt}{12pt}\\selectfont", include.rownames=F)
-print(round(mat_x_as,3) %>% xtable(digits=3), size="\\fontsize{10pt}{10pt}\\selectfont", include.rownames=F)
-print(subset(summary_EM_coeffs, select = c(mean, parameter, diff, perc)) %>% xtable(digits=3,
-  caption = "Check EM coefficients in order to understand why Ding is poorly perform when pi pro is small (pi pro is 0.1)."), 
-      size="\\fontsize{12pt}{12pt}\\selectfont")
-
-###################################################
-print(adjustments_for_tables_before_present(final_tables_general$`_S1`) %>% xtable(digits=c(2)),
-      size="\\fontsize{11pt}{11pt}\\selectfont", include.rownames=F)
-no_mis = adjustments_for_tables_before_present(final_tables_general$`_S1`)
-ff_mis = adjustments_for_tables_before_present(final_tables_general$`_S1`) %>% subset(select=-c(1:2))
-colnames(ff_mis) = paste0("mis_", colnames(ff_mis))
-print(cbind(no_mis, ff_mis) %>% 
-  filter(!Estimator %in% c("HL No", "BC Yes", "BC caliper inter Yes", "BC inter Yes", "HL Yes")) %>% 
-  xtable(digits=c(2)), size="\\fontsize{11pt}{11pt}\\selectfont", include.rownames=F)
-
-print(adjustments_for_tables_before_present(final_tables_crude$`_S1`) %>% xtable(digits=c(2)),
-      size="\\fontsize{11pt}{11pt}\\selectfont", include.rownames=F)
-print(naive_estimators_sum %>% xtable(digits=c(2)),
-      size="\\fontsize{11pt}{11pt}\\selectfont", include.rownames=F)
-###################################################
 ########################################################################
-
-
-########################################################################
-# TABLES for LaTeX
-# mat_nans %>% xtable(caption = 
-#                       "5 continous covariates, matching on mahal, ")
-# 
-
-
-# print(t(mat_all_estimators) %>% xtable(caption = 
-#  "nsim = 1000, 5 continous covariates, PM matching on PS, PA = 0.5"), include.rownames = FALSE)
-# print(t(mat_regression_estimators) %>% xtable(), include.rownames = FALSE)
-# print(summary_EM_coeffs %>% xtable(), include.rownames = FALSE)
-# print(t(mean_excluded_included_matching) %>% xtable(), include.rownames = FALSE)
-# print(t(mat_all_repeated_as_and_pro) %>% xtable(), include.rownames = FALSE)
-# print(t(mat_all_std_mean_diff) %>% xtable(), include.rownames = FALSE)
-
-
-t(mat_all_estimators) %>% xtable(digits=c(3), caption = paste0("True Model with interactions. ",
- cont_x, " continous covariates, nsim=", param_n_sim, " n=", param_n, 
- ", 1 over var matching on X with caliper ", caliper, " sd PS, PA = ", prob_A))
-print(mat_all_means_by_subset %>% xtable(digits=c(4)), size="\\fontsize{9pt}{11pt}\\selectfont")
-t(WLS_NOint_mat_regression_estimators) %>% xtable(digits=c(3), caption = "WLS wout interactions")
-t(WLS_YESint_mat_regression_estimators) %>% xtable(digits=c(3), caption = "WLS with interactions")
-t(OLS_NOint_mat_regression_estimators) %>% xtable(digits=c(3), caption = "OLS wout interactions")
-t(OLS_YESint_mat_regression_estimators) %>% xtable(digits=c(3), caption = "OLS with interactions")
-
-summary_EM_coeffs %>% xtable(digits=c(3))
-t(mean_excluded_included_matching) %>% xtable(digits=c(3))
-# t(mat_abs_std_mean_diff) %>% xtable(digits=3,
-#                         caption = "mean abs std diff of covariates")
-
-a = t(mat_all_matched_units)
-colnames(a) = substring(colnames(a), 1,8)
-print(xtable(a, digits=c(0),caption = 
-  paste0("True Model with interactions. ",
-  cont_x, " continous covariates, nsim=", param_n_sim, " n=", param_n, 
-  ", 1 over var matching on X with caliper ", caliper, " sd PS, PA = ", prob_A)), 
-  size="\\fontsize{5pt}{16pt}\\selectfont")
-# size="\\tiny",
-print(reT_mat_all_repeated_as_and_pro %>% xtable(digits=c(3)), size="\\fontsize{7pt}{10pt}\\selectfont")
-print(t(mat_all_std_mean_diff) %>% xtable(digits=c(3)), size="\\fontsize{5pt}{16pt}\\selectfont")
-#t(mat_all_std_mean_diff) %>% xtable(digits=c(3))
-########################################################################
-
-
-
