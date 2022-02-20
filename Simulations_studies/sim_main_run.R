@@ -17,52 +17,42 @@ source("Ding_Lu/PS_M_weighting_SA.R")
 
 
 #############################################################################################
-
 # treatment probability
 prob_A = 0.5
 
-# parameters for simulating x
+# parameters for simulating X
 #@@@@@@@@@@@@ dim_x includes intercept @@@@@@@@@@@@@@@
 dim_x = 6; cont_x = 5; categ_x = 0; vec_p_categ = rep(0.5, categ_x); dim_x_misspec = 2
 mean_x = rep(0.5, cont_x); var_x = rep(1, cont_x)
 
-# EM convergence parameters
-# iterations = 1000; epsilon_EM = 10^-6 
-iterations = 200; epsilon_EM = 10^-6 # epsilon_EM is for the EM convergence
-
 # monotonicity and PI assumptions
-monotonicity_assumption = "mono"; PI_assum = "strong"
+# monotonicity_assumption = "mono"; PI_assum = "strong"
 
-# misspec PARAMETERS (for PS model and Y model:
-# TODO misspec_PS: 0 <- NO, 1:only PS model, 2: PS model, and matching (mahalanobis, eucl...) and regression
+# misspec parameters (for PS model and Y model:
+# misspec_PS: 0 <- NO, 1:only PS model, 2: PS model, and matching (mahalanobis, eucl...) and regression
 misspec_outcome_funcform = FALSE; match_and_reg_watch_true_X = FALSE
 U_factor=1; funcform_factor_sqr=-3; funcform_factor_log=3
 mean_x_misspec = rep(0.5, dim_x_misspec)
-sim=2
-misspec_PS = 0 # 0: no misspec # 2: ff misspec
+#sim=2
+misspec_PS = 0 # 0: no misspec # 2: functional form misspecification
 # sensitivity paramters
 epsilon_1_GPI = 1
 
-# for covariance between X 
-# TODO Sigma here is vcov not sd cor. need to change in the PO sim in sim1 rows ~80
-'''corr_x = 0.3
-sqrt(var_x)
-cov_x <- diag(sqrt(5),cont_x) + corr_x - diag(1,cont_x) * corr_x # cov_x is vcov and corr
-X = mvrnorm(param_n, mu = mean_x, Sigma =  cov_x)
-apply(X, 2, mean); apply(X, 2, var); cov(X); cor(X)'''
+# EM convergence parameters
+iterations = 200; epsilon_EM = 10^-6 # epsilon_EM is for the EM convergence
 #############################################################################################
 
 ##########################################################
-# betas under GPI # betas_GP
-# TODO YES interactions between A and X:
-betas_GPI = as.matrix(rbind(c(22,5,2,1), c(20,3,3,0)))
-betas_GPI = as.matrix(rbind(c(22,5,2,1,3,5), c(20,3,3,0,1,3)))
-betas_GPI = as.matrix(rbind(c(22,rep(c(5,2,1,3,5),2)), c(20,rep(c(3,3,0,1,3),2))))
+# beta ####
+#  with interactions between A and X:
+betas_GPI = as.matrix(rbind(c(22,5,2,1), c(20,3,3,0))) # cont_x=3
+betas_GPI = as.matrix(rbind(c(22,5,2,1,3,5), c(20,3,3,0,1,3))) # cont_x=5
+betas_GPI = as.matrix(rbind(c(22,rep(c(5,2,1,3,5),2)), c(20,rep(c(3,3,0,1,3),2)))) # cont_x=10 
 
-# TODO NO interactions between A and X: "simple effect" is 2
-betas_GPI = as.matrix(rbind(c(22,3,4,5), c(20,3,4,5)))
-betas_GPI = as.matrix(rbind(c(22,3,4,5,1,3), c(20,3,4,5,1,3)))
-betas_GPI = as.matrix(rbind(c(22,rep(c(5,2,1,3,5),2)), c(20,rep(c(5,2,1,3,5),2))))
+#  without interactions between A and X: "simple effect" is 2
+betas_GPI = as.matrix(rbind(c(22,3,4,5), c(20,3,4,5))) # cont_x=3
+betas_GPI = as.matrix(rbind(c(22,3,4,5,1,3), c(20,3,4,5,1,3))) # cont_x=5
+betas_GPI = as.matrix(rbind(c(22,rep(c(5,2,1,3,5),2)), c(20,rep(c(5,2,1,3,5),2)))) # cont_x=10
 
 rownames(betas_GPI) = c("beta_treatment", "beta_control")
 ###############################################################################################
@@ -72,101 +62,47 @@ rownames(betas_GPI) = c("beta_treatment", "beta_control")
 var_GPI = as.matrix(rbind(1, 1))
 rownames(var_GPI) = c("var_treatment", "var_control")
 rho_GPI_PO = 0.4 #0.4 #1
-#sds_GPI_PO = 1
 ##########################################################
 
-
-
+# mat_gamma ####
 #############################################################################################
-#TODO mat_gamma ####
-#############################################################################################
-################ new values for gamma's 3X ####
-#TODO 25,50,75: large pi pro 3X
+# values for gamma's 3X ####
+# Large pi pro 3X
 mat_gamma = matrix(c(
-  c(0.08, rep(-0.355, dim_x-1)), c(0.2, rep(-0.11, dim_x-1))
-  ,c(-0.1, rep(0.27, dim_x-1)), c(-0.52, rep(-0.6, dim_x-1))
-  ,c(0.6, rep(1.325, dim_x-1)), c(-0.25, rep(0.25, dim_x-1))
-)
-,nrow = 3, byrow = T) 
-
-#TODO 25,50,75: small pi pro 3X:
+  c(-0.1, rep(0.27, dim_x-1)), c(-0.52, rep(-0.6, dim_x-1))
+ ,c(0.6, rep(1.325, dim_x-1)), c(-0.25, rep(0.25, dim_x-1))) ,nrow = 2, byrow = T) 
+# small pi pro 3X 
 mat_gamma = matrix(c(
-  c(1.05, rep(-0.4, dim_x-1)), c(0.8, rep(0.72, dim_x-1))
-  ,c(0.92, rep(1, dim_x-1)), c(0.9, rep(0.87, dim_x-1))
-  ,c(0.84, rep(1.2, dim_x-1)), c(0.32, rep(-0.2, dim_x-1))
-)
-,nrow = 3, byrow = T) 
+   c(-0.07, rep(1.24, dim_x-1)), c(1.25, rep(0.24, dim_x-1)) 
+  ,c(0.84, rep(1.2, dim_x-1)), c(0.32, rep(-0.2, dim_x-1))) ,nrow = 2, byrow = T)
 
-#TODO 25,50,75: small pi pro 3X for smaller prop in misspec: @@@@
+# values for gamma's 5x ####
+# large pi pro 5X 
 mat_gamma = matrix(c(
-  c(1.05, rep(-0.39, dim_x-1)), c(0.8, rep(0.72, dim_x-1))
-  ,c(-0.07, rep(1.24, dim_x-1)), c(1.25, rep(0.24, dim_x-1)) # @@@@
-  ,c(0.84, rep(1.2, dim_x-1)), c(0.32, rep(-0.2, dim_x-1))
-) ,nrow = 3, byrow = T)
-#############################################################################################
-
-#############################################################################################
-################  new values for gamma's 5x ####
-#TODO 25,50,75: large pi pro 5X:
+  c(-0.05, rep(0.16, dim_x-1)), c(-0.4, rep(-0.25, dim_x-1)) 
+ ,c(-0.5, rep(1.5, dim_x-1)), c(-0.25, rep(0.25, dim_x-1))) ,nrow = 2, byrow = T)
+# small pi pro 5X:
 mat_gamma = matrix(c(
-      c(0.3, rep(-0.3, dim_x-1)), c(0.275, rep(-0.1, dim_x-1))
-     ,c(-0.6, rep(0.35, dim_x-1)), c(-0.27, rep(-0.5, dim_x-1))
-      ,c(-0.5, rep(1.5, dim_x-1)), c(-0.25, rep(0.25, dim_x-1))
-    )
-    ,nrow = 3, byrow = T)
+   c(0.45, rep(0.75, dim_x-1)), c(0.62, rep(0.6, dim_x-1))
+  ,c(-0.12, rep(1.25, dim_x-1)), c(0.45, rep(-0.2, dim_x-1))) ,nrow = 2, byrow = T)
 
-
-#TODO 25,50,75: large pi pro 5X for larger prop in misspec: @@@@:
+# values for gamma's 10X #### 
+# large pi pro 10X:
 mat_gamma = matrix(c(
-  c(0.3, rep(-0.3, dim_x-1)), c(0.275, rep(-0.1, dim_x-1))
-  ,c(-0.05, rep(0.16, dim_x-1)), c(-0.4, rep(-0.25, dim_x-1)) # @@@@
-  ,c(-0.5, rep(1.5, dim_x-1)), c(-0.25, rep(0.25, dim_x-1))
-)
-,nrow = 3, byrow = T)
+  c(-0.954, rep(0.25, dim_x-1)), c(-0.31, rep(-0.16, dim_x-1))
+  ,c(-1.01, rep(0.8, dim_x-1)), c(-1.3, rep(0.45, dim_x-1))) ,nrow = 2, byrow = T)
 
-
-#TODO 25,50,75: small pi pro 5X:
+# small pi pro 10X 
 mat_gamma = matrix(c(
-    c(0.75, rep(0.125, dim_x-1)), c(0.6, rep(0.6, dim_x-1))
-   ,c(0.45, rep(0.75, dim_x-1)), c(0.62, rep(0.6, dim_x-1))
-   ,c(-0.12, rep(1.25, dim_x-1)), c(0.45, rep(-0.2, dim_x-1))
-   )
- ,nrow = 3, byrow = T)
-###################################################################
-
-################ new values for gamma's 10X #### 
-#TODO 25,50,75: large pi pro 10X:
-mat_gamma = matrix(c(
-  c(0.58, rep(-0.2, dim_x-1)), c(0.54, rep(-0.1, dim_x-1))
-  ,c(-0.954, rep(0.25, dim_x-1)), c(-0.31, rep(-0.16, dim_x-1))
-  ,c(-1.01, rep(0.8, dim_x-1)), c(-1.3, rep(0.45, dim_x-1))
-)
-,nrow = 3, byrow = T)
-
-#TODO 25,50,75: small pi pro 10X:
-mat_gamma = matrix(c(
-  c(0.042, rep(0.29, dim_x-1)), c(-0.1, rep(0.51, dim_x-1))
-  ,c(0.024, rep(0.41, dim_x-1)), c(0.26, rep(0.32, dim_x-1))
-  ,c(-0.43, rep(0.7, dim_x-1)), c(-0.275, rep(0.3, dim_x-1))
-)
-,nrow = 3, byrow = T)
-
-
-#TODO 25,50,75: small pi pro 10X for smaller prop in misspec: @@@@::
-mat_gamma = matrix(c(
-  c(0.042, rep(0.29, dim_x-1)), c(-0.1, rep(0.51, dim_x-1))
-  ,c(0.024, rep(0.41, dim_x-1)), c(0.26, rep(0.32, dim_x-1))
-  ,c(-0.45, rep(0.61, dim_x-1)), c(0.4, rep(-0.02, dim_x-1))
-)
-,nrow = 3, byrow = T)
-
-
+  c(0.024, rep(0.41, dim_x-1)), c(0.26, rep(0.32, dim_x-1))
+  ,c(-0.45, rep(0.61, dim_x-1)), c(0.4, rep(-0.02, dim_x-1))) ,nrow = 2, byrow = T)
 #############################################################################################
 
+# assign 0's to gamma_pro and add coefficients names
 gamma_pro = rep(0, dim_x)
 colnames(mat_gamma) = paste0( "gamma", paste(rep(c(0:(dim_x-1)), times = 2)), rep(c("as", "ns"), each = dim_x) )
 
-# TODO calculate with function: ####
+
 extract_pis_from_scenarios = function(nn=250000){
   big_lst = list(); mat_x_as <- mat_pis <- mat_x_by_g_A <- NULL
   for( k in c(1 : nrow(mat_gamma)) ){
@@ -190,9 +126,9 @@ extract_pis_from_scenarios = function(nn=250000){
 mat_gamma[,c(1,2,7,8)]
 
 big_lst = list(); big_mat_x_by_g_A=NULL
-for(i in 1:100){
+for(i in 1:10){
   print(i)
-  big_lst[[i]] = extract_pis_from_scenarios(param_n=2000)
+  big_lst[[i]] = extract_pis_from_scenarios(nn=2000)
   big_mat_x_by_g_A = rbind(big_mat_x_by_g_A, big_lst[[i]]$mat_x_by_g_A)
 }
 big_mat_x_by_g_A = subset(big_mat_x_by_g_A, select = c(Scenar,A,g, grep("X", colnames(big_mat_x_by_g_A))))
