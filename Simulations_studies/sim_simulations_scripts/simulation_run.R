@@ -5,31 +5,21 @@
 # TODO misspec_PS: 0 <- NO, 1:add 2 new U's to PS model and to outcome model
 # 2: add transformations to PS model, and remain original X's in ourcome model.
 # when misspec_PS = 1 & U_factor=0, there is no misspecification. U_factor=1 means the coeffs of U are the same as X, in the PS model
+
 simulate_data_function = function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, param_n,
                                   misspec_PS, misspec_outcome_funcform=FALSE,
                                   U_factor=0, funcform_factor_sqr=0, funcform_factor_log=0,
                                   epsilon_1_GPI = 1,
                                   only_mean_x_bool=FALSE){
   if(is.null(seed_num)!=TRUE){set.seed(seed_num)}
-  #print(gamma_pro)
-  # Simulating Multinomial Logit Data for principal score
+
   # draw covariate matrix
   x_obs <- matrix( c( rep(1,param_n), 
                       mvrnorm(param_n, mu=mean_x, Sigma = diag(var_x, cont_x))), 
                    nrow = param_n )
   # add categorial variable, if needed (needed when categ_x > 0)
   if(categ_x > 0){
-    
-    x_categorial = data.table(list.cbind(lapply(vec_p_categ, 
-                                                function(x) rbinom(n=param_n,prob=x,size=1))))
-    # TODO turn x_categorial to a factor somehow
-    # a = data.frame(apply(x_categorial, 2, as.factor))
-    # apply(a, 2, class)
-    # x_categorial %>% mutate_at( factor(.))
-    # a = x_categorial[, lapply(.SD, as.factor)]
-    # a = apply(x_categorial, 2, as.factor)
-    # a <- data.frame(list.cbind(lapply(x_categorial, factor)))
-    
+    x_categorial = data.table(list.cbind(lapply(vec_p_categ, function(x) rbinom(n=param_n,prob=x,size=1))))
     x_obs = as.matrix(cbind(x_obs, x_categorial))
   }
   colnames(x_obs) = paste0("X", c(1:dim_x))
@@ -40,11 +30,9 @@ simulate_data_function = function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, 
     gamma_as_adj = gamma_as; gamma_ns_adj = gamma_ns; gamma_pro_adj = gamma_pro; betas_GPI_adj = betas_GPI 
   }
   
-  # TODO misspec1: add 2 new U's to PS model and to outcome model
+  # misspec1: add 2 new U's to PS model and to outcome model
   if(misspec_PS == 1){
-    #min(x[,2]) < 0
     x_misspec = mvrnorm(param_n, mu=mean_x_misspec, Sigma = diag(var_x, dim_x_misspec))
-    #x_misspec[,1] = x_misspec[,1] ^ 2
     colnames(x_misspec) = paste0("U", c(1:dim_x_misspec))
     # PS true model covariates
     x_PS = as.matrix( data.frame( x_obs, x_misspec ) )
@@ -53,18 +41,15 @@ simulate_data_function = function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, 
     gamma_as_adj = c(gamma_as, U_factor*rep(gamma_as[2], dim_x_misspec))
     gamma_ns_adj = c(gamma_ns, U_factor*rep(gamma_ns[2], dim_x_misspec))
     gamma_pro_adj = rep(0, length(gamma_as_adj))
-    # c(5,2), c(2,1)
     betas_GPI_adj = as.matrix( data.frame(betas_GPI, c(1,1), c(1,1)) )
     colnames(betas_GPI_adj) = rep("", ncol(betas_GPI_adj))
   }
   
-  # TODO misspec2: replace 2 X's with x^2 and ~logx, to PS model and to outcome model
+  # misspec2: replace 2 X's with x^2 and ~logx, to PS model and to outcome model
   if(misspec_PS == 2){
-    #min(x[,3]) < 0
     x_misspec = as.matrix(data.frame(x_obs[,(ncol(x_obs) - 1)]^2,
                                      log(x_obs[,ncol(x_obs)] - (min(x_obs[,ncol(x_obs)]) - 0.1)))) %>% as.data.frame
     colnames(x_misspec) = c("X_sqr", "X_log")
-    head(x_misspec)
     # PS true model covariates
     x_PS = as.matrix( data.frame( x_obs[,-c((ncol(x_obs) - 1) ,ncol(x_obs))], x_misspec ) )
     # Y true model covariates
@@ -81,30 +66,22 @@ simulate_data_function = function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, 
     colnames(betas_GPI_adj) = rep("", ncol(betas_GPI_adj))
   }
   
-  
   # vector of probabilities
-  # print(gamma_pro_adj); print(class(gamma_pro_adj)); print(class(gamma_as_adj))
   vProb = cbind(exp(x_PS%*%gamma_as_adj), exp(x_PS%*%gamma_pro_adj), exp(x_PS%*%gamma_ns_adj)) 
   prob = vProb / apply(vProb, 1, sum) 
   # check that at least the mean of each stratum is positive
   probs_mean = apply(vProb, 2, mean) / sum(apply(vProb, 2, mean))
   # multinomial draws
-  #set.seed(102)
-  
   mChoices = t(apply(prob, 1, rmultinom, n = 1, size = 1))
-  #dfM = cbind.data.frame(y = apply(mChoices, 1, function(x_PS) which(x_PS==1)), x_PS)
   g_vec_num = apply(mChoices, 1, function(z) which(z==1))
   g_vec = ifelse(g_vec_num == 1, "as", ifelse(g_vec_num == 2, "pro", 
                                               ifelse(g_vec_num == 3, "ns", "har")))
   # descriptive of the principal scores
   pi = table(g_vec) / param_n
   pi = t(c(pi)); colnames(pi) = paste0("pi_", colnames(pi))
-  #hist(g_vec_num)
-  #probs_mean
-  
-  ###############  create initial data   ############### 
-  # data is actually going to be used in the EM first, in simulate_data_run_EM_and_match.
-  # Thus, data contains the "obs" X.
+
+  # create initial data ####
+  # data is actually going to be used in the EM first, in simulate_data_run_EM_and_match. Thus, data contains the "obs" X.
   data = data.frame(prob = prob, x_obs, g = g_vec, g_num = g_vec_num,
                     A = rbinom(param_n, 1, prob_A))
   data$S = ifelse(data$g == "as", 1, ifelse( data$g == "pro" & data$A == 1, 1,
@@ -117,108 +94,47 @@ simulate_data_function = function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, 
   if(only_mean_x_bool==TRUE){
     return(list(x_as=x_as, x_pro=x_pro, x_ns=x_ns, pi=pi, mean_by_A_g=mean_by_A_g))
   }
-  ###############  models for Y(1) & y(0):
+  
+  # models for Y(1) & y(0) ####
   PO_by_treatment_and_stratum = function(coeffs, sigma_square_param){
-    # TODO check which is the true formula
-    #return(rnorm(n, mean = coeffs[1] + coeffs[2] * x, sd = sqrt(sigma_square)))
     return(rnorm(n, mean = x %*% matrix(coeffs,nrow = dim_x, ncol = 1), sd = sqrt(sigma_square_param)))
   }
   
-  # TODO model with trong PI with pair dependent in errors 
-  # create an n * 2 matrix with dependent errors
-  if(PI_assum == "strong"){
-    print(PI_assum)
-    if(rho_GPI_PO != 0){
-      print(paste0("rho_GPI_PO", " is ", rho_GPI_PO))
-      #rnorm(3, mean = c(1:3), sd = 0)
-      # simulate dependency between errors
-      cov_GPI_PO = rho_GPI_PO * sqrt(var_GPI[1]) * sqrt(var_GPI[2])
-      cov_mat <- cbind(c(var_GPI[1], cov_GPI_PO), c(cov_GPI_PO, var_GPI[2]))
-      mu_x_beta_Y1 = x %*% matrix(betas_GPI_adj[1,], ncol = 1)
-      mu_x_beta_Y0 = x %*% matrix(betas_GPI_adj[2,], ncol = 1)
-      
-      ## two_PO = lapply(1:n, function(l){
-      ##   mvrnorm(1, mu = rep(0, 2), Sigma = cov_mat)
-      ## })
-      ##cov(two_PO); cor(two_PO)
-      
-      two_PO = lapply(1:param_n, function(l){
-        mvrnorm(1, mu = c(mu_x_beta_Y1[l], mu_x_beta_Y0[l]), cov_mat)
-      })
-      two_PO = data.frame(list.rbind(two_PO))
-    }
-    
-    if(rho_GPI_PO == 0){
-      print(paste0("rho_GPI_PO", " is ", 0))
-      # wout dependency
-      # only 2 models: 1 for Y1 and 1 for Y0
-      two_PO = lapply(1 : nrow(betas_GPI_adj), function(l){
-        PO_by_treatment_and_stratum(betas_GPI_adj[l,], sigma_square_ding[l])
-      })
-      two_PO = data.frame(list.cbind(two_PO))
-    }
-    
-    colnames(two_PO) = c("Y1", "Y0")
-    mean(two_PO$Y1, na.rm = T); mean(two_PO$Y0, na.rm = T)
-    dt = data.frame(data, two_PO)
+  # TODO model with PI with pair dependent errors 
+  if(rho_GPI_PO != 0){
+    print(paste0("rho_GPI_PO", " is ", rho_GPI_PO))
+    # simulate dependency between errors
+    cov_GPI_PO = rho_GPI_PO * sqrt(var_GPI[1]) * sqrt(var_GPI[2])
+    cov_mat <- cbind(c(var_GPI[1], cov_GPI_PO), c(cov_GPI_PO, var_GPI[2]))
+    mu_x_beta_Y1 = x %*% matrix(betas_GPI_adj[1,], ncol = 1)
+    mu_x_beta_Y0 = x %*% matrix(betas_GPI_adj[2,], ncol = 1)
+    two_PO = lapply(1:param_n, function(l){
+      mvrnorm(1, mu = c(mu_x_beta_Y1[l], mu_x_beta_Y0[l]), cov_mat)
+    })
+    two_PO = data.frame(list.rbind(two_PO))
+  }
+  # TODO model with PI with pair independent errors
+  if(rho_GPI_PO == 0){
+    print(paste0("rho_GPI_PO", " is ", 0))
+    # wout dependency
+    # only 2 models: 1 for Y1 and 1 for Y0
+    two_PO = lapply(1 : nrow(betas_GPI_adj), function(l){
+      PO_by_treatment_and_stratum(betas_GPI_adj[l,], sigma_square_ding[l])
+    })
+    two_PO = data.frame(list.cbind(two_PO))
   }
   
-  # model wout WPI: 
-  # Y_as_1 = rnorm(n, mean = beta0_as1 + beta1_as1 * x, sd = sqrt(sigma_square_as1))
-  if(PI_assum == "nothing"){
-    print(PI_assum)
-    # creating all_4_defined_PO 
-    all_4_defined_PO = lapply(1 : nrow(betas), function(l){
-      PO_by_treatment_and_stratum(betas[l,], sigma_square[l])
-    }) 
-    all_4_defined_PO = data.frame(list.cbind(all_4_defined_PO))
-    colnames(all_4_defined_PO) = c("Y_as1","Y_as0", "Y_pro1", "Y_har0")
-    
-    # creating all_4_not_defined_PO
-    all_4_not_defined_PO = data.frame(Y_pro0 = rep(0, param_n), Y_har1 = rep(0, param_n),
-                                      Y_ns1 = rep(0, param_n), Y_ns0 = rep(0, param_n))
-    # combine all 8 PO and order by treatment and strata
-    all_8_PO = data.frame(all_4_defined_PO, all_4_not_defined_PO)
-    all_8_PO <- subset(all_8_PO, select = c(Y_as1, Y_pro1, Y_har1, Y_ns1,
-                                            Y_as0, Y_pro0, Y_har0, Y_ns0))
-    Y0 = rep(0, param_n); Y1 = rep(0, param_n); PO = data.frame(Y1, Y0)
-    dt = data.frame(data, all_8_PO, PO)
-    
-    # calculate appropriate PO according to the strata and treatment arm
-    #dat = dt; row = 1
-    PO_func = function(dat, row){
-      temp_row = dat[row ,]
-      temp_row$Y1 = as.numeric(temp_row[paste0("Y_", temp_row$g, 1)])
-      temp_row$Y0 = as.numeric(temp_row[paste0("Y_", temp_row$g, 0)])
-      return(temp_row)
-    }
-    dt = lapply(1:n, function(l){
-      PO_func(dt, l)
-    }) 
-    dt = data.frame(list.rbind(dt))
-  }
-  #colnames(dt)[c( ( length(colnames(dt)) - 1 ), length(colnames(dt)) )] = c("Y_1", "Y_0")
-  #View(dt)
+  colnames(two_PO) = c("Y1", "Y0")
+  mean(two_PO$Y1, na.rm = T); mean(two_PO$Y0, na.rm = T)
+  dt = data.frame(data, two_PO)
+  
   # calculate Y with SUTVA
   dt$Y = (dt$A * dt$Y1 + (1 - dt$A) * dt$Y0) * dt$S
-  # TODO epsilon_1_GPI: sensitivity parameter to violation of GPI
-  #dt$Y[dt$g == "as" & dt$A == 1] = (1 + epsilon_1_GPI) * dt$Y[dt$g == "as" & dt$A == 1]
-  # dt$Y[dt$g == "pro" & dt$A == 1] = epsilon_1_GPI * dt$Y[dt$g == "pro" & dt$A == 1]
-  
   dt = data.frame(id = c(1:param_n), dt)
   dt = data.table(dt)
   # senity check
   as_1 = filter(dt, g=="as", A==1); mean(as_1$Y)
   pro_1 = filter(dt, g=="pro", A==1); mean(pro_1$Y)
-  
-  # hist of X at each stratum
-  # as_x = dt[g=="as", X2]
-  # #hist(as_x)
-  # ns_x = dt[g=="ns", X2]
-  # #hist(ns_x)
-  # pro_x = dt[g=="pro", X2]
-  #hist(pro_x)
-  
   dt$OBS = paste0("O(", dt$A, ",", dt$S, ")")
   #OBS table
   OBS_values = data.frame(unique(cbind(dt$A, dt$S))); colnames(OBS_values) = c("S", "A")
@@ -235,18 +151,6 @@ simulate_data_function = function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, 
   pi_pro_est = mean(filter(dt, A==1)$S) - mean(filter(dt, A==0)$S)
   pis_est = c(pi_as_est_func = pi_as_est, pi_ns_est_func = pi_ns_est, pi_pro_est_func = pi_pro_est)
   
-  # 
-  # # some basics estimators
-  # most_naive_est = mean(dt[A==1, Y]) - mean(dt[A==0, Y])
-  # sur_naive_est = mean(dt[A==1 & S == 1, Y]) - mean(dt[A==0 & S == 1, Y])
-  # P_s1_given_a1 = length(dt[A==1 & S == 1, Y]) / (length(dt[A==0 & S == 1, Y]) + length(dt[A==1 & S == 1, Y]))
-  
-  # check with data frame
-  # d_a1 = filter(dt, A==1); d_a0 = filter(dt, A==0)
-  # most_naive_est2 = mean(d_a1$Y) - mean(d_a0$Y)
-  # d_a1s1 = filter(dt, A==1, S==1); d_a0s1 = filter(dt, A==0, S==1)
-  # sur_naive_est2 = mean(d_a1s1$Y) - mean(d_a0s1$Y)
-  end_time <- Sys.time()
   return(list(dt=dt, x_obs=x_obs, x_PS=x_PS, x_outcome=x,
               OBS_table=OBS_table, pi=pi, pis_est=pis_est, probs_mean=probs_mean))
 }
@@ -274,19 +178,14 @@ simulate_data_run_EM_and_match = function(seed = 101, return_EM_PS = FALSE, inde
   while (i <= param_n_sim) {
   #for (i in 1:param_n_sim)
     #set.seed(100 + i)
-    #set.seed(100 + i + index_set_of_params)
     print(paste0("this is index_set_of_params ", index_set_of_params))
     print(paste0("this is n_sim ", i, " in simulate_data_run_EM_and_match. ",
          "index_EM_not_conv: ", index_EM_not_conv, ". real number of iterations: "  , real_iter_ind, "."))
     start_time1 <- Sys.time()
-    #data_for_EM = simulate_data_function(gamma_as, gamma_ns, gamma_pro, param_n, misspec_PS, epsilon_1_GPI = epsilon_1_GPI)
-    #set.seed(258)
     list_data_for_EM_and_X = simulate_data_function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, param_n,
           misspec_PS, misspec_outcome_funcform, U_factor, funcform_factor_sqr, funcform_factor_log,
           epsilon_1_GPI = epsilon_1_GPI)
     data_for_EM = list_data_for_EM_and_X$dt
-    #apply(subset(filter(data_for_EM, g=="as",A==1), select = c("A", covariates)), 2, mean)
-    #apply(subset(filter(data_for_EM, g=="as",A==0), select = c("A", covariates)), 2, mean)
     x = list_data_for_EM_and_X$x_obs; x_PS = data.frame(list_data_for_EM_and_X$x_PS)
     x_outcome = data.frame(list_data_for_EM_and_X$x_outcome)
     OBS_table = list_data_for_EM_and_X$OBS_table
@@ -299,35 +198,10 @@ simulate_data_run_EM_and_match = function(seed = 101, return_EM_PS = FALSE, inde
     pi_pro_est = mean(filter(data_for_EM, A==1)$S) - mean(filter(data_for_EM, A==0)$S)
     pis_est = c(pi_as_est = pi_as_est, pi_ns_est = pi_ns_est, pi_pro_est = pi_pro_est)
     
-    # senity check
-    # as_1 = filter(data_for_EM, g=="as", A==1); mean(as_1$Y)
-    # pro_1 = filter(data_for_EM, g=="pro", A==1); mean(pro_1$Y)
-    # X_sub_cols = colnames(data_for_EM)[grep("X", colnames(data_for_EM))][-1]
-    # in_range_as_1 = rowSums(apply(subset(as_1, select = X_sub_cols), 2, function(x) x>0.1 & x<0.5))
-    # in_range_pro_1 = rowSums(apply(subset(pro_1, select = X_sub_cols), 2, function(x) x>0.1 & x<0.5))
-    # mean(as_1$Y[in_range_as_1>=3]); mean(pro_1$Y[in_range_pro_1>=3])
-    
     ###########################################################
     # real parameter
     SACE = mean(data_for_EM[g_num==1 , Y1]) - mean(data_for_EM[g_num==1, Y0])
     SACE_conditional = mean(data_for_EM[A==1 & g_num==1 , Y]) - mean(data_for_EM[A==0 & g_num==1, Y])
-    
-    
-    # naive estimators, old and probably wrong version
-    #most_naive_est = mean(data_for_EM[A==1, Y]) - mean(data_for_EM[A==0, Y])
-    #most_naive_est_se = sqrt(( var(data_for_EM[A==1, Y]) + var(data_for_EM[A==0, Y]) ) / nrow(data_for_EM))
-    # CI_by_SE_and_Z_val_most_naive = round(most_naive_est + c(-1,1) * 1.96 * most_naive_est_se, 3)
-    # CI_by_SE_and_Z_val_most_naive = paste(CI_by_SE_and_Z_val_most_naive, sep = ' ', collapse = " , ")
-    # 
-    # # sur_naive_est  restricted analysis
-    # sur_naive_est = mean(data_for_EM[A==1 & S == 1, Y]) - mean(data_for_EM[A==0 & S == 1, Y])
-    # sur_naive_est_se = sqrt(( var(data_for_EM[A==1 & S==1, Y]) + var(data_for_EM[A==0 & S==1, Y]) ) / nrow(data_for_EM))
-    # CI_by_SE_and_Z_val_sur_naive = round(sur_naive_est + c(-1,1) * 1.96 * sur_naive_est_se, 3)
-    # CI_by_SE_and_Z_val_sur_naive = paste(CI_by_SE_and_Z_val_sur_naive, sep = ' ', collapse = " , ")
-    # 
-    # CI_naives_before_matching = data.frame(CI_by_SE_and_Z_val_most_naive, CI_by_SE_and_Z_val_sur_naive)
-    # colnames(CI_naives_before_matching) = c("naive_without_matching", "survivors_naive_without_matching")
-    
     
     # naive estimators
     # naive
@@ -357,21 +231,6 @@ simulate_data_run_EM_and_match = function(seed = 101, return_EM_PS = FALSE, inde
       next()
     }
     ###########################################################
-    
-    # Ding EM
-    #PROB[i,] = c(prob.c, prob.a, prob.n)/sum
-    # start_timeDing <- Sys.time()
-    # EMding = PS_pred(Z=data_for_EM$A, D=data_for_EM$S,
-    #         X=as.matrix(subset(data_for_EM, 
-    #            select = grep(paste(X_sub_cols, collapse="|"), colnames(data_for_EM)))), 
-    #          beta.a = NULL, beta.n = NULL, 
-    #          iter.max = 12, error0 = 0.001, Trace = FALSE)
-    # end_timeDing <- Sys.time()
-    # print(paste0("Ding EM lasts ", difftime(end_timeDing, start_timeDing)))
-    # # adjust the cols the same order as in myEM: as, ns, pro
-    # PS_est = data.frame(EMding$PROB[,2], EMding$PROB[,3], EMding$PROB[,1])
-    # colnames(PS_est) = c("EMest_p_as", "EMest_p_ns", "EMest_p_pro")
-    # data_with_PS = data.table(data_for_EM, PS_est)
     
     # Ding estimator
     #TODO in ding the pis order id PROB[i,] = c(prob.c, prob.a, prob.n)/sum
@@ -459,12 +318,6 @@ simulate_data_run_EM_and_match = function(seed = 101, return_EM_PS = FALSE, inde
     data_with_PS[, `:=` (O11_posterior_ratio = EMest_p_as / (EMest_p_as + EMest_p_pro)
                           , W_1_as = ( EMest_p_as / (EMest_p_as + EMest_p_pro) ) / O11_prior_ratio)]
      
-    # data_with_PS[, W_1_as_Y := W_1_as * Y]
-    # DING_est = mean(data_with_PS[A==1 & S == 1, W_1_as_Y]) - mean(data_with_PS[A==0 & S == 1, Y])
-    # 
-    # ##### DING model assisted, 3 options, only 1 for now: 
-    # DING_model_assisted_est_ps = DING_model_assisted_func(data_with_PS, x)
-    
     #########################################################################################
     # MATCHING and estimation 
     # TODO if I want to allow matching (mahalanobis, euclead) and rfegression to see the true x
@@ -482,7 +335,6 @@ simulate_data_run_EM_and_match = function(seed = 101, return_EM_PS = FALSE, inde
     #save(data_list50, file = "data_list50.RData")
     
     if(!exists("one_type_replace")){
-      print("NO one_type_replace")
       lst_matching_estimators_end_excluded_included = list()
       replace_vec = c(FALSE, TRUE)
       #set.seed(105)
@@ -677,41 +529,6 @@ simulate_data_run_EM_and_match = function(seed = 101, return_EM_PS = FALSE, inde
       
       
       }
-    
-    
-    # TODO run my_matching_func_pairmatch similar process to the case 
-    # where if(exists("one_type_replace") == TRUE)
-    if(pairmatch_bool == TRUE){
-      print("pairmatch")
-      matching_estimators_end_excluded_included_pairmatch = 
-        lapply(1:length(data_list), function(l){
-          my_matching_func_pairmatch(X_sub_cols, data_list[[l]], 
-                                     M=1, replace = FALSE,
-                                     estimand = "ATC", mahal_match = 2, caliper = caliper, OBS_table)
-        })
-      
-      matching_estimators_pairmatch = 
-        list.rbind(lapply(matching_estimators_end_excluded_included_pairmatch,
-                          head, 2))
-      matching_estimators_pairmatch = 
-        data.frame(t(unlist(matching_estimators_pairmatch)))
-      colnames(matching_estimators_pairmatch) = 
-        paste0(rep(c("pairMATCH_keepS0", "pairMATCH_removeS0"), each = 3),
-               "_", c("all", "wout_O_0_0", "S1"))
-      
-      # excluded_included_matching from matching function
-      excluded_included_matching_pairmatch = 
-        as.numeric(sapply(matching_estimators_end_excluded_included_pairmatch,
-                          "[[", 3))
-      
-      names(excluded_included_matching_pairmatch) = paste0(rep(c("all", "wout_O_0_0", "S1" ),each = 5), "_",
-                                                           rep(colnames(t(sapply(matching_estimators_end_excluded_included_pairmatch,
-                                                                                 "[[", 3)))))
-      
-      # TODO add std_mean_diff
-      
-    }
-    
     
     # TODO 1. put all results together in the current row of mat_param_estimators
     mat_param_estimators = rbind( mat_param_estimators,

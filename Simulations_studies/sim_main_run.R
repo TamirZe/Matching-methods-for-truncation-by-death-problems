@@ -25,9 +25,6 @@ prob_A = 0.5
 dim_x = 6; cont_x = 5; categ_x = 0; vec_p_categ = rep(0.5, categ_x); dim_x_misspec = 2
 mean_x = rep(0.5, cont_x); var_x = rep(1, cont_x)
 
-# monotonicity and PI assumptions
-# monotonicity_assumption = "mono"; PI_assum = "strong"
-
 # misspec parameters (for PS model and Y model:
 # misspec_PS: 0 <- NO, 1:only PS model, 2: PS model, and matching (mahalanobis, eucl...) and regression
 misspec_outcome_funcform = FALSE; match_and_reg_watch_true_X = FALSE
@@ -98,7 +95,7 @@ mat_gamma = matrix(c(
   ,c(-0.45, rep(0.61, dim_x-1)), c(0.4, rep(-0.02, dim_x-1))) ,nrow = 2, byrow = T)
 #############################################################################################
 
-# assign 0's to gamma_pro and add coefficients names
+# assign 0's to gamma_pro and add coefficients names ####
 gamma_pro = rep(0, dim_x)
 colnames(mat_gamma) = paste0( "gamma", paste(rep(c(0:(dim_x-1)), times = 2)), rep(c("as", "ns"), each = dim_x) )
 
@@ -133,9 +130,9 @@ for(i in 1:10){
 }
 big_mat_x_by_g_A = subset(big_mat_x_by_g_A, select = c(Scenar,A,g, grep("X", colnames(big_mat_x_by_g_A))))
 big_mat_x_by_g_A = data.table(big_mat_x_by_g_A)[, lapply(.SD, mean), by=c("Scenar", "A", "g")] %>% arrange(Scenar, g, A)
-#############################################################################################
 
-param_n = 2000; param_n_sim = 1000 # param_n = 2000; param_n_sim = 1000
+
+param_n = 2000; param_n_sim = 10 # param_n = 2000; param_n_sim = 1000
 caliper = 0.25; pairmatch_bool = FALSE
 match_on = "O11_posterior_ratio" # NULL # Feller and Mialli: "EMest_p_as" # Ding Lu appendix: "O11_posterior_ratio"
 mu_x_fixed = FALSE; mat_x_as; x_as = mat_x_as[1,]
