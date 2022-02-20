@@ -286,7 +286,6 @@ simulate_data_run_EM_and_match = function(seed = 101, return_EM_PS = FALSE, inde
     data_with_PS[, `:=` (O11_posterior_ratio = EMest_p_as / (EMest_p_as + EMest_p_pro)
                           , W_1_as = ( EMest_p_as / (EMest_p_as + EMest_p_pro) ) / O11_prior_ratio)]
      
-    #########################################################################################
     # MATCHING and estimation 
     # TODO if I want to allow matching (mahalanobis, euclead) and rfegression to see the true x
     # TODO i.e. misspecification ONLY in the PS model!!!
@@ -418,7 +417,6 @@ simulate_data_run_EM_and_match = function(seed = 101, return_EM_PS = FALSE, inde
     colnames(diff_distance) = paste0("d_", paste0( "rep", rep(substr(replace_vec,1,1), each=3), "_",
                                                    paste0(rep(c("MATCH", "MATCH"), each = 3),
                                                           "_", c("all", "wout_O_0_0", "S1"))))
-    
     
     # TODO 5.
     # standardized mean diff as2pro, as2as per each data set, with and wout replacements

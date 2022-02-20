@@ -156,21 +156,6 @@ my_matching_func_multiple = function(match_on = NULL, X_sub_cols, m_data, weight
      
     }
   
-  #summary(ATE_MATCH_PS)
-  #ATE_MATCH_PS$est; ATE_MATCH_PS$se; ATE_MATCH_PS$nobs; ATE_MATCH_PS$index.dropped
-  
-  # TODO HL
-  #TODO aligned HL (for matching with replacement)
-  # if(replace==TRUE){
-  #   # https://rdrr.io/cran/senstrat/man/hodgeslehmann.html
-  #   # library(senstrat)
-  #   # data("homocyst")
-  #   # attach(homocyst)
-  #   # sc<-hodgeslehmann(log2(homocysteine),z,stf,align="hl")
-  #   # detach(homocyst)
-  #   ART <- hodgeslehmann(dt_match_S1_pairs$Y,dt_match_S1_pairs$A,dt_match_S1_pairs$pair, align="hl", tau=0)
-  #   wilcoxon = wilcox.test(diff_per_pair,conf.int=T)
-  # }
   
   #if(replace==FALSE){
     wilcoxon = wilcox.test(diff_per_pair,conf.int=T)
@@ -231,14 +216,6 @@ my_matching_func_multiple = function(match_on = NULL, X_sub_cols, m_data, weight
   mean_as = apply(subset(initial_data_x_as, select = X_sub_cols[-1]), 2, mean)
   mean_A0_S1 = apply(subset(initial_data_x_as_A0, select = X_sub_cols[-1]), 2, mean)
   mean_A1_S1_as = apply(subset(initial_data_x_as_A1, select = X_sub_cols[-1]), 2, mean)
-  
-  # histograms
-  #apply(subset(initial_data_x_as, select = X_sub_cols[-1]), 2, function(i) hist(x, main = ))
-  
-  # lapply(c(1:length(X_sub_cols[-1])), function(i){
-  #   hist(subset(initial_data_x_as_A1, select = X_sub_cols[-1])[,i], xlab = "covariate",
-  #        main = paste0("initial_data_as_A1 " , X_sub_cols[-1][i]))
-  # })
   
   # descriprive after matching
   dt_match_S1_A0 = subset(dt_match_S1, select = grep("A0|ctr", colnames(dt_match_S1)))

@@ -153,25 +153,6 @@ for ( k in c(1 : nrow(mat_gamma)) ){
   gamma_ns=as.numeric(mat_gamma[k, (dim_x+1): (2*dim_x)])
   gamma_pro=gamma_pro
   start_time <- Sys.time()
-  
-  if(only_naive_bool == TRUE){
-    EM_and_matching = simulate_data_run_EM_and_match(return_EM_PS = FALSE, index_set_of_params=k,
-       gamma_as=gamma_as, gamma_ns=gamma_ns, gamma_pro=gamma_pro, misspec_PS=misspec_PS,
-       misspec_outcome_funcform=FALSE, U_factor=U_factor, funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log, 
-       match_and_reg_watch_true_X=FALSE, param_n=param_n, param_n_sim=param_n_sim,
-       iterations=iterations, epsilon_EM = epsilon_EM, caliper=caliper, epsilon_1_GPI=epsilon_1_GPI,
-       match_on = match_on, mu_x_fixed=mu_x_fixed, x_as=mat_x_as[k,], only_naive_bool=only_naive_bool)
-    
-    mat_SACE_estimators = EM_and_matching$mat_param_estimators
-    # nrow = nrow(mat_gamma) 
-    df_parameters = matrix(rep(as.numeric(mat_gamma[k,]), each=nrow(mat_SACE_estimators)), nrow=nrow(mat_SACE_estimators))
-    colnames(df_parameters) = colnames(mat_gamma)
-    mat_SACE_estimators = data.frame(mat_SACE_estimators, df_parameters)
-
-    list_all_mat_SACE_estimators[[k]] = mat_SACE_estimators
-    list_all_CI[[k]] = EM_and_matching$CI_mat
-    next()
-  }
 
   EM_and_matching = simulate_data_run_EM_and_match(return_EM_PS = FALSE, index_set_of_params=k,
       gamma_as=gamma_as, gamma_ns=gamma_ns, gamma_pro=gamma_pro, misspec_PS=misspec_PS,
@@ -181,11 +162,8 @@ for ( k in c(1 : nrow(mat_gamma)) ){
       match_on = match_on, mu_x_fixed=mu_x_fixed, x_as=mat_x_as[k,], only_naive_bool=only_naive_bool)
 
   mat_SACE_estimators = EM_and_matching[[1]]
-  # nrow = nrow(mat_gamma) 
   df_parameters = matrix(rep(as.numeric(mat_gamma[k,])
-                         #, each = (param_n_sim + length(param_measures)))
                           , each = nrow(mat_SACE_estimators))
-                         #, nrow = (param_n_sim + length(param_measures))
                           , nrow = nrow(mat_SACE_estimators))
   colnames(df_parameters) = colnames(mat_gamma)
   mat_SACE_estimators = data.frame(mat_SACE_estimators, df_parameters)
@@ -203,9 +181,6 @@ for ( k in c(1 : nrow(mat_gamma)) ){
   list_all_matched_units[[k]] = EM_and_matching[["mean_list_matched_units"]]
   rownames(list_all_matched_units[[k]]) = paste0("s", k, rownames(list_all_matched_units[[k]]))
   
-  # TODO in list_all_diff_distance_aspr_asas and list_all_std_mean_diff   
-  # when diff_distance_aspr_asas is positive, the matches between as to as are closer in X, 
-  #then matches between as to protected, since its the abs diff between as to pro matches - abs diff between as to as matches 
   list_all_diff_distance_aspr_asas[[k]] = EM_and_matching[["mat_diff_distance_aspr_asas"]]
   rownames(list_all_diff_distance_aspr_asas[[k]]) = paste0("s", k, rownames(list_all_diff_distance_aspr_asas[[k]]))
   list_all_std_mean_diff[[k]] = EM_and_matching[["mean_list_std_mean_diff"]]
@@ -215,7 +190,6 @@ for ( k in c(1 : nrow(mat_gamma)) ){
   list_all_EM_not_conv[[k]] = EM_and_matching[["list_EM_not_conv"]]
   if(! is_empty(list_all_EM_not_conv[[k]])){names(list_all_EM_not_conv[[k]]) = paste0("s", k, names(list_all_EM_not_conv[[k]]))}
   list_all_BCclpr[[k]] = EM_and_matching[["list_BCclpr"]]
-  #rownames(list_all_EM_not_conv[[k]]) = paste0("s", k, rownames(list_all_EM_not_conv[[k]]))
   print(paste0("sim is ", sim))
 
   end_time <- Sys.time()
