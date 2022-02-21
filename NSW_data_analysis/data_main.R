@@ -7,20 +7,20 @@ library(sandwich); library(rmutil);  library(caret); library(splitstackshape); l
 library(tidyr); library(dplyr); library(data.table); library(tidyr); library(tableone); library(lmtest)
 ########################################################################
 
-# sources for data analysis (from main)
 ########################################################################
+# source for data NSW_data_analysis
 setwd("~/A matching framework for truncation by death problems")
-source("Process_NSW_data/data_process/data_process_and_eda_funcs.R")
-source("Process_NSW_data/data_matching/data_matching_multiple_NEW.R")
-source("Process_NSW_data/data_models/data_OLS_WLS_estimator.R")
-source("Process_NSW_data/data_aligned_ranktest.R")
-source("Process_NSW_data/data_SA/data_SA_regression_funcs.R")
-source("Simulations_studies/sim_simulations_scripts/sim2DingLuEst.R")
+source("NSW_data_analysis/data_processing/data_processing_and_eda_funcs.R")
+source("NSW_data_analysis/data_matching/data_matching_multiple_NEW.R")
+source("NSW_data_analysis/data_post_matching_analysis/data_regression_estimators.R")
+source("NSW_data_analysis/data_post_matching_analysis/data_aligned_ranktest.R")
+source("NSW_data_analysis/data_SA/data_SA_regression_funcs.R")
+#source("Simulations_studies/sim_DGM_and_simulations/simulation_run.R")
 #source("Simulations_studies/sim_TABLES/table_design_multiple_func.R")
-source(paste0("Code/Ding_Lu/", "PS_M_weighting.R"))
-source(paste0("Code/Ding_Lu/", "PS_M_weighting_SA.R"))
-source(paste0("Code/Ding_Lu/", "xi_PS_M_weighting_SA.R"))
-source(paste0("Code/Ding_Lu/", "DL_SE_boot.R"))
+source("Ding_Lu/PS_M_weighting.R")
+source("Ding_Lu/PS_M_weighting_SA.R")
+source("Ding_Lu/xi_PS_M_weighting_SA.R")
+source("Ding_Lu/DL_SE_boot.R")
 ########################################################################
 
 # data files
@@ -31,8 +31,8 @@ data(LL, package = "cem")
 ########################################################################
 
 set.seed(101)
-# parameters and variables for matching and regressions ####
 ########################################################################
+# parameters and variables for matching and regressions ####
 iterations = 400; epsilon_EM = 1e-06;
 match_on = "e_1_as"  # "e_1_as", # EMest_p_as 
 data_bool = "LL" # "DW" # "LL"
@@ -44,10 +44,12 @@ reg_after_match = c("age", "education", "black", "hispanic", "married", "re75")
 reg_BC =          c("age", "education", "black", "hispanic", "married", "re75") 
 ######################################################################## 
 
+######################################################################## 
 # adjust data  ####
 data = LL
 data = adjust_data(data, 1000, data_bool=data_bool) #DW #LL
 variables = setdiff(colnames(data), c("id", "A", "S", "Y", "OBS", "emp_74_75"))
+######################################################################## 
 
 ######################################################################## 
 # pi estimation ####
@@ -103,20 +105,20 @@ data_with_PS = data.table(data, PS_est)
 data_with_PS$e_1_as = data_with_PS$EMest_p_as / (data_with_PS$EMest_p_as + data_with_PS$EMest_p_pro)
 ######################################################################## 
 
-# Ding and Lu estimators ####
 ######################################################################## 
+# Ding and Lu estimators ####
 DING_est = est_ding_lst$AACE
 DING_model_assisted_est_ps = est_ding_lst$AACE.reg
 
-# BOOSTING for DL estimator
-'''boosting_results = run_boosting(data, BS=500, seed=19, iter.max=iterations, error0=epsilon_EM)'''
+# bootstrap for DL estimator
+# boosting_results = run_boosting(data, BS=500, seed=19, iter.max=iterations, error0=epsilon_EM)
 ######################################################################## 
 
 ######################################################################## 
 # matching procedure ####
 # match only among the employed
 data_list = list(data_with_PS[S==1])
-#TODO MATCHING
+# MATCHING
 lst_matching_estimators = list()
 replace_vec = c(FALSE, TRUE)
 for(j in c(1:length(replace_vec))){
@@ -141,7 +143,7 @@ for (measure in names(data_pairs_lst)) {
   aligned_ranktets_lst[[measure]] = alignedranktest(outcome=data_new_grp$Y, matchedset=data_new_grp$trt_grp, treatment=data_new_grp$A)
 }
 
-# EM_coeffs
+# EM_coeffs ###
 print(EM_coeffs %>% xtable(), size="\\fontsize{9pt}{9pt}\\selectfont", include.rownames=F)
 
 # balance  ####

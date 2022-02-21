@@ -5,14 +5,17 @@ library(ggplot2); library(rockchalk); library(stats); library(rlist); library(mg
 library(optmatch); library(DOS); library(Matching); library(sandwich); library(rmutil); library(clubSandwich); library(tableone)
 library(sandwich); library(lmtest); library(rmutil); library(splitstackshape); library(PerformanceAnalytics)
 
+########################################################################
+# source for Simulations_studies
+setwd("~/A matching framework for truncation by death problems")
 source("Simulations_studies/sim_DGM_and_simulations/simulation_run.R")
 source("Simulations_studies/sim_matching_procedure/matching_PS_multiple.R")
-source("Simulations_studies/sim_post_matching_analysis/sim_regression_estimator.R")
+source("Simulations_studies/sim_post_matching_analysis/sim_regression_estimators.R")
 source("Simulations_studies/sim_tables_and_figures/table_design_multiple_func.R")
 source("Simulations_studies/sim_tables_and_figures/coverage_naive_est.R")
 source("Ding_Lu/PS_M_weighting.R")
 source("Ding_Lu/PS_M_weighting_SA.R")
-
+#############################################################################################
 
 #############################################################################################
 # treatment probability
