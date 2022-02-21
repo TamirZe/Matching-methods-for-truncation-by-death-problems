@@ -37,8 +37,6 @@ data_bool = "LL" # "DW" for dehejia and wahba dataset # "LL" for LaLonde dataset
 # EM convergence parameters
 iterations = 400; epsilon_EM = 1e-06
 
-mu_x_fixed = FALSE; x_as = mat_x_as[1,]
-
 # parameters and variables for matching and regressions ####
 match_on = "e_1_as"  # "e_1_as" # EMest_p_as 
 caliper = 0.3

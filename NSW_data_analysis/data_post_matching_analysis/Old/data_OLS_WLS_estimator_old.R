@@ -155,7 +155,7 @@ regression_adjusted_function = function(dt_match_S1, m_data, matched_pairs=NULL,
     weights_ctr = data.frame(id = dt_match_S1$id_ctrl , weight = rep(1, length(dt_match_S1$id_ctrl)))
     weights = rbind(weights_trt, weights_ctr)
     weights$appearance_over_unique_id = weights$weight / nrow(weights)
-    weights$AbadieImbens785_overN0 = weights$weight / length(weights_ctr$weight) #  length(weights_ctr$weight) = sum(weights_ctr$weight)
+    weights$AbadieImbens785_overN0 = weights$weight / length(weights_ctr$weight) 
     weights$AbadieImbens785_over_matched_units = weights$AbadieImbens785_overN0 / 2
     
     
@@ -167,9 +167,7 @@ regression_adjusted_function = function(dt_match_S1, m_data, matched_pairs=NULL,
     sum(reg_data_matched$id %in% weights$id) == nrow(reg_data_matched)
     identical(as.numeric(reg_data_matched$id), weights$id[order(weights$id)])
     
-    
-    # TODO? reg covariares instead of covariates
-    
+    # reg covariares instead of covariates
     lin_reg_matched = lm(formula = f , data = reg_data_matched_weigts
                          ,weights = reg_data_matched_weigts$appearance_over_unique_id)
     sum(reg_data_matched$Y==0)
@@ -191,8 +189,6 @@ regression_adjusted_function = function(dt_match_S1, m_data, matched_pairs=NULL,
                                                      reg_data_matched_OLS_WLS=reg_data_matched_weigts, x_as=x_as)
     }
     weighted_est_se = data.frame(t(weighted_est_se))
-    # colnames(weighted_est_se) = paste0(rep(c("appearance_over_unq"), each=ncol(weighted_est_se)),
-    #                  "_", c("estimator", "naive_se", "sandwi_se"))
     colnames(weighted_est_se) = paste0("WLS", "_", c("estimator", "naive_se", "sandwi_se"))
     
     WLS_CI_by_SE_and_Z_val = round(weighted_est_se$WLS_estimator +

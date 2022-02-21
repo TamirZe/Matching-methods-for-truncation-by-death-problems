@@ -1,5 +1,4 @@
 # for now we use covariates. we dont use reg_covariates currently
-
 regression_adjusted_function = function(rep_bool, dt_match_S1, m_data, matched_pairs,
                                         covariates = X_sub_cols[-1], reg_covariates = X_sub_cols[-1],
                                         interactions_bool = TRUE, LS="OLS", mu_x_fixed = FALSE, x_as){

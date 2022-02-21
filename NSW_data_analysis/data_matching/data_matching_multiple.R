@@ -32,8 +32,7 @@ matching_func_multiple_data = function(match_on = NULL,
                                       N_match = "", N_unq = "", subset(balance_before_match, select = -c(A, N)))
      est_var_x0 = apply(subset(filter(m_data, A==0), select = c("A", "EMest_p_as", "EMest_p_pro", "e_1_as", X_sub_cols[-1])), 2, var)
      est_var_x1 = apply(subset(filter(m_data,A==0), select = c("A", "EMest_p_as", "EMest_p_pro", "e_1_as", X_sub_cols[-1])), 2, var)
-     sd_smd = sqrt(est_var_x0)
-     #sd_smd = sqrt(0.5 * (est_var_x0 + est_var_x1))
+     sd_smd = sqrt(est_var_x0) #sd_smd = sqrt(0.5 * (est_var_x0 + est_var_x1))
      SMD = (balance_before_match[1,-c(1:5)] - balance_before_match[2,-c(1:5)]) / sd_smd[-1]
      balance_before_match[3,] = c(rep(" ",5), mutate_if(SMD, is.numeric, round, 3))
      balance_before_match = balance_before_match %>% mutate_if(is.numeric, round, 3)
@@ -41,11 +40,9 @@ matching_func_multiple_data = function(match_on = NULL,
 
    
   print(paste0("replace is ", replace, " nrows is ", nrow(m_data)))
-  #X_sub_cols = paste0("X", c(1:(dim_x)))
   # mahal_match for Weight = 2 for mahalanobis distance. 1 for inverse of variance
   vec_caliper = c(rep(1001, length(cont_cov_mahal)), caliper)
   # set weights matrix for mahalanobis for continous covariates
-  
   if(w_mat_bool == "INVERSE_SD"){
     #TODO INVERSE SD
     w_mat = diag(length(cont_cov_mahal) + 1) /
@@ -64,18 +61,12 @@ matching_func_multiple_data = function(match_on = NULL,
     w_mat = w_mat / sum(diag(w_mat))
   }
   
-  #TODO 1. MATCHING ONLY ONLY PS: EMest_p_as
+  #1. MATCHING ONLY ONLY PS: EMest_p_as
   print(match_on)
-  #set.seed(101)
   MATCH_PS_only  <- Match(Y=m_data[,Y], Tr=m_data[,A]
                           , X = subset(m_data, select = match_on)
-                          #, X=m_data[,"EMest_p_as"]         
-                          #, X = subset(m_data, select = c(X_sub_cols[-1], "EMest_p_as"))
                           ,ties=FALSE
-                          #, distance.tolerance = 1e-10
-                          #,caliper = vec_caliper
                           ,M=M, replace = replace, estimand = estimand, Weight = mahal_match
-                          #,Weight.matrix = w_mat
   )
   only_ps_lst = arrange_dataset_after_matching_DATA(m_data=m_data, match_obj=MATCH_PS_only, 
                           replace_bool=replace, X_sub_cols=X_sub_cols)
@@ -91,14 +82,11 @@ matching_func_multiple_data = function(match_on = NULL,
   balance_only_ps = balance_after_matching(m_data=m_data, match_obj=MATCH_PS_only, dt_match=dt_match_S1_only_ps, 
      X_sub_cols=X_sub_cols, metric="PS", replace=replace, smd_se="not_weighted", vertical_table=vertical_table)
   
-  # TODO 2. MAHALANOBIS WITHOUT PS CALIPER
+  #2. MAHALANOBIS WITHOUT PS CALIPER
   print("MAHALANOBIS WITHOUT PS CALIPER")
-  #set.seed(102)
   MATCH_MAHA_wout_PS  <- Match(Y=m_data[,Y], Tr=m_data[,A]
-                               #, X=m_data[,"est_p_as"]
                                , X = subset(m_data, select = cont_cov_mahal)
                                ,ties=FALSE
-                               #,caliper = vec_caliper ,Weight.matrix = w_mat
                                ,M=M, replace = replace, estimand = estimand, Weight = mahal_match
   )
   mala_wout_cal_lst = arrange_dataset_after_matching_DATA(m_data=m_data, match_obj=MATCH_MAHA_wout_PS,
@@ -115,14 +103,11 @@ matching_func_multiple_data = function(match_on = NULL,
   balance_maha_wout_cal = balance_after_matching(m_data=m_data, match_obj=MATCH_MAHA_wout_PS, dt_match=dt_match_S1_maha_wout_cal, 
                                                  X_sub_cols=X_sub_cols, metric="Mahal", replace=replace, smd_se="not_weighted", vertical_table=vertical_table)
   
-  # TODO 3. MAHALANOBIS WITH PS CALIPER
+  #3. MAHALANOBIS WITH PS CALIPER
   print("MAHALANOBIS WITH PS CALIPER")
-  #set.seed(103)
   ATE_MATCH_PS  <- Match(Y=m_data[,Y], Tr=m_data[,A]
-                         #, X=m_data[,"est_p_as"]
                          , X = subset(m_data, select = c(cont_cov_mahal, match_on))
                          ,ties=FALSE
-                         #, distance.tolerance = 1e-10
                          ,caliper = vec_caliper ,Weight.matrix = w_mat
                          ,M=M, replace = replace, estimand = estimand, Weight = mahal_match
   )
@@ -179,12 +164,10 @@ matching_func_multiple_data = function(match_on = NULL,
     balance_table_check = Reduce(function(x,y) merge(x = x, y = y, by = "Variable"), list(balance_before_match,
                                                                                           balance_only_ps$balance_match, balance_maha_wout_cal$balance_match, balance_maha_cal_PS$balance_match))
   }else{
-    #rbind.fill
     balance_table = data.frame(Replacements = replace,
                                rbind(balance_before_match, balance_only_ps$balance_match, balance_maha_wout_cal$balance_match, balance_maha_cal_PS$balance_match))
     balance_table$Replacements = substr(balance_table$Replacements, 1, 1)
   }
-  
   
   # TODO HL function
   func_wilcoxon_HL_est = function(boost_HL=FALSE, match_metric_lst, return_CI=FALSE){
@@ -206,7 +189,6 @@ matching_func_multiple_data = function(match_on = NULL,
   }
   
   # for each type of distance metric, run HL and OLS/WLS
-
   dt_and_pairs_match_lst = 
     list(only_ps=only_ps_lst, mala_wout_cal=mala_wout_cal_lst, mala_cal=ATE_MATCH_PS_lst)
   OLS_WLS_reg_lst <- coeffs_table <- HL_est_lst <- list()
@@ -216,30 +198,25 @@ matching_func_multiple_data = function(match_on = NULL,
     print(names(dt_and_pairs_match_lst)[i])
     
     #TODO for now I use covariates. I dont really use reg_covariates.
-    #TODO check what to do with matched_pairs
     if(replace == TRUE){
-      # TODO WLS
+      #  WLS
       LS_NOinter =
         regression_adjusted_function(rep_bool=replace,
              dt_match_S1=dt_and_pairs_match_lst[[i]]$dt_match_S1, m_data=m_data,
              matched_pairs=dt_and_pairs_match_lst[[i]]$matched_pairs, covariates = reg_cov,
-             interactions_bool = FALSE, LS="WLS", mu_x_fixed=mu_x_fixed, x_as=x_as)
+             interactions_bool = FALSE, LS="WLS")
       LS_YESinter =
         regression_adjusted_function(rep_bool=replace,
              dt_match_S1=dt_and_pairs_match_lst[[i]]$dt_match_S1, m_data=m_data,
              matched_pairs=dt_and_pairs_match_lst[[i]]$matched_pairs, covariates = reg_cov,
-             interactions_bool = TRUE, LS="WLS", mu_x_fixed=mu_x_fixed, x_as=x_as)
+             interactions_bool = TRUE, LS="WLS")
 
-      # WLS_clstr_se # WLS_sandwi_se
       regression_est_se = c(regression_est_se, 
                             paste0(LS_NOinter$estimator_and_se$WLS_estimator %>% round(3), " (",
                             LS_NOinter$estimator_and_se$WLS_clstr_se %>% round(3), ")"))
       regression_inter_est_se = c(regression_inter_est_se, 
                             paste0(LS_YESinter$estimator_and_se$WLS_estimator %>% round(3),  " (",
                             LS_YESinter$estimator_and_se$WLS_clstr_se %>% round(3), ")"))
-      
-      # coeffs_NOinter = LS_NOinter$coeffs_table
-      # coeffs_YESinter = LS_YESinter$coeffs_table
       
     }
     
@@ -249,20 +226,18 @@ matching_func_multiple_data = function(match_on = NULL,
         regression_adjusted_function(rep_bool=replace,
                dt_match_S1=dt_and_pairs_match_lst[[i]]$dt_match_S1, m_data=m_data,
                matched_pairs=dt_and_pairs_match_lst[[i]]$matched_pairs, covariates = reg_cov, 
-               interactions_bool = FALSE, LS="OLS", mu_x_fixed=mu_x_fixed, x_as=x_as)
+               interactions_bool = FALSE, LS="OLS")
       LS_YESinter =
         regression_adjusted_function(rep_bool=replace,
                dt_match_S1=dt_and_pairs_match_lst[[i]]$dt_match_S1, m_data=m_data,
                matched_pairs=dt_and_pairs_match_lst[[i]]$matched_pairs, covariates = reg_cov,
-               interactions_bool = TRUE, LS="OLS", mu_x_fixed=mu_x_fixed, x_as=x_as)
+               interactions_bool = TRUE, LS="OLS")
       regression_est_se = c(regression_est_se, 
                             paste0(LS_NOinter$estimator_and_se$OLS_estimator %>% round(3), " (",
                             LS_NOinter$estimator_and_se$OLS_se %>% round(3) %>% round(3), ")"))
       regression_inter_est_se = c(regression_inter_est_se, 
                             paste0(LS_YESinter$estimator_and_se$OLS_estimator %>% round(3), " (",
                             LS_YESinter$estimator_and_se$OLS_se %>% round(3), ")"))
-      # coeffs_NOinter = LS_NOinter$coeffs_table
-      # coeffs_YESinter = LS_YESinter$coeffs_table
       }
   
     # OLS WLS estimators  
@@ -289,7 +264,6 @@ matching_func_multiple_data = function(match_on = NULL,
     matchBC_PS <- Match(Y=m_data[,Y], Tr=m_data[,A], X = subset(m_data, select = match_on),
                      Z = subset(m_data, select = reg_BC), BiasAdjust=TRUE
                      ,ties=TRUE ,M=M, replace = replace, estimand = estimand, Weight = mahal_match
-                     #, distance.tolerance = 1e-10
     )
     BCest_PS = round(as.numeric(matchBC_PS$est), 3)
     BCse_PS = round(matchBC_PS$se, 3)
@@ -297,20 +271,16 @@ matching_func_multiple_data = function(match_on = NULL,
     CI_by_SE_and_Z_val_BC_PS = paste(CI_by_SE_and_Z_val_BC_PS, sep = ' ', collapse = " , ")
     
     
-    #set.seed(102)
-    # TODO AI bias corrected, consider only when replace==TRUE
+    # AI bias corrected, consider only when replace==TRUE
     matchBC <- Match(Y=m_data[,Y], Tr=m_data[,A], X = subset(m_data, select = cont_cov_mahal),
                      Z = subset(m_data, select = reg_BC), BiasAdjust=TRUE
                      ,ties=TRUE ,M=M, replace = replace, estimand = estimand, Weight = mahal_match
-                     #, distance.tolerance = 1e-10
     )
     BCest = round(as.numeric(matchBC$est), 3)
     BCse = round(matchBC$se, 3)
     CI_by_SE_and_Z_val_BC = round(BCest + c(-1,1) * 1.96 * BCse, 3)
     CI_by_SE_and_Z_val_BC = paste(CI_by_SE_and_Z_val_BC, sep = ' ', collapse = " , ")
     
-    #subset(m_data_inter, select = c(reg_BC, colnames(m_data_just_inter)))
-    #set.seed(102)
     matchBC_inter <- Match(Y=m_data_inter[,Y], Tr=m_data_inter[,A], X = subset(m_data_inter, select = cont_cov_mahal), 
                            Z = subset(m_data_inter, select = c(reg_BC, colnames(m_data_just_inter))), BiasAdjust=TRUE,
                            ties=TRUE ,M=M, replace = replace, estimand = estimand, Weight = mahal_match
@@ -320,7 +290,6 @@ matching_func_multiple_data = function(match_on = NULL,
     CI_by_SE_and_Z_val_BC_inter = round(BCest_inter + c(-1,1) * 1.96 * BCse_inter, 3)
     CI_by_SE_and_Z_val_BC_inter = paste(CI_by_SE_and_Z_val_BC_inter, sep = ' ', collapse = " , ")
     
-    #set.seed(102)
     matchBC_clpr <- Match(Y=m_data[,Y], Tr=m_data[,A], X = subset(m_data, 
                                                                   select = c(cont_cov_mahal, match_on)), 
                           Z = subset(m_data, select = reg_BC), BiasAdjust=TRUE
@@ -332,9 +301,7 @@ matching_func_multiple_data = function(match_on = NULL,
     BCse_clpr = round(matchBC_clpr$se, 3)
     CI_by_SE_and_Z_val_BCclpr = round(BCest_clpr + c(-1,1) * 1.96 * BCse_clpr, 3)
     CI_by_SE_and_Z_val_BCclpr = paste(CI_by_SE_and_Z_val_BCclpr, sep = ' ', collapse = " , ")
-    #summary.Match(matchBC, full=TRUE)
-    
-    #set.seed(102)
+
     matchBC_clpr_inter <- Match(Y=m_data_inter[,Y], Tr=m_data_inter[,A], X = subset(m_data_inter, 
                                                                   select = c(cont_cov_mahal, match_on)), 
                           Z = subset(m_data_inter, select = c(reg_BC, colnames(m_data_just_inter))), BiasAdjust=TRUE,
@@ -377,7 +344,6 @@ matching_func_multiple_data = function(match_on = NULL,
     data_pairs_lst = list(data_pairs_only_ps=data_pairs_only_ps, data_pairs_maha_wout_cal=data_pairs_maha_wout_cal, data_pairs_maha_cal_PS=data_pairs_maha_cal_PS),
     summary_table=summary_table, OLS_WLS_reg_lst=OLS_WLS_reg_lst, coeffs_table=coeffs_table))
 }
-
 
 
 balance_after_matching = function(m_data, match_obj, dt_match, X_sub_cols, metric, replace=FALSE,
@@ -460,7 +426,6 @@ balance_after_matching = function(m_data, match_obj, dt_match, X_sub_cols, metri
   balance_table1 = print(table1, smd = TRUE)
   return(list(balance_match=balance_match, balance_table1=balance_table1))
 }
-
 
 arrange_dataset_after_matching_DATA = function(m_data, match_obj, replace_bool, X_sub_cols){
   ncols  = ncol(subset(m_data[match_obj$index.treated, ], 
