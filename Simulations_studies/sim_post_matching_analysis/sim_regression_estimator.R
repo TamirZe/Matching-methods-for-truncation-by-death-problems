@@ -1,4 +1,4 @@
-# for now we use covariates. we dont really use reg_covariates
+# for now we use covariates. we dont use reg_covariates currently
 
 regression_adjusted_function = function(rep_bool, dt_match_S1, m_data, matched_pairs,
                                         covariates = X_sub_cols[-1], reg_covariates = X_sub_cols[-1],
@@ -7,14 +7,11 @@ regression_adjusted_function = function(rep_bool, dt_match_S1, m_data, matched_p
                                           lin_reg_fit_wls_matched=NULL, coeffs_table_wls=NULL, # data_matched_reg_weights=NULL,
                                           LS_for_estimation, x_as){
     coeffs = coeffs_table[,1]
-    #coeftest(lin_reg_fit_matched, vcov. = vcovHC, type = "HC1")
     names_coeffs_interactions = c("A", names(coeffs)[grep(":", names(coeffs))])
     coeffs_interactions = coeffs[names_coeffs_interactions]
     var_mu_x = apply(subset(filter(data_matched_reg, A==0), select = covariates), 2, var) / 
       nrow(filter(data_matched_reg, A==0))
     
-    #TODO NEW X
-    #x = expandRows(data_matched_reg, "weight") 
     x = subset(data_matched_reg, select = c("A", covariates))
     # the 1 is for the add to intercerpt for the treated (which is the coeff of A)
     x_check = subset(data_matched_reg, select = c("A", covariates))
@@ -32,7 +29,7 @@ regression_adjusted_function = function(rep_bool, dt_match_S1, m_data, matched_p
         vcovCR(lin_reg_fit_matched, cluster = data_matched_reg$pair, type = "CR1")[names_coeffs_interactions, names_coeffs_interactions] 
       se_beta_est_clstr <- 
         sqrt( matrix(mu_x_vec, nrow=1) %*% vcov_clstr_interactions %*% matrix(mu_x_vec, ncol=1) )
-      # ADD from DELTA METHOD for WLS
+      # DELTA METHOD for WLS
       se_beta_est_clstr_DM = sqrt( se_beta_est_clstr^2 + sum( (coeffs_interactions[-1])^2 * var_mu_x ) )
       estimators = c(beta_est, se_beta_est_clstr_DM)
       }
@@ -54,7 +51,7 @@ regression_adjusted_function = function(rep_bool, dt_match_S1, m_data, matched_p
       se_beta_est_sand <- 
         sqrt( matrix(mu_x_vec, nrow=1) %*% vcov_sand_interactions %*% matrix(mu_x_vec, ncol=1) )
       
-      # ADD from DELTA METHOD for WLS
+      # DELTA METHOD for WLS
       se_beta_est_clstr_DM = sqrt( se_beta_est_clstr^2 + sum( (coeffs_interactions[-1])^2 * var_mu_x ) )
       se_beta_est_sand_DM = sqrt( se_beta_est_sand^2 + sum( (coeffs_interactions[-1])^2 * var_mu_x ) )
     
@@ -69,7 +66,6 @@ regression_adjusted_function = function(rep_bool, dt_match_S1, m_data, matched_p
   # reg covariares
   reg_data_matched_wout_pairs = filter(m_data, id %in% 
                               c(unique(dt_match_S1$id), unique(dt_match_S1$A0_id)) )
-  #reg_data_matched2 = m_data[c(unique(dt_match_S1$id), unique(dt_match_S1$A0_id)) ,]
   reg_data_matched_wout_pairs = subset(reg_data_matched_wout_pairs, select = c("id", "A", covariates, "Y"))
   reg_data_matched = merge(matched_pairs, reg_data_matched_wout_pairs, by="id") %>% arrange(pair, A)
   length(unique(dt_match_S1$id)); length(dt_match_S1$id); length(unique(dt_match_S1$A0_id)); length(dt_match_S1$A0_id); nrow(dt_match_S1)
@@ -80,7 +76,7 @@ regression_adjusted_function = function(rep_bool, dt_match_S1, m_data, matched_p
     f = as.formula(paste0("Y ~ ", paste(c("A", covariates), collapse = " + ")))
   }else{
     print("interactions in model")
-    # TODO if only A in the model, there are actually no interactions
+    # if only A in the model, there are actually no interactions
     if(is.null(covariates)){
       print("only A in the model, there are actually no interactions")
       f = as.formula(paste0("Y ~ ", paste(c("A", covariates), collapse = " + "))) 
@@ -97,17 +93,14 @@ regression_adjusted_function = function(rep_bool, dt_match_S1, m_data, matched_p
     OLS_sum = summary(lin_reg_matched)
     coeffs_table = OLS_sum$coefficients
     
-    # TODO WITHOUT INTERACTIONS
+    # WITHOUT INTERACTIONS
     if(interactions_bool == FALSE){
-      #beta_est = lin_reg_matched$coefficients[2]
       beta_est = coeffs_table["A","Estimate"]
-      #TODO 02.08.2021
       se_beta_est = coeftest(lin_reg_matched, vcov. = vcovCL, cluster = ~ pair)["A","Std. Error",drop = FALSE]
       se_beta_est2 = data.frame(coef_test(lin_reg_matched, vcov = "CR1", cluster = reg_data_matched$pair))["A", "SE"]
-      #se_beta_est_naive = coeffs_table["A","Std. Error"]
       estimator_and_se = c(beta_est, se_beta_est)
       
-    # TODO WITH INTERACTIONS
+    # WITH INTERACTIONS
     }else{
       estimator_and_se = estimation_with_interactions(lin_reg_fit_matched=lin_reg_matched, coeffs_table= coeffs_table,
                             LS_for_estimation="OLS", data_matched_reg=reg_data_matched, x_as=x_as)
@@ -123,7 +116,6 @@ regression_adjusted_function = function(rep_bool, dt_match_S1, m_data, matched_p
   if(LS=="WLS"){
     print("WLS")
     # adjust for replacements
-    
     weights_trt = data.frame(table(dt_match_S1$id_trt))
     colnames(weights_trt) = c("id", "weight")
     weights_trt$id = as.numeric(as.character(weights_trt$id))
@@ -131,9 +123,9 @@ regression_adjusted_function = function(rep_bool, dt_match_S1, m_data, matched_p
     weights = rbind(weights_trt, weights_ctr)
     reg_data_matched_weights = merge(weights, reg_data_matched_wout_pairs, by= "id") #%>% arrange(pair, A)
     
-    #TODO reg covariares instead of covariates
     lin_reg_matched = lm(formula = f , data = reg_data_matched)
     lin_reg_matched_wls = lm(formula = f , data = reg_data_matched_weights, weights = reg_data_matched_weights$weight)
+    
     # WLS regression treatment coefficients estimator
     # WOUT INTERACTIONS
     if(interactions_bool == FALSE){
@@ -158,7 +150,6 @@ regression_adjusted_function = function(rep_bool, dt_match_S1, m_data, matched_p
            LS_for_estimation="WLS", x_as=x_as) 
     }
     estimator_and_se = data.frame(t(estimator_and_se))
-    # colnames(estimator_and_se) = paste0(rep(c("appearance_over_unq"), each=ncol(estimator_and_se)), "_", c("estimator", "naive_se", "sandwi_se"))
     colnames(estimator_and_se) = paste0("WLS", "_", c("estimator", "naive_se", "sandwi_se", "clstr_se"))
     CI_LS = round(estimator_and_se$WLS_estimator +
                     c(-1,1) * 1.96 * estimator_and_se$WLS_clstr_se, 3)

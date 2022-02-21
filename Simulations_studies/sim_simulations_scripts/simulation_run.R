@@ -5,16 +5,14 @@
 # misspec_PS: 0 <- NO mis, 2: add transformations to PS model, and remain original X's in ourcome model.
 simulate_data_function = function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, param_n,
                                   misspec_PS, misspec_outcome_funcform=FALSE,
-                                  U_factor=0, funcform_factor_sqr=0, funcform_factor_log=0,
-                                  epsilon_1_GPI = 1,
-                                  only_mean_x_bool=FALSE){
+                                  U_factor=0, funcform_factor_sqr=0, funcform_factor_log=0, only_mean_x_bool=FALSE){
   if(is.null(seed_num)!=TRUE){set.seed(seed_num)}
 
   # draw covariate matrix
   x_obs <- matrix( c( rep(1,param_n), 
                       mvrnorm(param_n, mu=mean_x, Sigma = diag(var_x, cont_x))), 
                    nrow = param_n )
-  # add categorial variable, if needed (needed when categ_x > 0)
+  # add categorial variable, if needed (needed if categ_x > 0)
   if(categ_x > 0){
     x_categorial = data.table(list.cbind(lapply(vec_p_categ, function(x) rbinom(n=param_n,prob=x,size=1))))
     x_obs = as.matrix(cbind(x_obs, x_categorial))
@@ -27,32 +25,16 @@ simulate_data_function = function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, 
     gamma_as_adj = gamma_as; gamma_ns_adj = gamma_ns; gamma_pro_adj = gamma_pro; betas_GPI_adj = betas_GPI 
   }
   
-  # misspec1: add 2 new U's to PS model and to outcome model
-  if(misspec_PS == 1){
-    x_misspec = mvrnorm(param_n, mu=mean_x_misspec, Sigma = diag(var_x, dim_x_misspec))
-    colnames(x_misspec) = paste0("U", c(1:dim_x_misspec))
-    # PS true model covariates
-    x_PS = as.matrix( data.frame( x_obs, x_misspec ) )
-    # Y true model covariates
-    x = x_PS
-    gamma_as_adj = c(gamma_as, U_factor*rep(gamma_as[2], dim_x_misspec))
-    gamma_ns_adj = c(gamma_ns, U_factor*rep(gamma_ns[2], dim_x_misspec))
-    gamma_pro_adj = rep(0, length(gamma_as_adj))
-    betas_GPI_adj = as.matrix( data.frame(betas_GPI, c(1,1), c(1,1)) )
-    colnames(betas_GPI_adj) = rep("", ncol(betas_GPI_adj))
-  }
-  
-  # misspec2: replace 2 X's with x^2 and ~logx, to PS model and to outcome model
+  # misspec2: replace 2 X's with x^2 and ~log(X), to PS model and possibly to outcome model (if misspec_outcome_funcform == TRUE) 
   if(misspec_PS == 2){
     x_misspec = as.matrix(data.frame(x_obs[,(ncol(x_obs) - 1)]^2,
                                      log(x_obs[,ncol(x_obs)] - (min(x_obs[,ncol(x_obs)]) - 0.1)))) %>% as.data.frame
     colnames(x_misspec) = c("X_sqr", "X_log")
     # PS true model covariates
     x_PS = as.matrix( data.frame( x_obs[,-c((ncol(x_obs) - 1) ,ncol(x_obs))], x_misspec ) )
-    # Y true model covariates
-    # if misspec_outcome_funcform == FALSE (default), Y on original (obs) X - easier for us
-    # if misspec_outcome_funcform == TRUE (default), Y on the transformation of X - harder for us,
-    # since we use the original X in the regression model
+    # Y true model covariates:
+    # if misspec_outcome_funcform == FALSE (default), Y on original (obs) X 
+    # if misspec_outcome_funcform == TRUE, Y on the transformation of X 
     if(misspec_outcome_funcform == FALSE){
       x = x_obs
     }else{x = x_PS}
@@ -66,7 +48,6 @@ simulate_data_function = function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, 
   # vector of probabilities
   vProb = cbind(exp(x_PS%*%gamma_as_adj), exp(x_PS%*%gamma_pro_adj), exp(x_PS%*%gamma_ns_adj)) 
   prob = vProb / apply(vProb, 1, sum) 
-  # check that at least the mean of each stratum is positive
   probs_mean = apply(vProb, 2, mean) / sum(apply(vProb, 2, mean))
   # multinomial draws
   mChoices = t(apply(prob, 1, rmultinom, n = 1, size = 1))
@@ -77,8 +58,8 @@ simulate_data_function = function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, 
   pi = table(g_vec) / param_n
   pi = t(c(pi)); colnames(pi) = paste0("pi_", colnames(pi))
 
-  # create initial data ####
-  # data is actually going to be used in the EM first, in simulate_data_run_EM_and_match. Thus, data contains the "obs" X.
+  # generate data ####
+  # data is going to be used in the EM first, in simulate_data_run_EM_and_match. Thus, data contains the "obs" X.
   data = data.frame(prob = prob, x_obs, g = g_vec, g_num = g_vec_num,
                     A = rbinom(param_n, 1, prob_A))
   data$S = ifelse(data$g == "as", 1, ifelse( data$g == "pro" & data$A == 1, 1,
@@ -110,11 +91,10 @@ simulate_data_function = function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, 
     })
     two_PO = data.frame(list.rbind(two_PO))
   }
-  # TODO model with PI with pair independent errors
+  # model with PI with pair independent errors
   if(rho_GPI_PO == 0){
     print(paste0("rho_GPI_PO", " is ", 0))
     # wout dependency
-    # only 2 models: 1 for Y1 and 1 for Y0
     two_PO = lapply(1 : nrow(betas_GPI_adj), function(l){
       PO_by_treatment_and_stratum(betas_GPI_adj[l,], sigma_square_ding[l])
     })
@@ -125,7 +105,7 @@ simulate_data_function = function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, 
   mean(two_PO$Y1, na.rm = T); mean(two_PO$Y0, na.rm = T)
   dt = data.frame(data, two_PO)
   
-  # calculate Y with SUTVA
+  # generate Y with SUTVA
   dt$Y = (dt$A * dt$Y1 + (1 - dt$A) * dt$Y0) * dt$S
   dt = data.frame(id = c(1:param_n), dt)
   dt = data.table(dt)
@@ -136,13 +116,11 @@ simulate_data_function = function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, 
   #OBS table
   OBS_values = data.frame(unique(cbind(dt$A, dt$S))); colnames(OBS_values) = c("S", "A")
   obs_table = table(dt$OBS)
-  OBS_table = matrix(c(obs_table[1], obs_table[3],
-                       obs_table[2], obs_table[4]),
-                     nrow = 2, ncol = 2)
+  OBS_table = matrix(c(obs_table[1], obs_table[3], obs_table[2], obs_table[4]), nrow = 2, ncol = 2)
   OBS_table = OBS_table/ param_n
   rownames(OBS_table) = c("A=0", "A=1"); colnames(OBS_table) = c("S=0", "S=1")
   
-  # TODO IDENTIFICATION: add estimation (under mono) of the pi's
+  # estimation of strata proportions (under mono) 
   pi_as_est = mean(filter(dt, A==0)$S)
   pi_ns_est = 1 - mean(filter(dt, A==1)$S)
   pi_pro_est = mean(filter(dt, A==1)$S) - mean(filter(dt, A==0)$S)
@@ -155,8 +133,8 @@ simulate_data_function = function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, 
 
 simulate_data_run_EM_and_match = function(seed = 101, return_EM_PS = FALSE, index_set_of_params, gamma_as, gamma_ns, gamma_pro,
       misspec_PS, misspec_outcome_funcform=FALSE, U_factor=0, funcform_factor_sqr=0, funcform_factor_log=0, 
-      match_and_reg_watch_true_X=FALSE, param_n, param_n_sim, iterations = 12, epsilon_EM = 0.001,
-      caliper, epsilon_1_GPI = 1, match_on = NULL, mu_x_fixed=FALSE, x_as, only_naive_bool=FALSE){
+      match_and_reg_watch_true_X=FALSE, param_n, param_n_sim, iterations, epsilon_EM = 0.001,
+      caliper, match_on = NULL, mu_x_fixed=FALSE, x_as, only_naive_bool=FALSE){
 
   X_sub_cols = paste0("X", c(1:(dim_x)))
   list_dat_EM <- list_coeff_as <- list_coeff_ns <- list()
@@ -174,14 +152,12 @@ simulate_data_run_EM_and_match = function(seed = 101, return_EM_PS = FALSE, inde
   i = 1; real_iter_ind = 1;  index_EM_not_conv = 0
   while (i <= param_n_sim) {
   #for (i in 1:param_n_sim)
-    #set.seed(100 + i)
     print(paste0("this is index_set_of_params ", index_set_of_params))
     print(paste0("this is n_sim ", i, " in simulate_data_run_EM_and_match. ",
          "index_EM_not_conv: ", index_EM_not_conv, ". real number of iterations: "  , real_iter_ind, "."))
     start_time1 <- Sys.time()
     list_data_for_EM_and_X = simulate_data_function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, param_n,
-          misspec_PS, misspec_outcome_funcform, U_factor, funcform_factor_sqr, funcform_factor_log,
-          epsilon_1_GPI = epsilon_1_GPI)
+          misspec_PS, misspec_outcome_funcform, U_factor, funcform_factor_sqr, funcform_factor_log)
     data_for_EM = list_data_for_EM_and_X$dt
     x = list_data_for_EM_and_X$x_obs; x_PS = data.frame(list_data_for_EM_and_X$x_PS)
     x_outcome = data.frame(list_data_for_EM_and_X$x_outcome)

@@ -24,34 +24,30 @@ dim_x = 6; cont_x = 5; categ_x = 0; vec_p_categ = rep(0.5, categ_x); dim_x_missp
 mean_x = rep(0.5, cont_x); var_x = rep(1, cont_x)
 
 # misspec parameters (for PS model and Y model:
-# misspec_PS: 0 <- NO, 1:only PS model, 2: PS model, and matching (mahalanobis, eucl...) and regression
+# misspec_PS: 0 <- NO, 1:only PS model, 2: PS model (possibly also Y)
 misspec_outcome_funcform = FALSE; match_and_reg_watch_true_X = FALSE
 U_factor=1; funcform_factor_sqr=-3; funcform_factor_log=3
 mean_x_misspec = rep(0.5, dim_x_misspec)
-#sim=2
 misspec_PS = 0 # 0: no misspec # 2: functional form misspecification
-# sensitivity paramters
-epsilon_1_GPI = 1
 
 # EM convergence parameters
-iterations = 200; epsilon_EM = 10^-6 # epsilon_EM is for the EM convergence
+iterations = 200; epsilon_EM = 10^-6
 #############################################################################################
 
 ##########################################################
 # beta ####
-#  with interactions between A and X:
+# with interactions between A and X:
 betas_GPI = as.matrix(rbind(c(22,5,2,1), c(20,3,3,0))) # cont_x=3
 betas_GPI = as.matrix(rbind(c(22,5,2,1,3,5), c(20,3,3,0,1,3))) # cont_x=5
 betas_GPI = as.matrix(rbind(c(22,rep(c(5,2,1,3,5),2)), c(20,rep(c(3,3,0,1,3),2)))) # cont_x=10 
 
-#  without interactions between A and X: "simple effect" is 2
+# without interactions between A and X: "simple effect" is 2
 betas_GPI = as.matrix(rbind(c(22,3,4,5), c(20,3,4,5))) # cont_x=3
 betas_GPI = as.matrix(rbind(c(22,3,4,5,1,3), c(20,3,4,5,1,3))) # cont_x=5
 betas_GPI = as.matrix(rbind(c(22,rep(c(5,2,1,3,5),2)), c(20,rep(c(5,2,1,3,5),2)))) # cont_x=10
 
 rownames(betas_GPI) = c("beta_treatment", "beta_control")
 ###############################################################################################
-
 
 ##########################################################
 var_GPI = as.matrix(rbind(1, 1))
@@ -92,7 +88,6 @@ mat_gamma = matrix(c(
   c(0.024, rep(0.41, dim_x-1)), c(0.26, rep(0.32, dim_x-1))
   ,c(-0.45, rep(0.61, dim_x-1)), c(0.4, rep(-0.02, dim_x-1))) ,nrow = 2, byrow = T)
 #############################################################################################
-
 # assign 0's to gamma_pro and add coefficients names ####
 gamma_pro = rep(0, dim_x)
 colnames(mat_gamma) = paste0( "gamma", paste(rep(c(0:(dim_x-1)), times = 2)), rep(c("as", "ns"), each = dim_x) )
@@ -104,9 +99,8 @@ extract_pis_from_scenarios = function(nn=250000){
     gamma_as = as.numeric(mat_gamma[k, c(1:dim_x)])
     gamma_ns =  as.numeric(mat_gamma[k, (dim_x+1): (2*dim_x)])
     lst_mean_x_and_pi = simulate_data_function(gamma_as=gamma_as, gamma_ns=gamma_ns, gamma_pro=gamma_pro, 
-                   param_n=nn, misspec_PS=2, misspec_outcome_funcform=FALSE, 
-                   U_factor=U_factor, funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log,
-                   epsilon_1_GPI = 1, only_mean_x_bool=TRUE)
+             param_n=nn, misspec_PS=2, misspec_outcome_funcform=FALSE, 
+             U_factor=U_factor, funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log, only_mean_x_bool=TRUE)
     big_lst[[k]] = lst_mean_x_and_pi
     mat_x_as = rbind(mat_x_as, lst_mean_x_and_pi$x_as)
     mat_pis = rbind(mat_pis, lst_mean_x_and_pi$pi)
@@ -158,7 +152,7 @@ for ( k in c(1 : nrow(mat_gamma)) ){
       gamma_as=gamma_as, gamma_ns=gamma_ns, gamma_pro=gamma_pro, misspec_PS=misspec_PS,
       misspec_outcome_funcform=FALSE, U_factor=U_factor, funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log, 
       match_and_reg_watch_true_X=FALSE, param_n=param_n, param_n_sim=param_n_sim,
-      iterations=iterations, epsilon_EM = epsilon_EM, caliper=caliper, epsilon_1_GPI=epsilon_1_GPI,
+      iterations=iterations, epsilon_EM = epsilon_EM, caliper=caliper,
       match_on = match_on, mu_x_fixed=mu_x_fixed, x_as=mat_x_as[k,], only_naive_bool=only_naive_bool)
 
   mat_SACE_estimators = EM_and_matching[[1]]
