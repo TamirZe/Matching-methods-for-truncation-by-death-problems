@@ -13,6 +13,7 @@ setwd("~/A matching framework for truncation by death problems")
 source("NSW_data_analysis/data_processing/data_processing_and_eda_funcs.R")
 source("NSW_data_analysis/data_matching/data_matching_multiple_NEW.R")
 source("NSW_data_analysis/data_post_matching_analysis/data_regression_estimators.R")
+#source("NSW_data_analysis/data_post_matching_analysis/old/data_OLS_WLS_estimator_old.R")
 source("NSW_data_analysis/data_post_matching_analysis/data_aligned_ranktest.R")
 source("NSW_data_analysis/data_SA/data_SA_regression_funcs.R")
 #source("Simulations_studies/sim_DGM_and_simulations/simulation_run.R")
@@ -26,16 +27,20 @@ source("Ding_Lu/DL_SE_boot.R")
 # data files
 ########################################################################
 library(readstata13); library(cem)
-nsw <- read.dta13("NSW_data_analysis/Data_files/nsw_dw.dta")
-data(LL, package = "cem")
+nsw <- read.dta13("NSW_data_analysis/data_files/nsw_dw.dta") # dehejia and wahba datase
+data(LL, package = "cem") # LaLonde dataset 
 ########################################################################
 
 set.seed(101)
 ########################################################################
+data_bool = "LL" # "DW" for dehejia and wahba dataset # "LL" for LaLonde dataset 
+# EM convergence parameters
+iterations = 400; epsilon_EM = 1e-06
+
+mu_x_fixed = FALSE; x_as = mat_x_as[1,]
+
 # parameters and variables for matching and regressions ####
-iterations = 400; epsilon_EM = 1e-06;
-match_on = "e_1_as"  # "e_1_as", # EMest_p_as 
-data_bool = "LL" # "DW" # "LL"
+match_on = "e_1_as"  # "e_1_as" # EMest_p_as 
 caliper = 0.3
 
 covariates_PS = c("age", "black", "hispanic", "married", "re75", "emp75")
