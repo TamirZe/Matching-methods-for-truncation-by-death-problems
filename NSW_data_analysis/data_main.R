@@ -11,7 +11,7 @@ library(tidyr); library(dplyr); library(data.table); library(tidyr); library(tab
 # source for data NSW_data_analysis
 setwd("~/A matching framework for truncation by death problems")
 source("NSW_data_analysis/data_processing/data_processing_and_eda_funcs.R")
-source("NSW_data_analysis/data_matching/data_matching_multiple_NEW.R")
+source("NSW_data_analysis/data_matching/data_matching_multiple.R")
 source("NSW_data_analysis/data_post_matching_analysis/data_regression_estimators.R")
 #source("NSW_data_analysis/data_post_matching_analysis/old/data_OLS_WLS_estimator_old.R")
 source("NSW_data_analysis/data_post_matching_analysis/data_aligned_ranktest.R")
