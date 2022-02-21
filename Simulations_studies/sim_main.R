@@ -5,9 +5,9 @@ library(ggplot2); library(rockchalk); library(stats); library(rlist); library(mg
 library(optmatch); library(DOS); library(Matching); library(sandwich); library(rmutil); library(clubSandwich); library(tableone)
 library(sandwich); library(lmtest); library(rmutil); library(splitstackshape); library(PerformanceAnalytics)
 
-source("Simulations_studies/sim_matching_scripts/matching_PS_multiple.R")
+source("Simulations_studies/sim_matching_procedure/matching_PS_multiple.R")
 source("Simulations_studies/sim_post_matching_analysis/sim_regression_estimator.R")
-source("Simulations_studies/sim_simulations_scripts/simulation_run.R")
+source("Simulations_studies/sim_DGM_and_simulations/simulation_run.R")
 source("Simulations_studies/sim_tables_and_figures/table_design_multiple_func.R")
 source("Simulations_studies/sim_tables_and_figures/coverage_naive_est.R")
 source("Ding_Lu/PS_M_weighting.R")
@@ -50,6 +50,7 @@ rownames(betas_GPI) = c("beta_treatment", "beta_control")
 ###############################################################################################
 
 ##########################################################
+# correlation structure between PO'
 var_GPI = as.matrix(rbind(1, 1))
 rownames(var_GPI) = c("var_treatment", "var_control")
 rho_GPI_PO = 0.4 #0.4 #1
@@ -151,7 +152,7 @@ only_naive_bool = F
 
 # run over different values of gamma's: 1:nrow(mat_gamma)
 # param_n_sim * time per run * nrow(mat_gamma)
-set.seed(101)
+
 for ( k in c(1 : nrow(mat_gamma)) ){
   print(paste0("in the outer for loop ", k))
   gamma_as=as.numeric(mat_gamma[k, c(1:dim_x)])

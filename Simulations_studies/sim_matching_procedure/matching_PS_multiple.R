@@ -6,7 +6,7 @@
 # m_data = data_with_PS[1:3000,]
 #m_data = data_with_PS[S==1,]
  
-# TODO caliper is in sd
+# caliper is in sd
 #replace = F; estimand = "ATC"; change_id = TRUE; mahal_match = 2; M=1; caliper = 0.25
 
 
@@ -471,3 +471,20 @@ crude_estimator_inference = function(match_obj, dt_match_S1, diff_per_pair, repl
               CI_by_SE_and_Z_val_crude=CI_by_SE_and_Z_val_crude))
 }
 
+tables_repeated = function(table_subjects){
+  #table_treated_subjects = data.table(table(ATE_MATCH$index.treated))
+  table_treated_subjects = data.table(apply(table_subjects, 2, as.numeric))
+  colnames(table_treated_subjects)[1] = "id_trt"
+  repeated_treated = table(table_treated_subjects$N)
+  return(list(table_treated_subjects = table_treated_subjects, 
+              repeated_treated = repeated_treated))
+}
+
+check_balance_function = function(data, cols){
+  data = data.frame(data)
+  diff_w = apply(data[ , cols], 2, mean) - 
+    apply(data[ , paste0("A0", "_", cols)], 2, mean)
+  std_diff_w = diff_w / 
+    apply(data[ , paste0("A0", "_", cols)], 2, sd)  
+  return(list(diff_w, std_diff_w))
+}
