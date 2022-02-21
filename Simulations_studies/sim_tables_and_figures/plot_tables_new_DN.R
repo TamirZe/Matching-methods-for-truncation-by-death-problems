@@ -1,7 +1,4 @@
-library(cowplot)
-library(ggpubr)
-library(arsenal)
-library(tidyverse)
+library(cowplot); library(ggpubr); library(arsenal); library(tidyverse)
 
 #legend_levels = c("Crude Wout", "OLS inter", "Crude With", "WLS inter", "BC With", "DingLu MA")  # WLS or WLS inter
 

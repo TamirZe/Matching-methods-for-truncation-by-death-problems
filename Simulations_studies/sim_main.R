@@ -6,10 +6,10 @@ library(optmatch); library(DOS); library(Matching); library(sandwich); library(r
 library(sandwich); library(lmtest); library(rmutil); library(splitstackshape); library(PerformanceAnalytics)
 
 source("Simulations_studies/sim_matching_scripts/matching_PS_multiple.R")
-source("Simulations_studies/sim_models/sim_OLS_WLS_estimator.R")
+source("Simulations_studies/sim_post_matching_analysis/sim_regression_estimator.R")
 source("Simulations_studies/sim_simulations_scripts/simulation_run.R")
-source("Simulations_studies/sim_TABLES/table_design_multiple_func.R")
-source("Simulations_studies/sim_TABLES/coverage_naive_est.R")
+source("Simulations_studies/sim_tables_and_figures/table_design_multiple_func.R")
+source("Simulations_studies/sim_tables_and_figures/coverage_naive_est.R")
 source("Ding_Lu/PS_M_weighting.R")
 source("Ding_Lu/PS_M_weighting_SA.R")
 
@@ -88,12 +88,13 @@ mat_gamma = matrix(c(
   c(0.024, rep(0.41, dim_x-1)), c(0.26, rep(0.32, dim_x-1))
   ,c(-0.45, rep(0.61, dim_x-1)), c(0.4, rep(-0.02, dim_x-1))) ,nrow = 2, byrow = T)
 #############################################################################################
+
 # assign 0's to gamma_pro and add coefficients names ####
 gamma_pro = rep(0, dim_x)
 colnames(mat_gamma) = paste0( "gamma", paste(rep(c(0:(dim_x-1)), times = 2)), rep(c("as", "ns"), each = dim_x) )
 
 #############################################################################################
-# extract strata proportion and mean covariates by stratum ####
+# extract strata proportion and mean covariates ####
 extract_pis_from_scenarios = function(nn=250000){
   big_lst = list(); mat_x_as <- mat_pis <- mat_x_by_g_A <- NULL
   for( k in c(1 : nrow(mat_gamma)) ){
