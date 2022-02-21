@@ -2,7 +2,7 @@ regression_adjusted_function = function(rep_bool, dt_match_S1, m_data,
                         matched_pairs, covariates = reg_cov,
                         interactions_bool, LS){
   estimation_with_interactions = function(lin_reg_fit_matched, coeffs_table, data_matched_reg, 
-                                          lin_reg_fit_wls_matched=NULL, coeffs_table_wls=NULL, # data_matched_reg_weights=NULL,
+                                          lin_reg_fit_wls_matched=NULL, coeffs_table_wls=NULL,
                                           LS_for_estimation){
     coeffs = coeffs_table[,1]
     names_coeffs_interactions = c("A", names(coeffs)[grep(":", names(coeffs))])
