@@ -26,7 +26,7 @@ source("Ding_Lu/DL_SE_boot.R")
 # data files
 ########################################################################
 library(readstata13); library(cem)
-nsw <- read.dta13("process_NSW_data/Data_files/nsw_dw.dta")
+nsw <- read.dta13("NSW_data_analysis/Data_files/nsw_dw.dta")
 data(LL, package = "cem")
 ########################################################################
 
@@ -97,7 +97,7 @@ coeff_as = est_ding_lst$beta.a; coeff_ns = est_ding_lst$beta.n
 EM_coeffs = rbind(coeff_as, coeff_ns)
 colnames(EM_coeffs)[-1] = sub(".*]", "", colnames(EM_coeffs)[-1])
 
-# adjust the cols the same order as in myEM: my order is: as, ns, pro. ding order: c(prob.c, prob.a, prob.n)
+# adjust the cols the same order as in myEM: my order is: as, ns, pro. Ding order: c(prob.c, prob.a, prob.n)
 PS_est = data.frame(est_ding_lst$PROB[,2], est_ding_lst$PROB[,3], est_ding_lst$PROB[,1])
 colnames(PS_est) = c("EMest_p_as", "EMest_p_ns", "EMest_p_pro")
 # add the principal scores to the data
