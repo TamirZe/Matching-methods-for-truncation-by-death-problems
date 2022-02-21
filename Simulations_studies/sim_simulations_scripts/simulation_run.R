@@ -4,14 +4,13 @@
 
 # misspec_PS: 0 <- NO mis, 2: add transformations to PS model, and remain original X's in ourcome model.
 simulate_data_function = function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, param_n,
-                                  misspec_PS, misspec_outcome_funcform=FALSE,
-                                  U_factor=0, funcform_factor_sqr=0, funcform_factor_log=0, only_mean_x_bool=FALSE){
+                                  misspec_PS, funcform_mis_out=FALSE,
+                                  funcform_factor_sqr=0, funcform_factor_log=0, only_mean_x_bool=FALSE){
   if(is.null(seed_num)!=TRUE){set.seed(seed_num)}
 
   # draw covariate matrix
   x_obs <- matrix( c( rep(1,param_n), 
-                      mvrnorm(param_n, mu=mean_x, Sigma = diag(var_x, cont_x))), 
-                   nrow = param_n )
+        mvrnorm(param_n, mu=mean_x, Sigma = diag(var_x, cont_x))), nrow = param_n )
   # add categorial variable, if needed (needed if categ_x > 0)
   if(categ_x > 0){
     x_categorial = data.table(list.cbind(lapply(vec_p_categ, function(x) rbinom(n=param_n,prob=x,size=1))))
@@ -25,7 +24,7 @@ simulate_data_function = function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, 
     gamma_as_adj = gamma_as; gamma_ns_adj = gamma_ns; gamma_pro_adj = gamma_pro; betas_GPI_adj = betas_GPI 
   }
   
-  # misspec2: replace 2 X's with x^2 and ~log(X), to PS model and possibly to outcome model (if misspec_outcome_funcform == TRUE) 
+  # misspec2: replace 2 X's with x^2 and ~log(X), to PS model and possibly to outcome model (if funcform_mis_out == TRUE) 
   if(misspec_PS == 2){
     x_misspec = as.matrix(data.frame(x_obs[,(ncol(x_obs) - 1)]^2,
                                      log(x_obs[,ncol(x_obs)] - (min(x_obs[,ncol(x_obs)]) - 0.1)))) %>% as.data.frame
@@ -33,9 +32,9 @@ simulate_data_function = function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, 
     # PS true model covariates
     x_PS = as.matrix( data.frame( x_obs[,-c((ncol(x_obs) - 1) ,ncol(x_obs))], x_misspec ) )
     # Y true model covariates:
-    # if misspec_outcome_funcform == FALSE (default), Y on original (obs) X 
-    # if misspec_outcome_funcform == TRUE, Y on the transformation of X 
-    if(misspec_outcome_funcform == FALSE){
+    # if funcform_mis_out == FALSE (default), Y on original (obs) X 
+    # if funcform_mis_out == TRUE, Y on the transformation of X 
+    if(funcform_mis_out == FALSE){
       x = x_obs
     }else{x = x_PS}
     gamma_as_adj = c(gamma_as[-c((ncol(x_obs) - 1) ,ncol(x_obs))], funcform_factor_sqr*gamma_as[2], funcform_factor_log*gamma_as[2])
@@ -131,8 +130,8 @@ simulate_data_function = function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, 
 }
 
 
-simulate_data_run_EM_and_match = function(seed = 101, return_EM_PS = FALSE, index_set_of_params, gamma_as, gamma_ns, gamma_pro,
-      misspec_PS, misspec_outcome_funcform=FALSE, U_factor=0, funcform_factor_sqr=0, funcform_factor_log=0, 
+simulate_data_run_EM_and_match = function(return_EM_PS = FALSE, index_set_of_params, gamma_as, gamma_ns, gamma_pro,
+      misspec_PS, funcform_mis_out=FALSE, funcform_factor_sqr=0, funcform_factor_log=0, 
       match_and_reg_watch_true_X=FALSE, param_n, param_n_sim, iterations, epsilon_EM = 0.001,
       caliper, match_on = NULL, mu_x_fixed=FALSE, x_as, only_naive_bool=FALSE){
 
@@ -157,7 +156,7 @@ simulate_data_run_EM_and_match = function(seed = 101, return_EM_PS = FALSE, inde
          "index_EM_not_conv: ", index_EM_not_conv, ". real number of iterations: "  , real_iter_ind, "."))
     start_time1 <- Sys.time()
     list_data_for_EM_and_X = simulate_data_function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, param_n,
-          misspec_PS, misspec_outcome_funcform, U_factor, funcform_factor_sqr, funcform_factor_log)
+          misspec_PS, funcform_mis_out, funcform_factor_sqr, funcform_factor_log)
     data_for_EM = list_data_for_EM_and_X$dt
     x = list_data_for_EM_and_X$x_obs; x_PS = data.frame(list_data_for_EM_and_X$x_PS)
     x_outcome = data.frame(list_data_for_EM_and_X$x_outcome)
