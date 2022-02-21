@@ -5,6 +5,7 @@ library(ggplot2); library(rockchalk); library(nnet); library(stats); library(rli
 library(optmatch); library(DOS); library(Matching); library(sandwich); library(rmutil); library(clubSandwich); library(Hmisc)
 library(sandwich); library(rmutil);  library(caret); library(splitstackshape); library(MatchIt); library(PerformanceAnalytics)
 library(tidyr); library(dplyr); library(data.table); library(tidyr); library(tableone); library(lmtest)
+library(readstata13); library(cem) # reading NSW datasets
 ########################################################################
 
 ########################################################################
@@ -87,12 +88,9 @@ colnames(CI_naives_before_matching) = c("naive_without_matching", "survivors_nai
 
 ######################################################################## 
 # EM algorithm ####
-#TODO EM with monotonicity
-beta.a = NULL; beta.n = NULL
 est_ding_lst = PSPS_M_weighting(Z=data$A, D=data$S,
-        X=as.matrix(subset(data, select = covariates_PS)),  
-        Y=data$Y, trc = TRUE, ep1 = 1, ep0 = 1, beta.a = beta.a, beta.n = beta.n,
-        iter.max = iterations, error0 = epsilon_EM) 
+        X=as.matrix(subset(data, select = covariates_PS)), Y=data$Y, trc = TRUE, ep1 = 1, ep0 = 1, 
+        beta.a = NULL, beta.n = NULL, iter.max = iterations, error0 = epsilon_EM) 
 #EM error
 error = est_ding_lst$error
 #EM coeffs
@@ -114,7 +112,7 @@ DING_est = est_ding_lst$AACE
 DING_model_assisted_est_ps = est_ding_lst$AACE.reg
 
 # bootstrap for DL estimator
-# boosting_results = run_boosting(data, BS=500, seed=19, iter.max=iterations, error0=epsilon_EM)
+'''boosting_results = run_boosting(data, BS=500, seed=19, iter.max=iterations, error0=epsilon_EM)'''
 ######################################################################## 
 
 ######################################################################## 
@@ -138,6 +136,7 @@ for(j in c(1:length(replace_vec))){
   }
 ######################################################################## 
 
+######################################################################## 
 # aligned_ranktets ####
 data_pairs_lst = lst_matching_estimators[[2]][[1]]$data_pairs_lst
 aligned_ranktets_lst = list()
@@ -145,7 +144,10 @@ for (measure in names(data_pairs_lst)) {
   data_new_grp = adjust_pairs_to_new_grp(data_pairs_lst[[measure]])
   aligned_ranktets_lst[[measure]] = alignedranktest(outcome=data_new_grp$Y, matchedset=data_new_grp$trt_grp, treatment=data_new_grp$A)
 }
+######################################################################## 
 
+######################################################################## 
+# print to latex
 # EM_coeffs ###
 print(EM_coeffs %>% xtable(), size="\\fontsize{9pt}{9pt}\\selectfont", include.rownames=F)
 
@@ -172,8 +174,7 @@ ESTIMATORS_TABLE = rbind(lst_matching_estimators[[1]][[1]]$summary_table,
                          lst_matching_estimators[[2]][[1]]$summary_table) %>% data.frame() 
 print(ESTIMATORS_TABLE %>% filter(Replacements==TRUE) %>% xtable(digits=c(0), caption = "Matching estimators."),
       size="\\fontsize{8pt}{8pt}\\selectfont", include.rownames=F)
-
-
+######################################################################## 
 
 
 
