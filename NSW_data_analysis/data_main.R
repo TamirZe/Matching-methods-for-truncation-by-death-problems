@@ -147,7 +147,7 @@ for (measure in names(data_pairs_lst)) {
 ######################################################################## 
 
 ######################################################################## 
-# print to latex
+# print to LateX
 # EM_coeffs ###
 print(EM_coeffs %>% xtable(), size="\\fontsize{9pt}{9pt}\\selectfont", include.rownames=F)
 
