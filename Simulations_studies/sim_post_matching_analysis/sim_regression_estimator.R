@@ -8,7 +8,6 @@ regression_adjusted_function = function(rep_bool, dt_match_S1, m_data, matched_p
                                           LS_for_estimation, x_as){
     coeffs = coeffs_table[,1]
     #coeftest(lin_reg_fit_matched, vcov. = vcovHC, type = "HC1")
-    # se is sqrt(vcov)
     names_coeffs_interactions = c("A", names(coeffs)[grep(":", names(coeffs))])
     coeffs_interactions = coeffs[names_coeffs_interactions]
     var_mu_x = apply(subset(filter(data_matched_reg, A==0), select = covariates), 2, var) / 
@@ -21,7 +20,6 @@ regression_adjusted_function = function(rep_bool, dt_match_S1, m_data, matched_p
     x_check = subset(data_matched_reg, select = c("A", covariates))
     mu_x_check = c(A = 1, apply(subset(filter(x_check, A==0), select = -A), 2, mean))
 
-    #mu_x_vec = c(A = 1, apply(subset(x, select = -A), 2, mean))
     if(mu_x_fixed == TRUE){mu_x_vec=x_as}else{
       mu_x_vec = c(A = 1, apply(subset(filter(x, A==0), select = -A), 2, mean))
     }
@@ -29,7 +27,6 @@ regression_adjusted_function = function(rep_bool, dt_match_S1, m_data, matched_p
     
     if(LS_for_estimation=="OLS"){
       cluster_coeffs = data.frame(coef_test(lin_reg_fit_matched, vcov = "CR1", cluster = data_matched_reg$pair))
-      #TODO 02.08.2021
       vcov_clstr_interactions = vcovCL(lin_reg_fit_matched, cluster = ~ pair)[names_coeffs_interactions, names_coeffs_interactions]
       vcov_clstr_interactions2 <- 
         vcovCR(lin_reg_fit_matched, cluster = data_matched_reg$pair, type = "CR1")[names_coeffs_interactions, names_coeffs_interactions] 
@@ -43,26 +40,21 @@ regression_adjusted_function = function(rep_bool, dt_match_S1, m_data, matched_p
     if(LS_for_estimation=="WLS"){
       se = coeffs_table[,2]
       se_interactions = se[names_coeffs_interactions]
-      vcov = vcov(lin_reg_fit_wls_matched) # vcov(lin_reg_fit_matched)
+      vcov = vcov(lin_reg_fit_wls_matched) 
       vcov_interactions_naive = vcov[names_coeffs_interactions, names_coeffs_interactions]
       var_beta_est_naive = matrix(mu_x_vec, nrow=1) %*% vcov_interactions_naive %*% matrix(mu_x_vec, ncol=1) 
       se_beta_est_naive = sqrt(var_beta_est_naive)
       se_beta_est_naive_DM = sqrt( var_beta_est_naive + sum( (coeffs_interactions[-1])^2 * var_mu_x ) )
      
        # robust clustered SE estimator
-      #identical(vcovHC(lin_reg_fit_matched, type = "HC"), sandwich(lin_reg_fit_matched))
       vcov_clstr_interactions = vcovCL(lin_reg_fit_matched, cluster = ~ pair + id)[names_coeffs_interactions, names_coeffs_interactions]
       se_beta_est_clstr <- 
         sqrt( matrix(mu_x_vec, nrow=1) %*% vcov_clstr_interactions %*% matrix(mu_x_vec, ncol=1) )
-      #a = coeftest(lin_reg_fit_matched, vcov. = vcovCL, cluster = ~ pair + id)[,"Std. Error",drop = FALSE]
-      #sqrt(diag(b)) == a
       vcov_sand_interactions = sandwich(lin_reg_fit_wls_matched)[names_coeffs_interactions, names_coeffs_interactions]
       se_beta_est_sand <- 
         sqrt( matrix(mu_x_vec, nrow=1) %*% vcov_sand_interactions %*% matrix(mu_x_vec, ncol=1) )
-      #sqrt(matrix(mu_x_vec, nrow=1) %*% vcov(lin_reg_fit_matched)[names_coeffs_interactions, names_coeffs_interactions] %*% matrix(mu_x_vec, ncol=1) )
       
       # ADD from DELTA METHOD for WLS
-      #var_mu_x = apply(subset(filter(x, A==0), select = -A), 2, sd) / nrow(filter(x, A==0))
       se_beta_est_clstr_DM = sqrt( se_beta_est_clstr^2 + sum( (coeffs_interactions[-1])^2 * var_mu_x ) )
       se_beta_est_sand_DM = sqrt( se_beta_est_sand^2 + sum( (coeffs_interactions[-1])^2 * var_mu_x ) )
     
