@@ -264,9 +264,8 @@ my_matching_func_multiple = function(match_on = NULL, X_sub_cols, m_data, weight
   matched_treated_S1_repeats = merge(matched_treated_S1, table_treated_subjects, 
                                      all.x = TRUE, all.y = FALSE, by = "id_trt")
   identical(matched_treated_S1_repeats[,-3], matched_treated_S1)
-  
-  S1_matched_distinguish_by_g =  
-    ddply(matched_treated_S1_repeats, .(g), summarize, amount_of_subjects = length(id_trt))
+  #S1_matched_distinguish_by_g = ddply(matched_treated_S1_repeats, .(g), summarize, amount_of_subjects = length(id_trt))
+  #S1_matched_distinguish_by_g = matched_treated_S1_repeats %>% group_by(g) %>% summarise(amount_of_subjects = n())
   
   #print("before repeated3")
   S1_matched_as = filter(matched_treated_S1_repeats, g=="as")

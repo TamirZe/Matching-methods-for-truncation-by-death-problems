@@ -1,13 +1,13 @@
-library(rlist); library(locfit); library(plyr); library(nnet); library(xtable); library(rlang);library(glue)
+library(rlist); library(locfit); library(nnet); library(xtable); library(rlang);library(glue)
 # library(multilevelMatching); library(PerformanceAnalytics); library(lmtest); library(caret);
-library(matrixStats); library(data.table); library(dplyr); library(reshape); library(MASS); library(Hmisc); 
+library(matrixStats); library(data.table); library(dplyr); library(plyr); library(reshape); library(MASS); library(Hmisc); 
 library(ggplot2); library(rockchalk); library(stats); library(rlist); library(mgsub); library(reshape2); library(gridExtra)
 library(optmatch); library(DOS); library(Matching); library(sandwich); library(rmutil); library(clubSandwich); library(tableone)
 library(sandwich); library(lmtest); library(rmutil); library(splitstackshape); library(PerformanceAnalytics)
 
+source("Simulations_studies/sim_DGM_and_simulations/simulation_run.R")
 source("Simulations_studies/sim_matching_procedure/matching_PS_multiple.R")
 source("Simulations_studies/sim_post_matching_analysis/sim_regression_estimator.R")
-source("Simulations_studies/sim_DGM_and_simulations/simulation_run.R")
 source("Simulations_studies/sim_tables_and_figures/table_design_multiple_func.R")
 source("Simulations_studies/sim_tables_and_figures/coverage_naive_est.R")
 source("Ding_Lu/PS_M_weighting.R")
@@ -73,7 +73,7 @@ mat_gamma = matrix(c(
 mat_gamma = matrix(c(
   c(-0.05, rep(0.16, dim_x-1)), c(-0.4, rep(-0.25, dim_x-1)) 
  ,c(-0.5, rep(1.5, dim_x-1)), c(-0.25, rep(0.25, dim_x-1))) ,nrow = 2, byrow = T)
-# small pi pro 5X:
+# small pi pro 5X 
 mat_gamma = matrix(c(
    c(0.45, rep(0.75, dim_x-1)), c(0.62, rep(0.6, dim_x-1))
   ,c(-0.12, rep(1.25, dim_x-1)), c(0.45, rep(-0.2, dim_x-1))) ,nrow = 2, byrow = T)
@@ -88,11 +88,11 @@ mat_gamma = matrix(c(
 mat_gamma = matrix(c(
   c(0.024, rep(0.41, dim_x-1)), c(0.26, rep(0.32, dim_x-1))
   ,c(-0.45, rep(0.61, dim_x-1)), c(0.4, rep(-0.02, dim_x-1))) ,nrow = 2, byrow = T)
-#############################################################################################
 
 # assign 0's to gamma_pro and add coefficients names ####
 gamma_pro = rep(0, dim_x)
 colnames(mat_gamma) = paste0( "gamma", paste(rep(c(0:(dim_x-1)), times = 2)), rep(c("as", "ns"), each = dim_x) )
+#############################################################################################
 
 #############################################################################################
 # extract strata proportion and mean covariates ####
@@ -136,7 +136,7 @@ for( k in c(1 : nrow(mat_gamma)) ){
 }
 #############################################################################################
 
-param_n = 2000; param_n_sim = 5 # param_n = 2000; param_n_sim = 1000
+param_n = 2000; param_n_sim = 3 # param_n = 2000; param_n_sim = 1000
 caliper = 0.25; match_on = "O11_posterior_ratio" 
 mu_x_fixed = FALSE; mat_x_as; x_as = mat_x_as[1,]
 
@@ -149,10 +149,8 @@ list_all_std_mean_diff <- list_all_means_by_subset  <- list_all_EM_not_conv <- l
 # for naive estimators and their SE and CI
 only_naive_bool = F
 
-
 # run over different values of gamma's: 1:nrow(mat_gamma)
 # param_n_sim * time per run * nrow(mat_gamma)
-
 for ( k in c(1 : nrow(mat_gamma)) ){
   print(paste0("in the outer for loop ", k))
   gamma_as=as.numeric(mat_gamma[k, c(1:dim_x)])
@@ -161,8 +159,8 @@ for ( k in c(1 : nrow(mat_gamma)) ){
   start_time <- Sys.time()
 
   EM_and_matching = simulate_data_run_EM_and_match(return_EM_PS=FALSE, index_set_of_params=k,
-      gamma_as=gamma_as, gamma_ns=gamma_ns, gamma_pro=gamma_pro, misspec_PS=misspec_PS,
-      funcform_mis_out=FALSE, funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log, 
+      gamma_as=gamma_as, gamma_ns=gamma_ns, gamma_pro=gamma_pro, 
+      misspec_PS=misspec_PS, funcform_mis_out=FALSE, funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log, 
       match_and_reg_watch_true_X=FALSE, param_n=param_n, param_n_sim=param_n_sim,
       iterations=iterations, epsilon_EM=epsilon_EM, caliper=caliper,
       match_on=match_on, mu_x_fixed=mu_x_fixed, x_as=mat_x_as[k,], only_naive_bool=only_naive_bool)
