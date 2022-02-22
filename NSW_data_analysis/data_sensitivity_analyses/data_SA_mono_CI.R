@@ -1,4 +1,6 @@
 #func: predictions for units from O(0,1), plugging A={0,1}
+SACE_estimation_1LEARNER_mono(matched_data=matched_data, reg_after_match=reg_after_match, alpha0_mono=alpha0, xi=xi, 
+    coeffs_regression_one_model=coeffs_regression_one_model, coeffs_regression_two_models=coeffs_regression_two_models, two_models_bool=TRUE)
 #########################################################################################
 SACE_estimation_1LEARNER_mono = function(matched_data, reg_after_match, alpha0_mono=1, xi=0, 
                                     coeffs_regression_one_model, coeffs_regression_two_models, two_models_bool = TRUE){
@@ -42,9 +44,7 @@ SACE_estimation_1LEARNER_mono = function(matched_data, reg_after_match, alpha0_m
   #TODO SE with f_alpha0
   g_alpha0 = 1 
   X = as.matrix(subset(A0_S1_data, select = c("intercept", reg_after_match))) 
-  X_tilde = cbind(intercept = (1 - f_alpha0) * X[,"intercept"], A = 1, (1 - f_alpha0) * X[,-intercept])
-  # g_alpha0 = 1 - f_alpha0 
-  # X_tilde = cbind(intercept = X[,"intercept"], A = (1 / f_alpha0), X[,-intercept])
+  X_tilde = cbind(intercept = (1 - f_alpha0) * X[,"intercept"], A = 1, (1 - f_alpha0) * X[,-which(colnames(X)=="intercept")])
   unit_diff_vec = g_alpha0 * (X_tilde %*% coeffs_regression_wout_inter)
   SACE_1LEARNER_adj_calc = mean(unit_diff_vec)
   print(SACE_1LEARNER_adj - SACE_1LEARNER_adj_calc)
@@ -58,7 +58,6 @@ SACE_estimation_1LEARNER_mono = function(matched_data, reg_after_match, alpha0_m
   #1. if we calculated 1 regression model
   # TODO add SE. for now im not really using it, thus I didnt add SEs
   if(two_models_bool == FALSE){
-    # regression prediction with interactions
     # with interactions
     coeffs_regression_with_inter = coeffs_regression_one_model$coeffs_with_interactions
     coeff_A_with_inter = coeffs_regression_with_inter["A"]; intercept_with_inter = coeffs_regression_with_inter["(Intercept)"]
