@@ -154,26 +154,23 @@ print(EM_coeffs %>% xtable(), size="\\fontsize{9pt}{9pt}\\selectfont", include.r
 # balance  ####
 # balance in the full dataset
 balance_full_data = covarites_descriptive_table_cont_disc(dat = data_with_PS, cov_descr = variables)
+
 # balance in the employed and in the matched dataset, using 3 distance measures
 BALANCE_TABLE = rbind(lst_matching_estimators[[1]][[1]]$balance_table, lst_matching_estimators[[2]][[1]]$balance_table) 
-print(filter(BALANCE_TABLE, Replacements==FALSE)[-c(4:7),-c(1,3:5)][,c(1,5:7,2:4,8:10)] %>% 
-        xtable(), size="\\fontsize{8pt}{8pt}\\selectfont", include.rownames=F)
-print(filter(BALANCE_TABLE, Replacements==TRUE)[-c(4:7),-c(1,3:5)][,c(1,5:7,2:4,8:10)] %>% 
-        xtable(), size="\\fontsize{8pt}{8pt}\\selectfont", include.rownames=F)
+
 BALANCE_TABLE_with = filter(BALANCE_TABLE, Replacements==TRUE, Variable != "N") %>% subset(select = -grep(".1|.2|Replacements", colnames(BALANCE_TABLE)))
+BALANCE_TABLE_wout = filter(BALANCE_TABLE, Replacements==FALSE, Variable != "N") %>% subset(select = -grep(".1|.2|Replacements", colnames(BALANCE_TABLE)))
 # balance in the full dataset, employed and matched dataset using mahalanobis with caliper
-if(identical(BALANCE_TABLE_with$Variable, setdiff(balance_full_data$Variable, c("N","S")))){
-  BALANCE_TABLE_with = cbind(filter(balance_full_data, !Variable %in% c("N", "S")), subset(BALANCE_TABLE_with, select = -Variable))
-}
-colnames(BALANCE_TABLE_with) = gsub("\\..*","", colnames(BALANCE_TABLE_with))
-print(BALANCE_TABLE_with[-c(4:6),] %>% xtable(caption = paste0("Matched data-set means, ", data_bool ," Sample.")),
-      size="\\fontsize{6pt}{6pt}\\selectfont", include.rownames=F)
+BALANCE_TABLE_with = cbind(filter(balance_full_data, !Variable %in% c("N", "S")), subset(BALANCE_TABLE_with, select = -Variable))
+BALANCE_TABLE_wout = cbind(filter(balance_full_data, !Variable %in% c("N", "S")), subset(BALANCE_TABLE_wout, select = -Variable))
+
+colnames(BALANCE_TABLE_with) <- colnames(BALANCE_TABLE_wout) <- gsub("\\..*","", colnames(BALANCE_TABLE_with))
+print(BALANCE_TABLE_with[-c(4:6),] %>% xtable(caption = paste0("Matched data-set means, ", data_bool ," Sample.")), size="\\fontsize{6pt}{6pt}\\selectfont", include.rownames=F)
+print(BALANCE_TABLE_wout[-c(4:6),] %>% xtable(caption = paste0("Matched data-set means, ", data_bool ," Sample.")), size="\\fontsize{6pt}{6pt}\\selectfont", include.rownames=F)
 
 # matching estimators ####
 ESTIMATORS_TABLE = rbind(lst_matching_estimators[[1]][[1]]$summary_table, 
                          lst_matching_estimators[[2]][[1]]$summary_table) %>% data.frame() 
-print(ESTIMATORS_TABLE %>% filter(Replacements==TRUE) %>% xtable(digits=c(0), caption = "Matching estimators."),
-      size="\\fontsize{8pt}{8pt}\\selectfont", include.rownames=F)
 ######################################################################## 
 
 
