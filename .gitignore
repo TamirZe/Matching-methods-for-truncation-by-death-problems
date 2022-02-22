@@ -4,10 +4,10 @@
 .Ruserdata
 
 NN/
-NEW_TEXT/
+new/
 
 /root/
     .gitignore
     /NN/
         .gitignore
-        NEW_TEXT.txt
+        new.txt
