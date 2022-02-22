@@ -1,13 +1,6 @@
-#m_data = data_list[[1]]
-# caliper is in sd
-#w_mat_bool = "NON-INFO"; replace = TRUE; estimand = "ATC"; change_id = TRUE; mahal_match = 2; M=1
-#reg_cov = reg_after_match # c("age", "education", "black", "hispanic", "married", "re74" ,"re75", "emp74", "emp75")
-#X_sub_cols = variables
-
 matching_func_multiple_data = function(match_on = NULL,
            cont_cov_mahal, reg_cov, X_sub_cols, reg_BC, m_data, 
            w_mat_bool = "NON-INFO", M=1, replace, estimand = "ATC", mahal_match = 2, caliper = 0.25
-           #,OBS_table
            ,change_id=TRUE, boost_HL=FALSE, pass_tables_matched_units = FALSE, one_leraner_bool=FALSE, vertical_table = TRUE, rnd=1){
   if(change_id == TRUE){
     print("change id")

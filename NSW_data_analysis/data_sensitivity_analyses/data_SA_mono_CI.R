@@ -117,13 +117,12 @@ for (j in 1:length(xi_sensi_mono_names)) {
   xi = xi_sensi_mono_vec[j]
   #########################################################################################
   tmp = data 
-  
   # EM
   # calculate PS for the current xi
   tmp$g = ifelse( tmp$A==0 & tmp$S==1, "as", ifelse( tmp$A==1 & tmp$S==0, "ns", ifelse(tmp$A==1 & tmp$S==1, "pro", "pro") )  )
   est_ding_lst_SA_mono = xi_PSPS_M_weighting_SA(Z=tmp$A, D=tmp$S,
                         X=as.matrix(subset(tmp, select = covariates_PS)),  
-                        Y=tmp$Y, eta=xi, # xi = 0 implies monotonicity
+                        Y=tmp$Y, eta=xi, 
                         beta.c = NULL, beta.n = NULL)
   DING_model_assisted_sensi = est_ding_lst_SA_mono$AACE.reg
   # Ding order: c(prob.c, prob.d, prob.a, prob.n)
@@ -141,6 +140,7 @@ for (j in 1:length(xi_sensi_mono_names)) {
   # matching for the current xi ####
   # set.seed because otherwise the matching procedure will not yield the same results when alpha_0=1 under all values of xi, during the SA for monotonicity (for mahalanobis measure) 
   # also, otherwise, when xi=0 in SA for monotonicity results will not be similar to results when alpha_1=1 in SA for PPI (for mahalanobis measure)
+  #TODO 22.02.22 even when we set.seed here matching on malanobis alone yields different results. Need to set.seed before every matching procedure for the same results
   set.seed(101) 
   matching_lst = matching_func_multiple_data(match_on = match_on
            ,cont_cov_mahal = cont_cov_mahal,  reg_cov = reg_after_match, X_sub_cols = variables
@@ -148,7 +148,7 @@ for (j in 1:length(xi_sensi_mono_names)) {
            ,w_mat_bool = "NON-INFO", M=1, replace=TRUE, estimand = "ATC", mahal_match = 2, caliper = caliper
            ,change_id=TRUE, boost_HL=FALSE, pass_tables_matched_units=FALSE, one_leraner_bool=TRUE)
  
-  #TODO matched_set_lst for all distance metrics
+  # matched_set_lst for all distance metrics
   matched_data_lst = matching_lst$matched_set_lst
   reg_matched_lst = matching_lst$reg_data_matched_lst
   # run on all distance metrics
@@ -181,7 +181,7 @@ for (j in 1:length(xi_sensi_mono_names)) {
 #########################################################################################
 
 #########################################################################################\
-# process for ggplot ####
+# process before plotting ####
 reg_sensi_mono = data.frame(reg_sensi_mono)
 reg_sensi_mono[,-1] = apply(reg_sensi_mono[,-1] , 2, as.numeric)
 reg_sensi_mono[,-c(1,2,3)] = round(reg_sensi_mono[,-c(1,2,3)])
@@ -236,12 +236,11 @@ plot_sensi_mono = plot_sensi_mono +
 #########################################################################################
 
 #########################################################################################
-# plot ####
+# plot SA for monotonicity under SPPI (alpha_0=1) under several xi values ####
 reg_sensi_mono$measure = mgsub(as.character(reg_sensi_mono$measure), "_", " ")
 reg_sensi_mono$measure = factor(reg_sensi_mono$measure, levels = c("Mahal", "Mahal PS cal", "PS"))
-reg_sensi_mono_sppi = filter(reg_sensi_mono, alpha0_mono==1 & !Estimator=="WLS inter")
 
-plot_sens_by_metric <- ggplot(reg_sensi_mono_sppi, aes(x=xi_mono, y=Estimate)) +
+plot_sens_by_metric <- reg_sensi_mono %>% filter(alpha0_mono==1 & !Estimator=="WLS inter") %>% ggplot(aes(x=xi_mono, y=Estimate)) +
   geom_point(aes(col = Estimator, size = 7), size = 2) + 
   geom_line(aes(col = Estimator, size = 1.5), size=1.5) + 
   #xlim("0.25", "0.5", "0.75", "1", "1.25", "1.5", "1.75") +

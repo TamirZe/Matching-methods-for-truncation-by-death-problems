@@ -17,6 +17,7 @@ source("NSW_data_analysis/data_post_matching_analysis/data_regression_estimators
 #source("NSW_data_analysis/data_post_matching_analysis/old/data_OLS_WLS_estimator_old.R")
 source("NSW_data_analysis/data_post_matching_analysis/data_aligned_ranktest.R")
 source("NSW_data_analysis/data_SA/data_SA_regression_funcs.R")
+source("NSW_data_analysis/data_sensitivity_analyses/data_SA_regression_funcs.R")
 #source("Simulations_studies/sim_DGM_and_simulations/simulation_run.R")
 #source("Simulations_studies/sim_TABLES/table_design_multiple_func.R")
 source("Ding_Lu/PS_M_weighting.R")

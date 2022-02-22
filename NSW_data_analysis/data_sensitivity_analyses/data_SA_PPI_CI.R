@@ -117,7 +117,7 @@ SACE_estimation_1LEARNER_PPI = function(matched_data, reg_after_match, eps_sensi
 set.seed(101) 
 matching_lst = matching_func_multiple_data(match_on = match_on,
        cont_cov_mahal = cont_cov_mahal,  reg_cov = reg_after_match, X_sub_cols = variables, 
-       reg_BC = reg_BC, m_data = data_with_PS[S==1], 
+       reg_BC = reg_BC, m_data = data_with_PS[S==1], # data_with_PS from data_main (the same data set used for analysis)
        w_mat_bool = "NON-INFO", M=1, replace=TRUE, estimand = "ATC", mahal_match = 2, caliper = caliper
        , change_id=TRUE, boost_HL=FALSE, pass_tables_matched_units=FALSE, one_leraner_bool=TRUE)
 
@@ -158,9 +158,8 @@ for(ind_matched_set in c(1:length(reg_matched_lst))){
   }
 }
 
-# process for ggplot
+# process before plotting
 reg_sensi_PPI = data.frame(reg_sensi_PPI)
-#reg_sensi_PPI = subset(reg_sensi_PPI, select = -c(SACE_1LEARNER, SACE_1LEARNER_inter)) %>% data.frame()
 reg_sensi_PPI[,-1] = apply(reg_sensi_PPI[,-1] , 2, as.numeric) %>% data.frame
 reg_sensi_PPI[,-c(1,2)] = round(reg_sensi_PPI[,-c(1,2)]) 
 
@@ -179,7 +178,7 @@ reg_sensi_PPI$set = data_bool
 #########################################################################################
 
 #########################################################################################
-#TODO plot ####
+#plot ####
 plot_sensi_PPI = reg_sensi_PPI %>% filter(measure == "Mahal_PS_cal" & Estimator %in% c("WLS")) %>%
 ggplot(aes(x=eps_PPI, y=Estimate)) + 
   geom_point(aes(col = Estimator, size = 7), size = 4) + theme_bw() + 
