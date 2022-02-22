@@ -5,9 +5,5 @@
 
 NN/
 new/
+Extra_code/
 
-/root/
-    .gitignore
-    /NN/
-        .gitignore
-        new.txt
