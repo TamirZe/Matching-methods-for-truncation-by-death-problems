@@ -3,5 +3,11 @@
 .RData
 .Ruserdata
 
-NN/
-NEW TEXT/
+#NN/
+#NEW TEXT/
+
+/root/
+    .gitignore
+    /NN/
+        .gitignore
+        NEWTEXT.txt
