@@ -1,7 +1,5 @@
-#func: predictions for units from O(0,1), plugging A={0,1}
-SACE_estimation_1LEARNER_mono(matched_data=matched_data, reg_after_match=reg_after_match, alpha0_mono=alpha0, xi=xi, 
-    coeffs_regression_one_model=coeffs_regression_one_model, coeffs_regression_two_models=coeffs_regression_two_models, two_models_bool=TRUE)
 #########################################################################################
+#func: predictions for units from O(0,1), plugging A={0,1}
 SACE_estimation_1LEARNER_mono = function(matched_data, reg_after_match, alpha0_mono=1, xi=0, 
                                     coeffs_regression_one_model, coeffs_regression_two_models, two_models_bool = TRUE){
   # func: weighted SE with replacements
@@ -225,15 +223,15 @@ plot_sensi_mono <- ggplot(filter(reg_sensi_mono, measure == "Mahal_PS_cal" & Est
     ) + 
   geom_hline(yintercept = 0)
 
-plot_sensi_mono_DW_LL = plot_sensi_mono +
+plot_sensi_mono = plot_sensi_mono +
   facet_grid(~ glue('xi*" = {xi_mono}"'), labeller = label_parsed) +
   theme(
     strip.text.x = element_text(size=12, face="bold"), strip.text.y = element_text(size=12, face="bold"),
     strip.background = element_rect(colour="black", fill="white"), 
-    axis.title.x=element_text(size=14),  # X axis title
-    axis.title.y=element_text(size=14),  # Y axis title
+    axis.title.x=element_text(size=14), # X axis title
+    axis.title.y=element_text(size=14), # Y axis title
     axis.text.x=element_text(size=10),  # X axis text
-    axis.text.y=element_text(size=10)
+    axis.text.y=element_text(size=10)   # Y axis text
   ) 
 #########################################################################################
 
@@ -241,10 +239,9 @@ plot_sensi_mono_DW_LL = plot_sensi_mono +
 # plot ####
 reg_sensi_mono$measure = mgsub(as.character(reg_sensi_mono$measure), "_", " ")
 reg_sensi_mono$measure = factor(reg_sensi_mono$measure, levels = c("Mahal", "Mahal PS cal", "PS"))
-reg_sensi_mono_sppi = filter(reg_sensi_mono, alpha0_mono==1)
-reg_sensi_mono_sppi = filter(reg_sensi_mono_sppi, !Estimator=="WLS inter")
+reg_sensi_mono_sppi = filter(reg_sensi_mono, alpha0_mono==1 & !Estimator=="WLS inter")
 
-plot_sensi <- ggplot(reg_sensi_mono_sppi, aes(x=xi_mono, y=Estimate)) +
+plot_sens_by_metric <- ggplot(reg_sensi_mono_sppi, aes(x=xi_mono, y=Estimate)) +
   geom_point(aes(col = Estimator, size = 7), size = 2) + 
   geom_line(aes(col = Estimator, size = 1.5), size=1.5) + 
   #xlim("0.25", "0.5", "0.75", "1", "1.25", "1.5", "1.75") +
@@ -258,7 +255,7 @@ plot_sensi <- ggplot(reg_sensi_mono_sppi, aes(x=xi_mono, y=Estimate)) +
   ) + 
   geom_hline(yintercept = 0 )
 
-plot_sens_byMetric = plot_sensi + 
+plot_sens_by_metric = plot_sens_by_metric + 
   scale_color_manual(name="Estimator", 
                      labels = legend_levels, 
                      values = c("Crude" = "orangered2", "WLS" = "green3", "WLS inter" = "cornflowerblue"))  +
@@ -278,7 +275,7 @@ plot_sens_byMetric = plot_sensi +
 
 # EXTRACT LEGEND
 library(cowplot); library(ggpubr)
-lgnd_plt <- get_legend(plot_sens_byMetric) # plot_sensi_DW_LL_line # plot_sens_byMetric
+lgnd_plt <- get_legend(plot_sens_by_metric) 
 # Convert to a ggplot and print
 as_ggplot(lgnd_plt)
 plot_sensi_woutLGND = plot_sens_byMetric + theme(legend.position = 'none') 

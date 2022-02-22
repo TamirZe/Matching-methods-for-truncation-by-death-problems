@@ -44,7 +44,7 @@ SACE_estimation_1LEARNER_PPI = function(matched_data, reg_after_match, eps_sensi
   #TODO SE with f_alpha_A0
   g_alpha_A0 = 1 / f_alpha_A0 # g_alpha_A0 = (1 - f_alpha_A0) / f_alpha_A0 
   X = as.matrix(subset(A0_S1_data, select = c("intercept", reg_after_match))) 
-  X_tilde = cbind(intercept = (1 - f_alpha_A0) * X[,"intercept"], A = 1, (1 - f_alpha_A0) * X[,-intercept]) # X_tilde = cbind(intercept = X[,"intercept"], A = (1/(1-f_alpha_A0)), X[,-intercept])
+  X_tilde = cbind(intercept = (1 - f_alpha_A0) * X[,"intercept"], A = 1, (1 - f_alpha_A0) * X[,-which(colnames(X)=="intercept")]) # X_tilde = cbind(intercept = X[,"intercept"], A = (1/(1-f_alpha_A0)), X[,-intercept])
   unit_diff_vec = g_alpha_A0 * (X_tilde %*% coeffs_regression_wout_inter)
   SACE_1LEARNER_adj_calc = mean(unit_diff_vec)
   print(SACE_1LEARNER_adj - SACE_1LEARNER_adj_calc)
@@ -119,7 +119,6 @@ matching_lst = matching_func_multiple_data(match_on = match_on,
        cont_cov_mahal = cont_cov_mahal,  reg_cov = reg_after_match, X_sub_cols = variables, 
        reg_BC = reg_BC, m_data = data_with_PS[S==1], 
        w_mat_bool = "NON-INFO", M=1, replace=TRUE, estimand = "ATC", mahal_match = 2, caliper = caliper
-       #, OBS_table = descrip_all_data_OBS$OBS_table
        , change_id=TRUE, boost_HL=FALSE, pass_tables_matched_units=FALSE, one_leraner_bool=TRUE)
 
 #TODO matched_set_lst for all distance metrics
@@ -132,7 +131,6 @@ reg_sensi_PPI <- NULL
 
 #TODO run on all distance mesaures
 for(ind_matched_set in c(1:length(reg_matched_lst))){ 
-  
   #m_dat = matching_lst$m_data; dt_match = matching_lst$ATE_MATCH_PS_lst$dt_match_S1; matching_lst$m_data 
   matched_data = matched_data_lst[[ind_matched_set]]
   reg_data_matched_SA = reg_matched_lst[[ind_matched_set]]
@@ -149,13 +147,6 @@ for(ind_matched_set in c(1:length(reg_matched_lst))){
   #########################################################################################
   for (i in 1:length(eps_sensi_PPI_vec)) {
     print(eps_sensi_PPI_names[i])
-    # DING estimator
-    # est_ding_lst = PSPS_M_weighting(Z=data_with_PS$A, D=data_with_PS$S, 
-    #   X=as.matrix(subset(data_with_PS, select = covariates_PS)), Y=data_with_PS$Y,
-    #   trc = TRUE, ep1 = eps_sensi_PPI_vec[i], ep0 = 1, beta.a = NULL, beta.n = NULL, iter.max = iterations , error0 = epsilon_EM)
-    # #DING_est_sensi_PPI = est_ding_lst$AACE
-    # DING_model_assisted_sensi_PPI = est_ding_lst$AACE.reg
-    
     
     # ONE-LEARNER regression approach
     #predictions for units from O(0,1), plugging A={0,1} + 4. sensitivity adjustments
