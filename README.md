@@ -8,7 +8,7 @@ Reproducibility of simulation results and data analysis associated with the pape
 This repository includes two main parts, and an additional folder containing the EM algorithms we have applied and adjusted.
 
 1. Simulations: simulation scripts, simulation results and simulation summary.
-(Figures 2 and Table 2 in the paper's main text, and (Figures 1 & 2 and Tables 5 & 6 in the Supplementary).
+(Figures 2 and Table 2 in the paper's main text, and Figures 1 and 2 and Tables 5 and 6 in the Supplementary).
 Information regarding the parameters we used in each of the Scenarios is given in Tables 1,2,3,4 in the Supplementary
 
 2. Data_analysis: 
