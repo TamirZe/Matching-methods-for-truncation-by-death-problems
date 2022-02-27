@@ -7,11 +7,11 @@ Reproducibility of simulation results and data analysis associated with the pape
 
 This repository includes two main parts, and an additional folder containing the EM algorithms we have applied and adjusted.
 
-1. Simulations: simulation scripts, simulation results and simulation summary.
-(Figures 2 and Table 2 in the paper's main text, and Figures 1 and 2 and Tables 5 and 6 in the Supplementary).
+1. Simulations: simulation scripts, simulation results and simulation summary
+(Figures 2 and Table 2 in the main text, and Figures 1 and 2 and Tables 5 and 6 in the Supplementary).
 Information regarding the parameters we used in each of the Scenarios is given in Tables 1,2,3,4 in the Supplementary
 
-2. Data_analysis: 
+2. Data_analysis: analysis of the National Supported Work Demonstration (Figure 3 and Tables 3 and 4 in the main text, and Figures 3 and 3, and Tables 8,9,10 in the Supplementary).
 
 3. Ding and Lu EM algorithms: this folder contains our adjustment for sensitivity analysis for Monotonicity.
 
