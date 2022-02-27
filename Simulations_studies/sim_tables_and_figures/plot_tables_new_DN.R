@@ -1,7 +1,6 @@
 library(cowplot); library(ggpubr); library(arsenal); library(tidyverse)
 
 #legend_levels = c("Crude Wout", "OLS inter", "Crude With", "WLS inter", "BC With", "DingLu MA")  # WLS or WLS inter
-
 small_large_pro$Scenario = mgsub(small_large_pro$Scenario, c("A", "B"), c("0.5", "0.75"))
 small_large_pro$shape = mgsub(small_large_pro$Estimator, c("OLS|WLS|BC", " inter| caliper"), c("Model-based", ""))
 small_large_pro$shape[small_large_pro$shape!="Model-based"] = "other"
