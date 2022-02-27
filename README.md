@@ -3,28 +3,22 @@ A matching framework for truncation by death problems
 
 
 
-Reproducibility of numerical examples and of simulation results associated with the paper "Causal inference for semi-competing risks data" by Nevo and Gorfine (2021+, Biostatistics). Comments and suggestions are welcomed and can be sent to danielnevo 🐼 @ 🐼 gmail.com (remove the pandas).
+Reproducibility of simulation results and data analysis associated with the paper "A matching framework for truncation by death problems" by Zehavi and Nevo.
 
-This repository includes two main parts
+This repository includes two main parts, and additional folder containing the EM algorithms we have adjusted and applied.
 
-Simulations: Simulation scripts, simulation results and simulation summary.
-Exact numerical examples for large sample (Figures 2 & 3 in the paper).
-
-
-## Including Plots
-
-You can also embed plots, for example:
-
-![](README_files/figure-gfm/pressure-1.png)<!-- -->
-
-Note that the `echo = FALSE` parameter was added to the code chunk to
-prevent printing of the R code that generated the plot.
+1. Simulations: Simulation scripts, simulation results and simulation summary.
+ (Figures 2 & 3 in the paper).
+2. Data_analysis: 
+3. Ding and Lu EM algorithms: this folder contains our adjustment for sensitivity analysis for Monotonicity.
 
 
-### Simulations
 
 
-### Data analysis
+### Simulations_studeis
 
 
-### Ding and Lu EM algorithms
+### NSW_Data_analysis
+
+
+### Ding_Lu EM algorithms
