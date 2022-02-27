@@ -1,8 +1,6 @@
-README
+A matching framework for truncation by death problems
 ================
-Tamir Zehavi
 
-#### A matching framework for truncation by death problems
 
 
 Reproducibility of numerical examples and of simulation results associated with the paper "Causal inference for semi-competing risks data" by Nevo and Gorfine (2021+, Biostatistics). Comments and suggestions are welcomed and can be sent to danielnevo 🐼 @ 🐼 gmail.com (remove the pandas).
