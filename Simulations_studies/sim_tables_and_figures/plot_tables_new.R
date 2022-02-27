@@ -151,7 +151,6 @@ plot_general = plot_general + scale_color_manual(name="Estimator",
                              hjust=0.5),  # subtitle
   plot.caption=element_text(size=10),  # caption
   axis.title.x=element_text(
-    #vjust=10,  
     size=22),  # X axis title
   axis.title.y=element_text(size=22),  # Y axis title
   axis.text.x=element_text(size=15, 
