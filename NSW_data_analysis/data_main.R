@@ -25,7 +25,7 @@ source("Ding_Lu/DL_SE_boot.R")
 # data files
 ########################################################################
 library(readstata13); library(cem)
-nsw <- read.dta13("NSW_data_analysis/data_files/nsw_dw.dta") # dehejia and wahba datase
+nsw <- read.dta13("NSW_data_analysis/data_files/LL_DW_datasets/DW_dataset/nsw_dw.dta") # dehejia and wahba datase
 data(LL, package = "cem") # LaLonde dataset 
 ########################################################################
 

@@ -54,6 +54,7 @@ matching_func_multiple_data = function(match_on = NULL,
   }
   
   #1. MATCHING ONLY ONLY PS: EMest_p_as
+  set.seed(101)
   print(match_on)
   MATCH_PS_only  <- Match(Y=m_data[,Y], Tr=m_data[,A]
                           , X = subset(m_data, select = match_on)
@@ -75,6 +76,7 @@ matching_func_multiple_data = function(match_on = NULL,
      X_sub_cols=X_sub_cols, metric="PS", replace=replace, smd_se="not_weighted", vertical_table=vertical_table)
   
   #2. MAHALANOBIS WITHOUT PS CALIPER
+  set.seed(102)
   print("MAHALANOBIS WITHOUT PS CALIPER")
   MATCH_MAHA_wout_PS  <- Match(Y=m_data[,Y], Tr=m_data[,A]
                                , X = subset(m_data, select = cont_cov_mahal)
@@ -96,6 +98,7 @@ matching_func_multiple_data = function(match_on = NULL,
                                                  X_sub_cols=X_sub_cols, metric="Mahal", replace=replace, smd_se="not_weighted", vertical_table=vertical_table)
   
   #3. MAHALANOBIS WITH PS CALIPER
+  set.seed(103)
   print("MAHALANOBIS WITH PS CALIPER")
   ATE_MATCH_PS  <- Match(Y=m_data[,Y], Tr=m_data[,A]
                          , X = subset(m_data, select = c(cont_cov_mahal, match_on))
