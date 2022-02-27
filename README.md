@@ -25,6 +25,6 @@ The parameter misspec_PS equals zero/two for a correct specification/mis-specifi
 The data analysis can be ran through "data_main" file, except for the sensitivity analyses procedures.
 the sensitivity analyses procedures for Monotonicity and PPI, were performed through data_SA_mono and data_SA_PPI files, respectively.
 
-### Ding_Lu_EM: EM algorithms
+### Ding_Lu_EM
 This folder includes the EM algorithm (of Ding and Lu, 2017) that were used for the simulations studies and the data analysis, 
 and our adjusted EM algorithm for sensitivity analysis for Monotonicity, using our sensitivity parameter, xi.
