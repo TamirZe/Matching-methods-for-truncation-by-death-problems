@@ -21,7 +21,7 @@ The simulation can be ran through "sim_main" file, except for the files used for
 Different parameters per each Scenario are betas_GPI (changing according to the number of covariates and whether or not interactions included in the true outcome model), and mat_gamma (changing according to the number of covariates and strata proportions).
 The parameter misspec_PS equals zero/two for a correct specification/mis-specification of the principal score.
 
-### NSW_Data_analysis
+### NSW_data_analysis
 The data analysis can be ran through "data_main" file, except for the sensitivity analyses procedures.
 the sensitivity analyses procedures for Monotonicity and PPI, were performed through data_SA_mono and data_SA_PPI files, respectively.
 
