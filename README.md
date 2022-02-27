@@ -13,7 +13,7 @@ Information regarding the parameters we used in each of the Scenarios is given i
 
 2. Data_analysis: analysis of the National Supported Work Demonstration (Figure 3 and Tables 3 and 4 in the main text, and Figures 3 and 3, and Tables 8,9,10 in the Supplementary).
 
-3. EM algorithms: this folder includes the original code for the EM algorithm proposed by Ding and Lu (2017), and an additional adjustment.
+3. EM algorithms: the original code for the EM algorithm proposed by Ding and Lu (2017), and an additional adjustment.
 
 
 ### Simulations_studeis
