@@ -1,4 +1,3 @@
-#dfr = list_all_CI[[3]]
 calculate_coverage = function(dfr){
   # coverage
   bool_CI_contain_SACE = function(x){
