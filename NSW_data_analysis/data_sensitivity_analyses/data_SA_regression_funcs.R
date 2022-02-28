@@ -38,7 +38,7 @@ regression_function_one_model = function(reg_data_matched_SA, data_reg, reg_afte
 #########################################################################################
 
 #########################################################################################
-#func: two separate regression models (trt and ctr) on the matched dataset with original Y ####
+#func: two separate regression models (trt and ctr separately) on the matched dataset with original Y ####
 regression_function_two_models = function(reg_data_matched_SA, data_reg, reg_after_match, repl = TRUE){
   f = as.formula(paste0("Y ~ ", paste(reg_after_match, collapse = " + ")))
   

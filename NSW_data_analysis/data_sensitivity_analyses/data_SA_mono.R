@@ -97,7 +97,7 @@ reg_sensi_mono$set = data_bool
 #########################################################################################
 
 #########################################################################################
-# plot SA for monotonicity under PPI ####
+# plot SA for monotonicity under PPI, as a function of xi and alpha_0 ####
 plot_sensi_mono <- ggplot(filter(reg_sensi_mono, measure == "Mahal_PS_cal" & Estimator %in% c("WLS")), 
                           aes(x=alpha0_mono, y=Estimate)) + 
   geom_point(aes(col = Estimator, size = 7), size = 3) + theme_bw() + 

@@ -1,5 +1,5 @@
 #########################################################################################
-#by Estimator, for Mahal_PS_cal ####
+#by Estimator, measure: Mahal_PS_cal ####
 
 # PPI
 plot_sensi_PPI_by_est <- ggplot(filter(reg_sensi_PPI, measure == "Mahal_PS_cal"), aes(x=eps_PPI, y=Estimate)) +
@@ -42,7 +42,7 @@ plot_sensi_mono_by_est <- ggplot(filter(reg_sensi_mono, measure == "Mahal_PS_cal
   scale_x_continuous(breaks=c(.5, 1, 1.5, 2), labels = c(".5", "1", "1.5", "2")) +  
   geom_hline(yintercept = 0)
 
-plot_sensi_mono_by_est_final = plot_sensi_mono_by_est +
+plot_sensi_mono_by_est = plot_sensi_mono_by_est +
   facet_grid(~ glue('xi*" = {xi_mono}"'), labeller = label_parsed) +
   theme(
     legend.position = "bottom",
@@ -57,7 +57,7 @@ plot_sensi_mono_by_est_final = plot_sensi_mono_by_est +
 #########################################################################################
 
 #########################################################################################
-#by measure, for WLS ####
+#by measure, WLS estimator (without interactions)####
 
 # PPI
 plot_sensi_PPI_by_measure <- ggplot(filter(reg_sensi_PPI, Estimator == "WLS"), aes(x=eps_PPI, y=Estimate)) +
@@ -99,7 +99,7 @@ plot_sensi_mono_by_measure <- ggplot(filter(reg_sensi_mono, Estimator %in% c("WL
   scale_x_continuous(breaks=c(.5, 1, 1.5, 2), labels = c(".5", "1", "1.5", "2")) +  
   geom_hline(yintercept = 0)
 
-plot_sensi_mono_by_measure_final = plot_sensi_mono_by_measure +
+plot_sensi_mono_by_measure = plot_sensi_mono_by_measure +
   facet_grid(~ glue('xi*" = {xi_mono}"'), labeller = label_parsed) +
   theme(
     legend.position = "bottom",
