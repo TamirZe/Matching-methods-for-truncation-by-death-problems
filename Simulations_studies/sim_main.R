@@ -31,7 +31,7 @@ mean_x = rep(0.5, cont_x); var_x = rep(1, cont_x)
 funcform_mis_out = FALSE; match_and_reg_watch_true_X = FALSE
 funcform_factor_sqr=-3; funcform_factor_log=3
 mean_x_misspec = rep(0.5, dim_x_misspec)
-misspec_PS = 0 # 0: no misspec # 2: PS functional form misspecification
+misspec_PS = 0 # 0: no misspec of PS model # 2: PS functional form misspecification
 
 # CPSR parameter
 xi = 0
@@ -152,8 +152,6 @@ list_all_OLS_NOint_regression_estimators <- list_all_OLS_YESint_regression_estim
 list_all_EM_coeffs <- list_all_excluded_included_matching <-
 list_all_repeated_as_and_pro <- list_all_diff_distance_aspr_asas <- list_all_matched_units <-
 list_all_std_mean_diff <- list_all_means_by_subset  <- list_all_EM_not_conv <- list_all_BCclpr <- list()
-# for naive estimators and their SE and CI
-only_naive_bool = F
 
 # run over different values of gamma's: 1:nrow(mat_gamma)
 # param_n_sim * time per run * nrow(mat_gamma)
@@ -169,7 +167,7 @@ for ( k in c(1 : nrow(mat_gamma)) ){
       misspec_PS=misspec_PS, funcform_mis_out=FALSE, funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log, 
       match_and_reg_watch_true_X=FALSE, param_n=param_n, param_n_sim=param_n_sim,
       iterations=iterations, epsilon_EM=epsilon_EM, caliper=caliper,
-      match_on=match_on, mu_x_fixed=mu_x_fixed, x_as=mat_x_as[k,], only_naive_bool=only_naive_bool)
+      match_on=match_on, mu_x_fixed=mu_x_fixed, x_as=mat_x_as[k,])
 
   mat_SACE_estimators = EM_and_matching[[1]]
   df_parameters = matrix(rep(as.numeric(mat_gamma[k,])

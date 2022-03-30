@@ -1,16 +1,16 @@
-#gamma_pro = rep(0, dim_x)
-#gamma_as = as.numeric(mat_gamma[1, c(1:dim_x)])
-#gamma_ns =  as.numeric(mat_gamma[1, (dim_x+1): (2*dim_x)])
+gamma_pro = rep(0, dim_x)
+gamma_as = as.numeric(mat_gamma[1, c(1:dim_x)])
+gamma_ns =  as.numeric(mat_gamma[1, (dim_x+1): (2*dim_x)])
 
 # misspec_PS: 0 <- NO mis, 2: add transformations to PS model, and remain original X's in ourcome model.
 simulate_data_function = function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, param_n,
                                   misspec_PS, funcform_mis_out=FALSE,
                                   funcform_factor_sqr=0, funcform_factor_log=0, only_mean_x_bool=FALSE){
   if(is.null(seed_num)!=TRUE){set.seed(seed_num)}
-
+  
   # draw covariate matrix
   x_obs <- matrix( c( rep(1,param_n), 
-        mvrnorm(param_n, mu=mean_x, Sigma = diag(var_x, cont_x))), nrow = param_n )
+                      mvrnorm(param_n, mu=mean_x, Sigma = diag(var_x, cont_x))), nrow = param_n )
   # add categorial variable, if needed (needed if categ_x > 0)
   if(categ_x > 0){
     x_categorial = data.table(list.cbind(lapply(vec_p_categ, function(x) rbinom(n=param_n,prob=x,size=1))))
@@ -56,7 +56,7 @@ simulate_data_function = function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, 
   # descriptive of the principal scores
   pi = table(g_vec) / param_n
   pi = t(c(pi)); colnames(pi) = paste0("pi_", colnames(pi))
-
+  
   # generate data ####
   # data is going to be used in the EM first, in simulate_data_run_EM_and_match. Thus, data contains the "obs" X.
   data = data.frame(prob = prob, x_obs, g = g_vec, g_num = g_vec_num,
@@ -131,10 +131,10 @@ simulate_data_function = function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, 
 
 
 simulate_data_run_EM_and_match = function(return_EM_PS = FALSE, index_set_of_params, gamma_as, gamma_ns, gamma_pro,
-      misspec_PS, funcform_mis_out=FALSE, funcform_factor_sqr=0, funcform_factor_log=0, 
-      match_and_reg_watch_true_X=FALSE, param_n, param_n_sim, iterations, epsilon_EM = 0.001,
-      caliper, match_on = NULL, mu_x_fixed=FALSE, x_as){
-
+                                          misspec_PS, funcform_mis_out=FALSE, funcform_factor_sqr=0, funcform_factor_log=0, 
+                                          match_and_reg_watch_true_X=FALSE, param_n, param_n_sim, iterations, epsilon_EM = 0.001,
+                                          caliper, match_on = NULL, mu_x_fixed=FALSE, x_as){
+  
   X_sub_cols = paste0("X", c(1:(dim_x)))
   list_dat_EM <- list_coeff_as <- list_coeff_ns <- list()
   # run over param_n_sim different samples, each with param_n observations
@@ -150,13 +150,13 @@ simulate_data_run_EM_and_match = function(return_EM_PS = FALSE, index_set_of_par
   # i is the index. we dont consider iteration when EM does not converge
   i = 1; real_iter_ind = 1;  index_EM_not_conv = 0
   while (i <= param_n_sim) {
-  #for (i in 1:param_n_sim)
+    #for (i in 1:param_n_sim)
     print(paste0("this is index_set_of_params ", index_set_of_params))
     print(paste0("this is n_sim ", i, " in simulate_data_run_EM_and_match. ",
-         "index_EM_not_conv: ", index_EM_not_conv, ". real number of iterations: "  , real_iter_ind, "."))
+                 "index_EM_not_conv: ", index_EM_not_conv, ". real number of iterations: "  , real_iter_ind, "."))
     start_time1 <- Sys.time()
     list_data_for_EM_and_X = simulate_data_function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, param_n,
-          misspec_PS, funcform_mis_out, funcform_factor_sqr, funcform_factor_log)
+                                                    misspec_PS, funcform_mis_out, funcform_factor_sqr, funcform_factor_log)
     data_for_EM = list_data_for_EM_and_X$dt
     x = list_data_for_EM_and_X$x_obs; x_PS = data.frame(list_data_for_EM_and_X$x_PS)
     x_outcome = data.frame(list_data_for_EM_and_X$x_outcome)
@@ -195,8 +195,8 @@ simulate_data_run_EM_and_match = function(return_EM_PS = FALSE, index_set_of_par
     if(only_naive_bool==TRUE){
       # TODO put all naive estimators together in the current row of mat_param_estimators
       mat_param_estimators = rbind( mat_param_estimators,
-          data.frame(SACE, most_naive_est, most_naive_est_se, sur_naive_est, sur_naive_est_se,
-         pis, t(pis_est), t(pis_est_from_func) ))
+                                    data.frame(SACE, most_naive_est, most_naive_est_se, sur_naive_est, sur_naive_est_se,
+                                               pis, t(pis_est), t(pis_est_from_func) ))
       CI_mat = rbind( CI_mat, data.frame(SACE, CI_naives_before_matching) )
       i = i + 1
       next()
@@ -206,10 +206,10 @@ simulate_data_run_EM_and_match = function(return_EM_PS = FALSE, index_set_of_par
     #TODO in ding the pis order id PROB[i,] = c(prob.c, prob.a, prob.n)/sum
     start_timeDing <- Sys.time()
     est_ding_lst = PSPS_M_weighting(Z=data_for_EM$A, D=data_for_EM$S,
-                     X=as.matrix(subset(data_for_EM, 
-                      select = grep(paste(X_sub_cols[-1], collapse="|"), colnames(data_for_EM)))),  
-                     Y=data_for_EM$Y, trc = TRUE, ep1 = 1, ep0 = 1, beta.a = NULL, beta.n = NULL,
-                     iter.max = iterations , error0 = epsilon_EM) 
+                                    X=as.matrix(subset(data_for_EM, 
+                                                       select = grep(paste(X_sub_cols[-1], collapse="|"), colnames(data_for_EM)))),  
+                                    Y=data_for_EM$Y, trc = TRUE, ep1 = 1, ep0 = 1, beta.a = NULL, beta.n = NULL,
+                                    iter.max = iterations , error0 = epsilon_EM) 
     end_timeDing <- Sys.time()
     print(paste0("Ding EM lasts ", difftime(end_timeDing, start_timeDing)))
     # adjust the cols the same order as in myEM: my order is: as, ns, pro. ding order: c(prob.c, prob.a, prob.n)
@@ -225,7 +225,7 @@ simulate_data_run_EM_and_match = function(return_EM_PS = FALSE, index_set_of_par
       list_EM_not_conv$coeffs[[index_EM_not_conv]] = data.frame(rbind(coeff_as=coeff_as, coeff_ns=coeff_ns))
       colnames(list_EM_not_conv$coeffs[[index_EM_not_conv]]) = X_sub_cols
       list_EM_not_conv$probs_nas[[index_EM_not_conv]] = c(total_na = sum(is.na(PS_est)), 
-            prop_na = sum(is.na(PS_est)) / ( nrow(PS_est) * ncol(PS_est) ) ) %>% round(3)
+                                                          prop_na = sum(is.na(PS_est)) / ( nrow(PS_est) * ncol(PS_est) ) ) %>% round(3)
       real_iter_ind = real_iter_ind + 1
       next()
     }
@@ -241,8 +241,8 @@ simulate_data_run_EM_and_match = function(return_EM_PS = FALSE, index_set_of_par
       PS_true_EM_compr = rapply(object = PS_true_EM_compr, f = round, classes = "numeric", how = "replace", digits = 3)
       colnames(PS_true_EM_compr) = mgsub(colnames(PS_true_EM_compr), c("prob.1", "prob.2", "prob.3"), c("prob_as", "prob_pro", "prob_ns"))
       PS_true_EM_compr = data.frame(id = PS_true_EM_compr$id, g = PS_true_EM_compr$g,
-        prob_as = PS_true_EM_compr$prob_as, EMest_p_as=PS_true_EM_compr$EMest_p_as, diff = PS_true_EM_compr$prob_as - PS_true_EM_compr$EMest_p_as,
-        prob_pro = PS_true_EM_compr$prob_pro, EMest_p_pro=PS_true_EM_compr$EMest_p_pro, prob_ns = PS_true_EM_compr$prob_ns, EMest_p_ns=PS_true_EM_compr$EMest_p_ns)
+                                    prob_as = PS_true_EM_compr$prob_as, EMest_p_as=PS_true_EM_compr$EMest_p_as, diff = PS_true_EM_compr$prob_as - PS_true_EM_compr$EMest_p_as,
+                                    prob_pro = PS_true_EM_compr$prob_pro, EMest_p_pro=PS_true_EM_compr$EMest_p_pro, prob_ns = PS_true_EM_compr$prob_ns, EMest_p_ns=PS_true_EM_compr$EMest_p_ns)
       return(list(PS_true_EM_compr=PS_true_EM_compr,OBS_table=OBS_table, pis=pis, EM_coeffs=EM_coeffs))
     }
     
@@ -262,9 +262,9 @@ simulate_data_run_EM_and_match = function(return_EM_PS = FALSE, index_set_of_par
       lst_matching_estimators_end_excluded_included[[j]] =
         lapply(1:length(data_list), function(l){
           my_matching_func_multiple(match_on = match_on, X_sub_cols, data_list[[l]],
-              weighting = FALSE, M=1, replace = replace_vec[j], estimand = "ATC", mahal_match = 2,
-              min_PS = min_PS, min_diff_PS = min_diff_PS,
-              caliper = caliper, OBS_table, change_id = TRUE, mu_x_fixed=mu_x_fixed, x_as=x_as, pass_tables_matched_units=FALSE)
+                                    weighting = FALSE, M=1, replace = replace_vec[j], estimand = "ATC", mahal_match = 2,
+                                    min_PS = min_PS, min_diff_PS = min_diff_PS,
+                                    caliper = caliper, OBS_table, change_id = TRUE, mu_x_fixed=mu_x_fixed, x_as=x_as, pass_tables_matched_units=FALSE)
         })
     }
     
@@ -277,9 +277,9 @@ simulate_data_run_EM_and_match = function(return_EM_PS = FALSE, index_set_of_par
     # MULTIPLE MATCHING WITH BC
     matching_estimators = list.cbind(matching_estimators)
     colnames(matching_estimators) = paste0(paste0("rep", rep(substr(replace_vec,1,1), each=length(matching_estimators)/2)),
-               "_", "MATCH_", rep(c("all", "wout_O_0_0", "S1"), each=2, times=3*2*2),
-               rep(c("_PS", "_maha", "","_HL","_BC","_BCclpr", "_BC_inter","_BCclpr_inter"), each=6, times=2),
-               rep(c("_est","_SE"), times=length(matching_estimators)/2)) 
+                                           "_", "MATCH_", rep(c("all", "wout_O_0_0", "S1"), each=2, times=3*2*2),
+                                           rep(c("_PS", "_maha", "","_HL","_BC","_BCclpr", "_BC_inter","_BCclpr_inter"), each=6, times=2),
+                                           rep(c("_est","_SE"), times=length(matching_estimators)/2)) 
     
     CI_matching_estimators = lapply(1:length(replace_vec), function(j){
       as.vector(t(t(unlist(list.rbind(lapply(lst_matching_estimators_end_excluded_included[[j]],
@@ -291,11 +291,11 @@ simulate_data_run_EM_and_match = function(return_EM_PS = FALSE, index_set_of_par
     # MULTIPLE MATCHING WITH BC
     # with and wout BC inter
     colnames(CI_matching_estimators) = paste0(paste0("rep", 
-         rep(substr(replace_vec,1,1), each=length(CI_matching_estimators)/2)),
-          "_", "MATCH_", rep(c("all", "wout_O_0_0", "S1"), times=3*2),
-          rep(c("_PS", "_maha","","_HL","_BC","_BCclpr"
-                , "_BC_inter","_BCclpr_inter" # remove if we dont have BC with interactions
-                ), each=3, times=2))
+                                                     rep(substr(replace_vec,1,1), each=length(CI_matching_estimators)/2)),
+                                              "_", "MATCH_", rep(c("all", "wout_O_0_0", "S1"), times=3*2),
+                                              rep(c("_PS", "_maha","","_HL","_BC","_BCclpr"
+                                                    , "_BC_inter","_BCclpr_inter" # remove if we dont have BC with interactions
+                                              ), each=3, times=2))
     
     
     # rep_bool_false_true = 2 for WLS and 1 for OLS
@@ -378,7 +378,7 @@ simulate_data_run_EM_and_match = function(return_EM_PS = FALSE, index_set_of_par
     # standardized mean diff as2pro, as2as per each data set, with and wout replacements
     # each element in  the list is a matrix. with all covariates std diff per each part, 6 parts in total
     std_mean_diff_lst = lapply(1:length(replace_vec), function(j){
-        lapply(lst_matching_estimators_end_excluded_included[[j]], "[[", "std_diff_2_cols")})
+      lapply(lst_matching_estimators_end_excluded_included[[j]], "[[", "std_diff_2_cols")})
     std_mean_diff_lst = unlist(std_mean_diff_lst, recursive = FALSE)
     
     # TODO 7. means_by_subset
@@ -386,24 +386,24 @@ simulate_data_run_EM_and_match = function(return_EM_PS = FALSE, index_set_of_par
       lapply(lst_matching_estimators_end_excluded_included[[j]], "[[", "means_by_subset")})
     means_by_subset_mat = list.rbind(unlist(means_by_subset_lst, recursive = FALSE))
     rownames(means_by_subset_mat) = paste0(rep(c("reF_", "reT_"), each=18), 
-             rep(c("all", "wout_0_0", "S1"), each=6), "_", rownames(means_by_subset_mat))
+                                           rep(c("all", "wout_0_0", "S1"), each=6), "_", rownames(means_by_subset_mat))
     
-  
+    
     # check ties in BC caliper
     BCclpr_untrt_surv_matched_untrt_matched_trt = lapply(1:length(replace_vec), function(j){
-           list.rbind(lapply(lst_matching_estimators_end_excluded_included[[j]],
-               "[[", "BCclpr_untrt_surv_matched_untrt_matched_trt"))
-       })
+      list.rbind(lapply(lst_matching_estimators_end_excluded_included[[j]],
+                        "[[", "BCclpr_untrt_surv_matched_untrt_matched_trt"))
+    })
     
     
     # TODO 1. put all results together in the current row of mat_param_estimators
     mat_param_estimators = rbind( mat_param_estimators,
-      data.frame(SACE, SACE_conditional,
-       DING_est, DING_model_assisted_est_ps
-       ,matching_estimators
-       , diff_distance,
-       most_naive_est, most_naive_est_se, sur_naive_est, sur_naive_est_se,
-       pis, t(pis_est), t(pis_est_from_func), vec_OBS_table
+                                  data.frame(SACE, SACE_conditional,
+                                             DING_est, DING_model_assisted_est_ps
+                                             ,matching_estimators
+                                             , diff_distance,
+                                             most_naive_est, most_naive_est_se, sur_naive_est, sur_naive_est_se,
+                                             pis, t(pis_est), t(pis_est_from_func), vec_OBS_table
                                   ))
     
     # TODO regression estimators
@@ -437,7 +437,7 @@ simulate_data_run_EM_and_match = function(return_EM_PS = FALSE, index_set_of_par
     list_matched_units[[i]] = rbindlist(matched_units_lst
                                         #, fill=TRUE
                                         #,use.names=FALSE
-                                        )
+    )
     rownames(list_matched_units[[i]])=
       paste0("rep", rep(substr(replace_vec,1,1), each=3), "_", c("all", "wout_O_0_0", "S1"))
     
@@ -570,73 +570,5 @@ simulate_data_run_EM_and_match = function(return_EM_PS = FALSE, index_set_of_par
               list_BCclpr = list_BCclpr
   ))
 }
-
-
-
-
-# TODO calcultae mean in a list contains n_sim lists
-# each list in gthe big list contains 6 df, per each part
-# calculate mean df11, df12... 
-#           mean df12, df22...
-
-# list1 <- replicate(3, matrix(sample(1:12), 3, 4), simplify=FALSE)
-# apply(simplify2array(list1), 1:2, mean)
-
-
-#list_of_lists = list_std_mean_diff
-# TODO 09.10.2021 check this function
-calculate_mean_of_dfs_in_lists_of_lists = function(list_of_lists){
-  mat_all_diffs = NULL
-  current_list = list()
-  replace_vec = c(FALSE, TRUE)
-  # per replace and data for matching
-  for (j in 1:length(list_of_lists[[1]])) {
-    # per simulation
-    for(i in 1:length(list_of_lists)){
-      # mean over all i's
-      # TODO for some reason, i NEED THE 1 in the end,
-      # check in the function that creates this lists of matrices- list_of_lists[[i]][[j]] is a list and not df or mat
-      current_list[[i]] = as.matrix(list_of_lists[[i]][[j]]) #as.matrix(list_of_lists[[i]][[j]][[1]])
-    }
-    temp_mean = apply(simplify2array(current_list), 1:2, mean)
-    mat_all_diffs = cbind(mat_all_diffs, temp_mean, 
-                          diff = abs(temp_mean[,1]) - abs(temp_mean[,2]))
-    
-    # aaply(laply(list_of_means, as.matrix), c(2, 3), mean)
-    # sapply(list_of_means, mean)
-    # library(abind)
-    # all.matrix <- abind(list_of_means, along=3)
-    # apply(all.matrix, c(1,2), mean)
-  }
-  colnames(mat_all_diffs) = paste0(colnames(mat_all_diffs), 
-           paste0( "_rep", rep(substr(replace_vec,1,1), each=9),
-                   "_", rep(c("all", "wout_O_0_0", "S1"), each=3)))
-  return(mat_all_diffs)
-}
-
-
-# list_of_lists = list_repeated_as_and_pro
-#list_of_lists = list_matched_unitss
-calculate_mean_repeated_as_and_pro = function(list_of_lists, mean_repeated_as_and_pro_boll=TRUE){
-  temp = lapply(1:length(list_of_lists), function(i){
-    list_of_lists[[i]] = as.matrix(list_of_lists[[i]])
-    apply(list_of_lists[[i]], 2, as.numeric)
-  })
-  mean_repeated_as_and_pro = data.frame(apply(simplify2array(temp), 1:2, mean))
-  rownames(mean_repeated_as_and_pro) = rownames(list_of_lists[[1]])
-  if(mean_repeated_as_and_pro_boll == TRUE){
-    as_rep = subset(mean_repeated_as_and_pro,
-                    select = grep("as_", colnames(mean_repeated_as_and_pro)))
-    pro_rep = subset(mean_repeated_as_and_pro,
-                     select = grep("pro_", colnames(mean_repeated_as_and_pro)))
-    #mean_as = as.matrix(as_rep) %*% c(1:ncol(as_rep)) / ifelse(as_rep>0, 1, 0) %*% c(1:ncol(as_rep))
-    mean_as = as.matrix(as_rep) %*% c(1:ncol(as_rep)) / apply(as_rep, 1, sum)
-    mean_pro = as.matrix(pro_rep) %*% c(1:ncol(pro_rep)) / apply(pro_rep, 1, sum)
-    mean_repeated_as_and_pro = data.frame(mean_repeated_as_and_pro, mean_as = mean_as, mean_pro = mean_pro)
-  }
-  return(mean_repeated_as_and_pro)
-}
-
-
 
 
