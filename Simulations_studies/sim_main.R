@@ -107,7 +107,7 @@ extract_pis_from_scenarios = function(nn=250000){
   for( k in c(1 : nrow(mat_gamma)) ){
     gamma_as = as.numeric(mat_gamma[k, c(1:dim_x)])
     gamma_ns =  as.numeric(mat_gamma[k, (dim_x+1): (2*dim_x)])
-    lst_mean_x_and_pi = simulate_data_function(gamma_as=gamma_as, gamma_ns=gamma_ns, gamma_pro=gamma_pro, 
+    lst_mean_x_and_pi = simulate_data_function(gamma_as=gamma_as, gamma_ns=gamma_ns, gamma_pro=gamma_pro, xi,
              param_n=nn, misspec_PS=2, funcform_mis_out=FALSE, 
              funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log, only_mean_x_bool=TRUE)
     big_lst[[k]] = lst_mean_x_and_pi
@@ -136,7 +136,7 @@ big_mat_x_by_g_A = data.table(big_mat_x_by_g_A)[, lapply(.SD, mean), by=c("Scena
 mat_x_as = NULL
 for( k in c(1 : nrow(mat_gamma)) ){
   gamma_as = as.numeric(mat_gamma[k, c(1:dim_x)]); gamma_ns =  as.numeric(mat_gamma[k, (dim_x+1): (2*dim_x)])
-  lst_mean_x_and_pi = simulate_data_function(gamma_as=gamma_as, gamma_ns=gamma_ns, gamma_pro=gamma_pro, 
+  lst_mean_x_and_pi = simulate_data_function(gamma_as=gamma_as, gamma_ns=gamma_ns, gamma_pro=gamma_pro, xi,
     param_n=250000, misspec_PS=0, funcform_mis_out=FALSE, funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log, only_mean_x_bool=TRUE)
   mat_x_as = rbind(mat_x_as, lst_mean_x_and_pi$x_as)
 }

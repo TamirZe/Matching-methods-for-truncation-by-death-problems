@@ -3,7 +3,7 @@ gamma_as = as.numeric(mat_gamma[1, c(1:dim_x)])
 gamma_ns =  as.numeric(mat_gamma[1, (dim_x+1): (2*dim_x)])
 
 # misspec_PS: 0 <- NO mis, 2: add transformations to PS model, and remain original X's in ourcome model.
-simulate_data_function = function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, param_n,
+simulate_data_function = function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, xi, param_n,
                                   misspec_PS, funcform_mis_out=FALSE,
                                   funcform_factor_sqr=0, funcform_factor_log=0, only_mean_x_bool=FALSE){
   if(is.null(seed_num)!=TRUE){set.seed(seed_num)}
@@ -50,9 +50,13 @@ simulate_data_function = function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, 
   probs_mean = apply(vProb, 2, mean) / sum(apply(vProb, 2, mean))
   # multinomial draws
   mChoices = t(apply(prob, 1, rmultinom, n = 1, size = 1))
+  # 1-ah, 2-pro, 3-ns
   g_vec_num = apply(mChoices, 1, function(z) which(z==1))
-  g_vec = ifelse(g_vec_num == 1, "as", ifelse(g_vec_num == 2, "pro", 
-                                              ifelse(g_vec_num == 3, "ns", "har")))
+  # within ah, randomize to as or har, according to xi
+  g_vec_num[g_vec_num==1] = rbinom( length(g_vec_num[g_vec_num==1]), 1, (1 / (1+xi)) )
+  # 0-har, 1-ah, 2-pro, 3-ns
+  g_vec = mapvalues(g_vec_num, from = c(0:3), to = c("har", "as", "pro", "ns"))
+ 
   # descriptive of the principal scores
   pi = table(g_vec) / param_n
   pi = t(c(pi)); colnames(pi) = paste0("pi_", colnames(pi))
@@ -61,10 +65,10 @@ simulate_data_function = function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, 
   # data is going to be used in the EM first, in simulate_data_run_EM_and_match. Thus, data contains the "obs" X.
   data = data.frame(prob = prob, x_obs, g = g_vec, g_num = g_vec_num,
                     A = rbinom(param_n, 1, prob_A))
-  data$S = ifelse(data$g == "as", 1, ifelse( data$g == "pro" & data$A == 1, 1,
-                                             ifelse( data$g == "har" & data$A == 0, 1, 0 ) ))
+  data$S = ifelse((data$g == "as") | (data$g == "pro" & data$A == 1) | (data$g == "har" & data$A == 0), 1, 0)
   mean_by_g = data.table(data)[, lapply(.SD, mean), by="g"]
   mean_by_A_g = data.table(data)[, lapply(.SD, mean), by=c("A", "g")] %>% arrange(g,A)
+  x_har = filter(mean_by_g, g=="har") %>% subset(select = grep("X|^A$", colnames(mean_by_g))) %>% as.matrix
   x_as = filter(mean_by_g, g=="as") %>% subset(select = grep("X|^A$", colnames(mean_by_g))) %>% as.matrix
   x_pro = filter(mean_by_g, g=="pro") %>% subset(select = grep("X|^A$", colnames(mean_by_g))) %>% as.matrix
   x_ns = filter(mean_by_g, g=="ns") %>% subset(select = grep("X|^A$", colnames(mean_by_g))) %>% as.matrix
@@ -106,24 +110,21 @@ simulate_data_function = function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, 
   
   # generate Y with SUTVA
   dt$Y = (dt$A * dt$Y1 + (1 - dt$A) * dt$Y0) * dt$S
-  dt = data.frame(id = c(1:param_n), dt)
-  dt = data.table(dt)
-  # senity check
-  as_1 = filter(dt, g=="as", A==1); mean(as_1$Y)
-  pro_1 = filter(dt, g=="pro", A==1); mean(pro_1$Y)
+  dt = data.table(id = c(1:param_n), dt)
   dt$OBS = paste0("O(", dt$A, ",", dt$S, ")")
   #OBS table
-  OBS_values = data.frame(unique(cbind(dt$A, dt$S))); colnames(OBS_values) = c("S", "A")
   obs_table = table(dt$OBS)
   OBS_table = matrix(c(obs_table[1], obs_table[3], obs_table[2], obs_table[4]), nrow = 2, ncol = 2)
   OBS_table = OBS_table/ param_n
   rownames(OBS_table) = c("A=0", "A=1"); colnames(OBS_table) = c("S=0", "S=1")
   
-  # estimation of strata proportions (under mono) 
-  pi_as_est = mean(filter(dt, A==0)$S)
-  pi_ns_est = 1 - mean(filter(dt, A==1)$S)
-  pi_pro_est = mean(filter(dt, A==1)$S) - mean(filter(dt, A==0)$S)
-  pis_est = c(pi_as_est_func = pi_as_est, pi_ns_est_func = pi_ns_est, pi_pro_est_func = pi_pro_est)
+  # estimation of strata proportions (under CPSR) 
+  p1 = mean(filter(dt, A==1)$S); p0 = mean(filter(dt, A==0)$S)
+  pi_har_est = (xi/(1+xi))*p0
+  pi_as_est = (1 /(1 + xi))*p0
+  pi_pro_est = p1 - (1/(1+xi))*p0
+  pi_ns_est = 1 - p1 - (xi/(1+xi))*p0
+  pis_est = c(pi_har_est = pi_har_est, pi_as_est = pi_as_est, pi_ns_est = pi_ns_est, pi_pro_est = pi_pro_est)
   
   return(list(dt=dt, x_obs=x_obs, x_PS=x_PS, x_outcome=x,
               OBS_table=OBS_table, pi=pi, pis_est=pis_est, probs_mean=probs_mean))
@@ -155,7 +156,7 @@ simulate_data_run_EM_and_match = function(return_EM_PS = FALSE, index_set_of_par
     print(paste0("this is n_sim ", i, " in simulate_data_run_EM_and_match. ",
                  "index_EM_not_conv: ", index_EM_not_conv, ". real number of iterations: "  , real_iter_ind, "."))
     start_time1 <- Sys.time()
-    list_data_for_EM_and_X = simulate_data_function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, param_n,
+    list_data_for_EM_and_X = simulate_data_function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, xi, param_n,
                                                     misspec_PS, funcform_mis_out, funcform_factor_sqr, funcform_factor_log)
     data_for_EM = list_data_for_EM_and_X$dt
     x = list_data_for_EM_and_X$x_obs; x_PS = data.frame(list_data_for_EM_and_X$x_PS)
