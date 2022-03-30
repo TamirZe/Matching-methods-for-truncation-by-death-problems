@@ -31,7 +31,10 @@ mean_x = rep(0.5, cont_x); var_x = rep(1, cont_x)
 funcform_mis_out = FALSE; match_and_reg_watch_true_X = FALSE
 funcform_factor_sqr=-3; funcform_factor_log=3
 mean_x_misspec = rep(0.5, dim_x_misspec)
-misspec_PS = 0 # 0: no misspec # 2: functional form misspecification
+misspec_PS = 0 # 0: no misspec # 2: PS functional form misspecification
+
+# CPSR parameter
+xi = 0
 
 # EM convergence parameters
 iterations = 200; epsilon_EM = 10^-6
