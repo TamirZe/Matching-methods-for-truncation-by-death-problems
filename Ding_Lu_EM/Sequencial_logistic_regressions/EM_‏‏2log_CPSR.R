@@ -7,20 +7,20 @@
 # PS_M_weighting_SA_CPSR is my adjustment to PS_M_weighting_SA script of Ding and Lu, with my xi, insted of DL's eta
 ##################################################################
 
-
 ##the package used for multivariate logistic regression
-library(nnet)
+#library(nnet)
 
 #Preliminary function: principal score calculation 
 #Z: randomization
 #D: treatment received
 #X: pretreatment covaraites: an N*V matrix WITH constant 1
-#fitting multinomial logistic regression model with principal stratification variable as missing data
+#fitting 2 logistic regressions if beta.S0==NULL, and 1 logistic regression if not (in case we use beta.S0 from log reg of S on X, given A=0)
+# with principal stratification variable as missing data
 
 
 #TODO original parameters: iter.max = 10000, error0 = 10^-4
 xi_2log_PredTreatEffect = function(Z, D, X, eta = 0,
-                              beta.S0=beta.S0, beta.ah = beta.ah, beta.c = beta.c, 
+                              beta.S0=NULL, beta.ah = beta.ah, beta.c = beta.c, 
                               iter.max = 10000, error0 = 10^-4,
                               prob.pred = FALSE, verbose = FALSE, out.length = 10) {
   N = dim(X)[1]
@@ -49,7 +49,7 @@ xi_2log_PredTreatEffect = function(Z, D, X, eta = 0,
     AugData_S0 <- AugData_S1 <- NULL
     #each individual correspond to 1 or 2 individuals in the augmented data set
     for(i in 1:N){
-      if(is.null(beta.S0)){ # Employ two logitic regressions, calculate  beta.ah_old through EM
+      if(is.null(beta.S0)){ # Employ two logistic regressions, calculate  beta.ah_old through EM
         
         if(Z[i]==1&D[i]==1) {
           #posterior probabilities
@@ -69,7 +69,7 @@ xi_2log_PredTreatEffect = function(Z, D, X, eta = 0,
           #posterior probabilities
           prob.10 = eta*exp(t(beta.ah_old)%*%X[i, ]) / (eta*exp(t(beta.ah_old)%*%X[i, ]) + (1 + eta))
           prob.n = 1 - prob.10
-          
+  
           # augmented data for S(0)=1
           AugData_S0 = rbind(AugData_S0, c(1, X[i, ], prob.10)) # S(0)=1, with weight prob.10 (har)
           AugData_S0 = rbind(AugData_S0, c(0, X[i, ], prob.n)) # S(0)=0, with weight prob.n
@@ -90,7 +90,7 @@ xi_2log_PredTreatEffect = function(Z, D, X, eta = 0,
           ##posterior probabilities
           prob.c = exp(t(beta.c_old)%*%X[i, ]) / ( 1 + exp(t(beta.c_old)%*%X[i, ]) )
           prob.n = 1 - prob.c
-          
+
           # augmented data for S(0)=1
           AugData_S0 = rbind(AugData_S0, c(0, X[i, ], prob.c+prob.n)) # S(0)=0, with weight 1
           
@@ -163,8 +163,8 @@ xi_2log_PredTreatEffect = function(Z, D, X, eta = 0,
       beta.ah  = beta.S0
     }
     
-    fit_S1 = glm(AugData_S1[, 1] ~ AugData_S1[, (3:(V+1))], weights = AugData_S1[, (V+2)], family="binomial")
-    beta.c = coef(fit_S1)
+    fit_S1_given_A0 = glm(AugData_S1[, 1] ~ AugData_S1[, (3:(V+1))], weights = AugData_S1[, (V+2)], family="binomial")
+    beta.c = coef(fit_S1_given_A0)
     
     iter = iter + 1
     error = ifelse(is.null(beta.S0) ,sum((beta.ah - beta.ah_old)^2) + sum((beta.c - beta.c_old)^2), sum((beta.c - beta.c_old)^2))
@@ -181,7 +181,7 @@ xi_2log_PredTreatEffect = function(Z, D, X, eta = 0,
       prob.d = eta/(1 + eta) * exp(t(beta.ah)%*%X[i, ])
       prob.a = 1/(1  + eta) * exp(t(beta.ah)%*%X[i, ])
       prob.n = 1 #gamma_ns=0
-      beta.c = exp(t(beta.c)%*%X[i, ])
+      prob.c = exp(t(beta.c)%*%X[i, ])
       sum = prob.d + prob.a + prob.n + prob.c
       
       #PROB[i,] = c(prob.c, prob.d, prob.a, prob.n)/sum
@@ -191,7 +191,7 @@ xi_2log_PredTreatEffect = function(Z, D, X, eta = 0,
     ##the results
     res = list(PROB = PROB,
                beta.ah = beta.ah,
-               beta.n = beta.n,
+               beta.c = beta.c,
                error.rec = error.rec)
     return(res)
     
@@ -199,7 +199,7 @@ xi_2log_PredTreatEffect = function(Z, D, X, eta = 0,
   else{
     ##the results
     res = list(beta.ah = beta.ah,
-               beta.n = beta.n,
+               beta.c = beta.c,
                error.rec = error.rec)
     return(res)	
   }
@@ -218,7 +218,7 @@ xi_2log_PSPS_M_weighting = function(Z, D, X, Y,
   ##PS_pred returns 4 columns: c, d, a, n
   ps.score.fit = xi_2log_PredTreatEffect(Z=Z, D=D, X=X, eta = eta, 
                              beta.S0=beta.S0, beta.ah = beta.ah, beta.c = beta.c, 
-                             iter.max=iter.max, error0=error0, prob.pred = TRUE,)
+                             iter.max=iter.max, error0=error0, prob.pred = TRUE)
   # c(prob.c, prob.d, prob.a, prob.n)
   ps.score  = ps.score.fit$PROB
   
@@ -257,7 +257,7 @@ xi_2log_PSPS_M_weighting = function(Z, D, X, Y,
   colnames(ps.score) = c("EMest_p_har", "EMest_p_as", "EMest_p_ns", "EMest_p_pro")
   ##results
   ACE = list(AACE = AACE, AACE.reg = AACE.reg, ps.score=ps.score,
-             beta.ah = ps.score.fit$beta.ah, beta.n = ps.score.fit$beta.n)
+             beta.ah = ps.score.fit$beta.ah, beta.c = ps.score.fit$beta.c)
   
   return(ACE)
   

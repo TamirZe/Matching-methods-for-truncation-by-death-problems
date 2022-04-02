@@ -50,7 +50,7 @@ xi_2log_PredTreatEffect = function(Z, D, X, eta = 0,
     AugData_S0 <- AugData_S1 <- NULL
     #each individual correspond to 1 or 2 individuals in the augmented data set
     for(i in 1:N){
-      if(is.null(beta.S0)){ # Employ two logitic regressions, calculate  beta.ah_old through EM
+      if(is.null(beta.S0)){ # Employ two logistic regressions, calculate  beta.ah_old through EM
         
         if(Z[i]==1&D[i]==1) {
           #posterior probabilities
@@ -166,8 +166,8 @@ xi_2log_PredTreatEffect = function(Z, D, X, eta = 0,
     
     # 1-AugData_S1[, 1] BECAUSE WE ACTUALLY SEARCH FOR beta_n and not beta_pro
     # so we actually run logistic regression of S(1)=0
-    fit_S1 = glm(1-AugData_S1[, 1] ~ AugData_S1[, (3:(V+1))], weights = AugData_S1[, (V+2)], family="binomial")
-    beta.n = coef(fit_S1)
+    fit_S1_given_A0 = glm(1-AugData_S1[, 1] ~ AugData_S1[, (3:(V+1))], weights = AugData_S1[, (V+2)], family="binomial")
+    beta.n = coef(fit_S1_given_A0)
     
     iter = iter + 1
     error = ifelse(is.null(beta.S0) ,sum((beta.ah - beta.ah_old)^2) + sum((beta.n - beta.n_old)^2), sum((beta.n - beta.n_old)^2))

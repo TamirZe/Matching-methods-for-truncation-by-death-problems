@@ -73,8 +73,8 @@ simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_ns, gamma_pro, 
   }
   
   # descriptive of the principal scores
-  pi = table(g_vec) / param_n
-  pi = t(c(pi)); colnames(pi) = paste0("pi_", colnames(pi))
+  pis = table(g_vec) / param_n
+  pis = t(c(pis)); colnames(pis) = paste0("pi_", colnames(pis))
   
   # generate data ####
   # data is going to be used in the EM first, in simulate_data_run_EM_and_match. Thus, data contains the "obs" X.
@@ -88,7 +88,7 @@ simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_ns, gamma_pro, 
   x_pro = filter(mean_by_g, g=="pro") %>% subset(select = grep("X|^A$", colnames(mean_by_g))) %>% as.matrix
   x_ns = filter(mean_by_g, g=="ns") %>% subset(select = grep("X|^A$", colnames(mean_by_g))) %>% as.matrix
   if(only_mean_x_bool==TRUE){
-    return(list(x_har=x_har, x_as=x_as, x_pro=x_pro, x_ns=x_ns, pi=pi, mean_by_A_g=mean_by_A_g))
+    return(list(x_har=x_har, x_as=x_as, x_pro=x_pro, x_ns=x_ns, pis=pis, mean_by_A_g=mean_by_A_g))
   }
   
   # models for Y(1) & y(0) ####
@@ -139,14 +139,14 @@ simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_ns, gamma_pro, 
   pi_as_est = (1 /(1 + xi))*p0
   pi_ns_est = 1 - p1 - (xi/(1+xi))*p0
   pi_pro_est = p1 - (1/(1+xi))*p0
-  pis_est = c(pi_har_est = pi_har_est, pi_as_est = pi_as_est, pi_ns_est = pi_ns_est, pi_pro_est = pi_pro_est,)
+  pis_est = c(pi_har_est = pi_har_est, pi_as_est = pi_as_est, pi_ns_est = pi_ns_est, pi_pro_est = pi_pro_est)
   
   return(list(dt=dt, x_obs=x_obs, x_PS=x_PS, x_outcome=x,
-              OBS_table=OBS_table, pi=pi, pis_est=pis_est, probs_mean=probs_mean))
+              OBS_table=OBS_table, pis=pis, pis_est=pis_est, probs_mean=probs_mean))
 }
 
 
-simulate_data_run_EM_and_match = function(return_EM_PS = FALSE, index_set_of_params, gamma_ah, gamma_ns, gamma_pro, xi,
+simulate_data_run_EM_and_match = function(return_EM_PS = FALSE, index_set_of_params, gamma_ah, gamma_ns, gamma_pro, xi, two_log_models=TRUE,
                                           misspec_PS, funcform_mis_out=FALSE, funcform_factor_sqr=0, funcform_factor_log=0, 
                                           match_and_reg_watch_true_X=FALSE, param_n, param_n_sim, iterations, epsilon_EM = 0.001,
                                           caliper, match_on = NULL, mu_x_fixed=FALSE, x_as){
@@ -171,13 +171,15 @@ simulate_data_run_EM_and_match = function(return_EM_PS = FALSE, index_set_of_par
     print(paste0("this is n_sim ", i, " in simulate_data_run_EM_and_match. ",
                  "index_EM_not_conv: ", index_EM_not_conv, ". real number of iterations: "  , real_iter_ind, "."))
     start_time1 <- Sys.time()
-    list_data_for_EM_and_X = simulate_data_function(seed_num=NULL, gamma_ah, gamma_ns, gamma_pro, xi=xi, two_log_models=FALSE, param_n,
-                                                    misspec_PS, funcform_mis_out, funcform_factor_sqr, funcform_factor_log)
+    list_data_for_EM_and_X = simulate_data_function(seed_num=NULL, gamma_ah=gamma_ah, gamma_ns=gamma_ns, gamma_pro=gamma_pro, 
+            xi=xi, two_log_models=two_log_models, param_n=param_n,
+            misspec_PS=misspec_PS, funcform_mis_out=funcform_mis_out, funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log)
+    
     data_for_EM = list_data_for_EM_and_X$dt
     x = list_data_for_EM_and_X$x_obs; x_PS = data.frame(list_data_for_EM_and_X$x_PS)
     x_outcome = data.frame(list_data_for_EM_and_X$x_outcome)
     OBS_table = list_data_for_EM_and_X$OBS_table
-    pis = list_data_for_EM_and_X$pi; pis_est = list_data_for_EM_and_X$pis_est
+    pis = list_data_for_EM_and_X$pis; pis_est = list_data_for_EM_and_X$pis_est
     vec_OBS_table = t(c(OBS_table)); colnames(vec_OBS_table) = c("A0_S0", "A1_S0", "A0_S1", "A1_S1")
     
     # real parameter
@@ -215,16 +217,18 @@ simulate_data_run_EM_and_match = function(return_EM_PS = FALSE, index_set_of_par
     # Ding estimator
     
     #logistic regression S(0)=1 on X, using S|A=0
-    fit_S0_in_A0 = glm(as.formula(paste0("S ~ ",paste(X_sub_cols[-1], collapse="+"))), data=filter(data_for_EM, A==0), family="binomial")
-    beta_S0 = fit_S0_in_A0$coefficients
+    fit_S0_given_A0 = glm(as.formula(paste0("S ~ ",paste(X_sub_cols[-1], collapse="+"))), data=filter(data_for_EM, A==0), family="binomial")
+    beta_S0_given_A0 = fit_S0_given_A0$coefficients
     
     # EM
     #TODO in ding the pis order is PROB[i,] = c(prob.c, prob.a, prob.n)/sum
-    start_timeDing <- Sys.time() 
-    est_ding_lst = xi_2log_PSPS_M_weighting(Z=data_for_EM$A, D=data_for_EM$S,
+    start_timeDing <- Sys.time()
+    # est_ding_lst
+    # one_log_EM - beta.S0=beta_S0_given_A0 # two_log_EM - beta.S0=NULL
+    one_log_EM = xi_2log_PSPS_M_weighting(Z=data_for_EM$A, D=data_for_EM$S,
                     X=as.matrix(subset(data_for_EM, select = 
                     grep(paste(X_sub_cols[-1], collapse="|"), colnames(data_for_EM)))), Y=data_for_EM$Y, 
-                    eta=xi, beta.S0=NULL, beta.ah=NULL, beta.n=NULL, # beta.S0=beta_S0 # beta.S0=NULL
+                    eta=xi, beta.S0=beta_S0_given_A0, beta.ah=NULL, beta.c=NULL, # beta.S0=beta_S0_given_A0 # beta.S0=NULL
                     iter.max=iterations, error0=epsilon_EM) 
     
     end_timeDing <- Sys.time()
