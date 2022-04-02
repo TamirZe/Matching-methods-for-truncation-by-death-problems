@@ -12,7 +12,6 @@ simulate_data_function = function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, 
   # draw covariate matrix
   x_obs <- matrix( c( rep(1,param_n), 
                       mvrnorm(param_n, mu=mean_x, Sigma = diag(var_x, cont_x))), nrow = param_n )
-  print("hi")
   # add categorial variable, if needed (needed if categ_x > 0)
   if(categ_x > 0){
     x_categorial = data.table(list.cbind(lapply(vec_p_categ, function(x) rbinom(n=param_n,prob=x,size=1))))
@@ -46,12 +45,17 @@ simulate_data_function = function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, 
     colnames(betas_GPI_adj) = rep("", ncol(betas_GPI_adj))
   }
   
-  if(two_log_models==TRUE){
-    
+  if(two_log_models==TRUE){ # two logistic models
+    # log reg of S(0)
+    prob_S0 = exp(x_PS%*%gamma_as_adj) / ( 1 + exp(x_PS%*%gamma_as_adj) )
+    S0_vec = rbinom( length(prob_S0), 1, prob_S0 )
+    #log reg OF s(1) given S(0)
+    prob_S1 = exp(x_PS%*%gamma_pro_adj) / ( 1 + exp(x_PS%*%gamma_pro_adj) )
+    S0_vec[S0_vec==0] = rbinom( S0_vec[S0_vec==0], 1, prob_S1 )
   }
-  else{
+  else{ # multinomial model
     # vector of probabilities
-    vProb = cbind(exp(x_PS%*%gamma_as_adj), exp(x_PS%*%gamma_pro_adj), exp(x_PS%*%gamma_ns_adj)) 
+    vProb = cbind(exp(x_PS%*%gamma_as_adj), exp(x_PS%*%gamma_ns_adj), exp(x_PS%*%gamma_pro_adj)) 
     prob = vProb / apply(vProb, 1, sum) 
     probs_mean = apply(vProb, 2, mean) / sum(apply(vProb, 2, mean))
     # multinomial draws
@@ -61,16 +65,17 @@ simulate_data_function = function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, 
     # within ah, randomize to as or har, according to xi
     g_vec_num[g_vec_num==1] = rbinom( length(g_vec_num[g_vec_num==1]), 1, (1 / (1+xi)) )
     # 0-har, 1-ah, 2-pro, 3-ns
-    g_vec = mapvalues(g_vec_num, from = c(0:3), to = c("har", "as", "pro", "ns"))
+    g_vec = mapvalues(g_vec_num, from = c(0:3), to = c("har", "as", "ns", "pro"))
    
     # descriptive of the principal scores
     pi = table(g_vec) / param_n
     pi = t(c(pi)); colnames(pi) = paste0("pi_", colnames(pi))
+    prob = data.frame(prob_har = (xi/(1+xi))*prob[,1], prob_as = (1/(1+xi))*prob[,1], prob_ns = prob[,2], prob_pro = prob[,3])
   }
   
   # generate data ####
   # data is going to be used in the EM first, in simulate_data_run_EM_and_match. Thus, data contains the "obs" X.
-  data = data.frame(prob = prob, x_obs, g = g_vec, g_num = g_vec_num,
+  data = data.frame(prob, x_obs, g = g_vec, g_num = g_vec_num,
                     A = rbinom(param_n, 1, prob_A))
   data$S = ifelse((data$g == "as") | (data$g == "pro" & data$A == 1) | (data$g == "har" & data$A == 0), 1, 0)
   mean_by_g = data.table(data)[, lapply(.SD, mean), by="g"]
@@ -129,9 +134,9 @@ simulate_data_function = function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, 
   p1 = mean(filter(dt, A==1)$S); p0 = mean(filter(dt, A==0)$S)
   pi_har_est = (xi/(1+xi))*p0
   pi_as_est = (1 /(1 + xi))*p0
-  pi_pro_est = p1 - (1/(1+xi))*p0
   pi_ns_est = 1 - p1 - (xi/(1+xi))*p0
-  pis_est = c(pi_har_est = pi_har_est, pi_as_est = pi_as_est, pi_ns_est = pi_ns_est, pi_pro_est = pi_pro_est)
+  pi_pro_est = p1 - (1/(1+xi))*p0
+  pis_est = c(pi_har_est = pi_har_est, pi_as_est = pi_as_est, pi_pro_est = pi_pro_est, pi_ns_est = pi_ns_est)
   
   return(list(dt=dt, x_obs=x_obs, x_PS=x_PS, x_outcome=x,
               OBS_table=OBS_table, pi=pi, pis_est=pis_est, probs_mean=probs_mean))
@@ -144,7 +149,7 @@ simulate_data_run_EM_and_match = function(return_EM_PS = FALSE, index_set_of_par
                                           caliper, match_on = NULL, mu_x_fixed=FALSE, x_as){
   
   X_sub_cols = paste0("X", c(1:(dim_x)))
-  list_dat_EM <- list_coeff_as <- list_coeff_ns <- list()
+  list_dat_EM <- list_coeff_ah <- list_coeff_ns <- list()
   # run over param_n_sim different samples, each with param_n observations
   WLS_NOint_mat_reg_estimators <- WLS_YESint_mat_reg_estimators <-
     OLS_NOint_mat_reg_estimators <- OLS_YESint_mat_reg_estimators <-
@@ -169,18 +174,12 @@ simulate_data_run_EM_and_match = function(return_EM_PS = FALSE, index_set_of_par
     x = list_data_for_EM_and_X$x_obs; x_PS = data.frame(list_data_for_EM_and_X$x_PS)
     x_outcome = data.frame(list_data_for_EM_and_X$x_outcome)
     OBS_table = list_data_for_EM_and_X$OBS_table
-    pis = list_data_for_EM_and_X$pi; pis_est_from_func = list_data_for_EM_and_X$pis_est
-    vec_OBS_table = t(c(OBS_table))
-    colnames(vec_OBS_table) = c("A0_S0", "A1_S0", "A0_S1", "A1_S1")
-    # pi estimation
-    pi_as_est = mean(filter(data_for_EM, A==0)$S)
-    pi_ns_est = 1 - mean(filter(data_for_EM, A==1)$S)
-    pi_pro_est = mean(filter(data_for_EM, A==1)$S) - mean(filter(data_for_EM, A==0)$S)
-    pis_est = c(pi_as_est = pi_as_est, pi_ns_est = pi_ns_est, pi_pro_est = pi_pro_est)
+    pis = list_data_for_EM_and_X$pi; pis_est = list_data_for_EM_and_X$pis_est
+    vec_OBS_table = t(c(OBS_table)); colnames(vec_OBS_table) = c("A0_S0", "A1_S0", "A0_S1", "A1_S1")
     
     # real parameter
-    SACE = mean(data_for_EM[g_num==1 , Y1]) - mean(data_for_EM[g_num==1, Y0])
-    SACE_conditional = mean(data_for_EM[A==1 & g_num==1 , Y]) - mean(data_for_EM[A==0 & g_num==1, Y])
+    SACE = mean(data_for_EM[g=="as" , Y1]) - mean(data_for_EM[g=="as", Y0])
+    SACE_conditional = mean(data_for_EM[A==1 & g=="as" , Y]) - mean(data_for_EM[A==0 & g=="as", Y])
     
     # naive estimators
     # naive
@@ -204,7 +203,7 @@ simulate_data_run_EM_and_match = function(return_EM_PS = FALSE, index_set_of_par
       # TODO put all naive estimators together in the current row of mat_param_estimators
       mat_param_estimators = rbind( mat_param_estimators,
                                     data.frame(SACE, most_naive_est, most_naive_est_se, sur_naive_est, sur_naive_est_se,
-                                               pis, t(pis_est), t(pis_est_from_func) ))
+                                               pis, t(pis_est) ))
       CI_mat = rbind( CI_mat, data.frame(SACE, CI_naives_before_matching) )
       i = i + 1
       next()
@@ -212,32 +211,31 @@ simulate_data_run_EM_and_match = function(return_EM_PS = FALSE, index_set_of_par
     
     # Ding estimator
     
-    #logistic regression S(0)=1, using S|A=0
-    fit_S0_by_A0 = glm(as.formula(paste0("S ~ ",paste(X_sub_cols[-1], collapse="+"))), data=filter(data_for_EM, A==0), family="binomial")
-    beta_S0 = fit_S0_by_A0$coefficients
+    #logistic regression S(0)=1 on X, using S|A=0
+    fit_S0_in_A0 = glm(as.formula(paste0("S ~ ",paste(X_sub_cols[-1], collapse="+"))), data=filter(data_for_EM, A==0), family="binomial")
+    beta_S0 = fit_S0_in_A0$coefficients
     
     # EM
-    #TODO in ding the pis order id PROB[i,] = c(prob.c, prob.a, prob.n)/sum
+    #TODO in ding the pis order is PROB[i,] = c(prob.c, prob.a, prob.n)/sum
     start_timeDing <- Sys.time() 
     est_ding_lst = xi_2log_PSPS_M_weighting(Z=data_for_EM$A, D=data_for_EM$S,
                     X=as.matrix(subset(data_for_EM, select = 
                     grep(paste(X_sub_cols[-1], collapse="|"), colnames(data_for_EM)))), Y=data_for_EM$Y, 
-                    eta=xi, beta.S0=beta_S0, beta.ah=NULL, beta.n=NULL, # beta.S0=beta_S0 # beta.S0=NULL
+                    eta=xi, beta.S0=NULL, beta.ah=NULL, beta.n=NULL, # beta.S0=beta_S0 # beta.S0=NULL
                     iter.max=iterations, error0=epsilon_EM) 
     
     end_timeDing <- Sys.time()
     print(paste0("Ding EM lasts ", difftime(end_timeDing, start_timeDing)))
-    # adjust the cols the same order as in myEM: my order is: har, as, ns, pro. ding order: c(prob.c, prob.d, prob.a, prob.n)
-    PS_est = data.frame(est_ding_lst$ps.score[,2], est_ding_lst$ps.score[,3], est_ding_lst$ps.score[,4], est_ding_lst$ps.score[,1])
-    colnames(PS_est) = c("EMest_p_har", "EMest_p_as", "EMest_p_ns", "EMest_p_pro")
-    data_with_PS = data.table(data_for_EM, PS_est)
+    #adjust the cols the same order as in myEM: my order is: har, as, ns, pro. ding order: c(prob.c, prob.d, prob.a, prob.n)
+    #PS_est = data.frame(est_ding_lst$ps.score[,2], est_ding_lst$ps.score[,3], est_ding_lst$ps.score[,4], est_ding_lst$ps.score[,1])
+    data_with_PS = data.table(data_for_EM, est_ding_lst$ps.score)
     
     # if PS_est contains NAS, it probably implies that the EM process diverged, skip this iteration and go to the next
-    if( sum(is.na(PS_est)) > 0){
+    if( sum(is.na(PS_est)) > 0 ){
       index_EM_not_conv = index_EM_not_conv + 1
       list_EM_not_conv$probs[[index_EM_not_conv]] = PS_est
-      coeff_as = est_ding_lst$beta.a ; coeff_ns = est_ding_lst$beta.n
-      list_EM_not_conv$coeffs[[index_EM_not_conv]] = data.frame(rbind(coeff_as=coeff_as, coeff_ns=coeff_ns))
+      coeff_ah = est_ding_lst$beta.ah ; coeff_ns = est_ding_lst$beta.n
+      list_EM_not_conv$coeffs[[index_EM_not_conv]] = data.frame(rbind(coeff_ah=coeff_ah, coeff_ns=coeff_ns))
       colnames(list_EM_not_conv$coeffs[[index_EM_not_conv]]) = X_sub_cols
       list_EM_not_conv$probs_nas[[index_EM_not_conv]] = c(total_na = sum(is.na(PS_est)), 
                                                           prop_na = sum(is.na(PS_est)) / ( nrow(PS_est) * ncol(PS_est) ) ) %>% round(3)
@@ -247,27 +245,23 @@ simulate_data_run_EM_and_match = function(return_EM_PS = FALSE, index_set_of_par
     
     DING_est = est_ding_lst$AACE
     DING_model_assisted_est_ps = est_ding_lst$AACE.reg
-    coeff_as = est_ding_lst$beta.a ; coeff_ns = est_ding_lst$beta.n
-    list_coeff_as[[i]] = coeff_as; list_coeff_ns[[i]] = coeff_ns
+    coeff_ah = est_ding_lst$beta.ah ; coeff_ns = est_ding_lst$beta.n
+    list_coeff_ah[[i]] = coeff_ah; list_coeff_ns[[i]] = coeff_ns
     
     # EM summary
     if(return_EM_PS == TRUE){
       PS_true_EM_compr = subset( data_with_PS, select = grep("^id$|^g$|prob.|EM",colnames(data_with_PS)) )
       PS_true_EM_compr = rapply(object = PS_true_EM_compr, f = round, classes = "numeric", how = "replace", digits = 3)
-      colnames(PS_true_EM_compr) = mgsub(colnames(PS_true_EM_compr), c("prob.1", "prob.2", "prob.3"), c("prob_as", "prob_pro", "prob_ns"))
       PS_true_EM_compr = data.frame(id = PS_true_EM_compr$id, g = PS_true_EM_compr$g,
-                                    prob_as = PS_true_EM_compr$prob_as, EMest_p_as=PS_true_EM_compr$EMest_p_as, diff = PS_true_EM_compr$prob_as - PS_true_EM_compr$EMest_p_as,
-                                    prob_pro = PS_true_EM_compr$prob_pro, EMest_p_pro=PS_true_EM_compr$EMest_p_pro, prob_ns = PS_true_EM_compr$prob_ns, EMest_p_ns=PS_true_EM_compr$EMest_p_ns)
+        prob_as = PS_true_EM_compr$prob_as, EMest_p_as=PS_true_EM_compr$EMest_p_as, diff = PS_true_EM_compr$prob_as - PS_true_EM_compr$EMest_p_as,
+        prob_pro = PS_true_EM_compr$prob_pro, EMest_p_pro=PS_true_EM_compr$EMest_p_pro, prob_ns = PS_true_EM_compr$prob_ns, EMest_p_ns=PS_true_EM_compr$EMest_p_ns)
       return(list(PS_true_EM_compr=PS_true_EM_compr,OBS_table=OBS_table, pis=pis, EM_coeffs=EM_coeffs))
     }
     
-    # calculate O11_posterior_ratio and O11_prior_ratio
-    # pis order: as, ns, pro
-    pis = data.frame(pis) 
-    O11_prior_ratio = pis[which(names(pis)=="pi_as")] / (pis[which(names(pis)=="pi_as")] + pis[which(names(pis)=="pi_pro")]) 
-    data_with_PS$O11_prior_ratio = O11_prior_ratio
-    data_with_PS[, `:=` (O11_posterior_ratio = EMest_p_as / (EMest_p_as + EMest_p_pro),
-                         W_1_as = ( EMest_p_as / (EMest_p_as + EMest_p_pro) ) / O11_prior_ratio)]
+    # calculate O11_prior_ratio, O11_posterior_ratio and W_1_as
+    O11_prior_ratio = pis_est["pi_as_est"] / (pis_est["pi_as_est"] + pis_est["pi_pro_est"])
+    data_with_PS[, `:=` ( O11_posterior_ratio = EMest_p_as / (EMest_p_as + EMest_p_pro), O11_prior_ratio = O11_prior_ratio )]
+    data_with_PS$W_1_as = data_with_PS2$O11_posterior_ratio / O11_prior_ratio
     
     # run for all options (3 options - full dataset, wout A=0,S=0, only S=1)
     data_list = list(data_with_PS, data_with_PS[OBS != "O(0,0)"], data_with_PS[S==1]) 
@@ -418,7 +412,7 @@ simulate_data_run_EM_and_match = function(return_EM_PS = FALSE, index_set_of_par
                                              ,matching_estimators
                                              , diff_distance,
                                              most_naive_est, most_naive_est_se, sur_naive_est, sur_naive_est_se,
-                                             pis, t(pis_est), t(pis_est_from_func), vec_OBS_table
+                                             pis, t(pis_est), vec_OBS_table
                                   ))
     
     # TODO regression estimators
@@ -518,13 +512,13 @@ simulate_data_run_EM_and_match = function(return_EM_PS = FALSE, index_set_of_par
   
   # calculating EM estimators and arrange in a data frame
   # TODO put this thing in a function
-  coeffs_as = lapply(c(1:dim_x), function(l){
-    sapply(list_coeff_as, "[[", l)
+  coeffs_ah = lapply(c(1:dim_x), function(l){
+    sapply(list_coeff_ah, "[[", l)
   })
   coeffs_ns = lapply(c(1:dim_x), function(l){
     sapply(list_coeff_ns, "[[", l)
   })
-  coeffs = data.table( rbind( list.rbind(coeffs_as), list.rbind(coeffs_ns) ) )
+  coeffs = data.table( rbind( list.rbind(coeffs_ah), list.rbind(coeffs_ns) ) )
   
   #TODO FIX THIS HERE
   print("mean and sd")
@@ -536,7 +530,7 @@ simulate_data_run_EM_and_match = function(return_EM_PS = FALSE, index_set_of_par
   coeffs$perc = coeffs$diff / abs(coeffs$parameter)
   coeffs_df = data.frame(coeffs)
   rownames(coeffs_df) = colnames(mat_gamma)
-  #rownames(coeffs_df) = c("coeff_as_0", "coeff_as_1","coeff_ns_0", "coeff_ns_1")
+  #rownames(coeffs_df) = c("coeff_ah_0", "coeff_ah_1","coeff_ns_0", "coeff_ns_1")
   
   # TODO 2. mean and sd for mat_excluded_included_matching
   mat_excluded_included_matching = rbind(mat_excluded_included_matching, 

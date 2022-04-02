@@ -187,7 +187,8 @@ xi_2log_PredTreatEffect = function(Z, D, X, eta = 0,
       prob.n = exp(t(beta.n)%*%X[i, ])
       sum = prob.c + prob.d + prob.a + prob.n
       
-      PROB[i,] = c(prob.c, prob.d, prob.a, prob.n)/sum
+      #PROB[i,] = c(prob.c, prob.d, prob.a, prob.n)/sum
+      PROB[i,] = c(prob.d, prob.a, prob.n, prob.c)/sum
     }	
     
     ##the results
@@ -255,8 +256,8 @@ xi_2log_PSPS_M_weighting = function(Z, D, X, Y,
   
   ##CACE, NACE and AACE, regression estimates
   AACE.reg = mean(weighted.Y1a) - mean(weighted.Y0a) + mean(weighted.ra)
-  ps.score = data.frame(ps.score)
-  colnames(ps.score) = c("prob.c", "prob.d", "prob.a", "prob.n")
+  #colnames(ps.score) = c("prob.d", "prob.a", "prob.n", "prob.c")
+  colnames(ps.score) = c("EMest_p_har", "EMest_p_as", "EMest_p_ns", "EMest_p_pro")
   ##results
   ACE = list(AACE = AACE, AACE.reg = AACE.reg, ps.score=ps.score,
              beta.ah = ps.score.fit$beta.ah, beta.n = ps.score.fit$beta.n)
