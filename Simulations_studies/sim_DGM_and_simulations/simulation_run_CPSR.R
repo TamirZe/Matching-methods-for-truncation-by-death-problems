@@ -4,7 +4,7 @@ gamma_ns =  as.numeric(mat_gamma[1, (dim_x+1): (2*dim_x)])
 
 # misspec_PS: 0 <- NO mis, 2: add transformations to PS model, and remain original X's in ourcome model.
 # CHANGE two_log_models=TRUE
-simulate_data_function = function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, xi, two_log_models=FALSE, param_n, 
+simulate_data_function = function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, xi, two_log_models=TRUE, param_n, 
                                   misspec_PS, funcform_mis_out=FALSE,
                                   funcform_factor_sqr=0, funcform_factor_log=0, only_mean_x_bool=FALSE){
   if(!is.null(seed_num)){set.seed(seed_num)}
@@ -49,11 +49,19 @@ simulate_data_function = function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, 
     # log reg of S(0)
     prob_S0 = exp(x_PS%*%gamma_as_adj) / ( 1 + exp(x_PS%*%gamma_as_adj) )
     S0_vec = rbinom( length(prob_S0), 1, prob_S0 )
-    #log reg OF s(1) given S(0)
-    prob_S1 = exp(x_PS%*%gamma_pro_adj) / ( 1 + exp(x_PS%*%gamma_pro_adj) )
-    S0_vec[S0_vec==0] = rbinom( S0_vec[S0_vec==0], 1, prob_S1 )
-  }
-  else{ # multinomial model
+    # if S(0)==1, assign to as with p = 1/1+xi and to har, with p = xi/x+xi (log reg with a constant only)
+    g_vec_num = S0_vec
+    g_vec_num[g_vec_num == 0] = -1
+    g_vec_num[g_vec_num == 1] = rbinom( length(g_vec_num[g_vec_num == 1]), 1, (1 / (1+xi)) )
+    #if S(0)==0, log reg for S(1)
+    prob_S1 = exp(x_PS%*%gamma_pro_adj) / ( 1 + exp(x_PS%*%gamma_pro_adj) ) # prob_S1=1 given S(0)=0
+    # -1 to switch pro ns - after the -1, ns is 1, and pro is 0, +2 to convert ns to2 and pro to 3
+    g_vec_num[g_vec_num == -1] = ( 1 - rbinom(length(prob_S1[g_vec_num == -1]), 1, prob_S1[g_vec_num == -1]) ) + 2 
+    
+    g_vec = mapvalues(g_vec_num, from = c(0:3), to = c("har", "as", "ns", "pro"))
+    prob = data.frame(prob_har = prob_S0*(xi/(1+xi)), prob_as = prob_S0*(1/(1+xi)), 
+                      prob_ns = (1-prob_S0)*(1-prob_S1), prob_pro = (1-prob_S0)*prob_S1)
+    }else{ # multinomial model
     # vector of probabilities
     vProb = cbind(exp(x_PS%*%gamma_as_adj), exp(x_PS%*%gamma_ns_adj), exp(x_PS%*%gamma_pro_adj)) 
     prob = vProb / apply(vProb, 1, sum) 
@@ -66,12 +74,12 @@ simulate_data_function = function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, 
     g_vec_num[g_vec_num==1] = rbinom( length(g_vec_num[g_vec_num==1]), 1, (1 / (1+xi)) )
     # 0-har, 1-ah, 2-pro, 3-ns
     g_vec = mapvalues(g_vec_num, from = c(0:3), to = c("har", "as", "ns", "pro"))
-   
-    # descriptive of the principal scores
-    pi = table(g_vec) / param_n
-    pi = t(c(pi)); colnames(pi) = paste0("pi_", colnames(pi))
-    prob = data.frame(prob_har = (xi/(1+xi))*prob[,1], prob_as = (1/(1+xi))*prob[,1], prob_ns = prob[,2], prob_pro = prob[,3])
+    prob = data.frame(prob_har = prob[,1]*(xi/(1+xi)), prob_as = prob[,1]*(1/(1+xi)), prob_ns = prob[,2], prob_pro = prob[,3])
   }
+  
+  # descriptive of the principal scores
+  pi = table(g_vec) / param_n
+  pi = t(c(pi)); colnames(pi) = paste0("pi_", colnames(pi))
   
   # generate data ####
   # data is going to be used in the EM first, in simulate_data_run_EM_and_match. Thus, data contains the "obs" X.
