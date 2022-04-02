@@ -136,7 +136,7 @@ big_mat_x_by_g_A = data.table(big_mat_x_by_g_A)[, lapply(.SD, mean), by=c("Scena
 mat_x_as = NULL
 for( k in c(1 : nrow(mat_gamma)) ){
   gamma_as = as.numeric(mat_gamma[k, c(1:dim_x)]); gamma_ns =  as.numeric(mat_gamma[k, (dim_x+1): (2*dim_x)])
-  lst_mean_x_and_pi = simulate_data_function(gamma_as=gamma_as, gamma_ns=gamma_ns, gamma_pro=gamma_pro, xi,
+  lst_mean_x_and_pi = simulate_data_function(gamma_as=gamma_as, gamma_ns=gamma_ns, gamma_pro=gamma_pro, xi=xi,
     param_n=250000, misspec_PS=0, funcform_mis_out=FALSE, funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log, only_mean_x_bool=TRUE)
   mat_x_as = rbind(mat_x_as, lst_mean_x_and_pi$x_as)
 }
@@ -163,7 +163,7 @@ for ( k in c(1 : nrow(mat_gamma)) ){
   start_time <- Sys.time()
 
   EM_and_matching = simulate_data_run_EM_and_match(return_EM_PS=FALSE, index_set_of_params=k,
-      gamma_as=gamma_as, gamma_ns=gamma_ns, gamma_pro=gamma_pro, 
+      gamma_as=gamma_as, gamma_ns=gamma_ns, gamma_pro=gamma_pro, xi=xi,
       misspec_PS=misspec_PS, funcform_mis_out=FALSE, funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log, 
       match_and_reg_watch_true_X=FALSE, param_n=param_n, param_n_sim=param_n_sim,
       iterations=iterations, epsilon_EM=epsilon_EM, caliper=caliper,

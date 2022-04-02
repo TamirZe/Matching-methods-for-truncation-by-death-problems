@@ -20,12 +20,6 @@ library(nnet)
 #Trace: if TRUE then trace each EM iteration
 #fitting multinomial logistic regression model with principal stratification variable as missing data
 
-# Z=data_for_EM$A; D=data_for_EM$S
-# X=as.matrix(subset(data_for_EM, 
-#         select = grep(paste(X_sub_cols, collapse="|"), colnames(data_for_EM))))
-#Y=data_for_EM$Y
-# beta.a = NULL; beta.n = NULL; iter.max = 200; error0 = 10^-6; Trace = TRUE
-
 
 #TODO original parameters iter.max = 200, error0 = 10^-6
 PS_pred = function(Z, D, X, 
@@ -125,14 +119,7 @@ PS_pred = function(Z, D, X,
 #ep1, ep0: sensitivity parameters in Proposition 4, Section 6.1.
 #beta.a, beta.n: initial values for the paramaters in the multiple logistic regression
 
-# X=as.matrix(subset(data_for_EM, 
-#                           select = grep(paste(X_sub_cols[-1], collapse="|"), colnames(data_for_EM))))
-#     
-# Z=data_for_EM$A; D=data_for_EM$S
-# X=as.matrix(subset(data_for_EM, 
-#                    select = grep(paste(X_sub_cols[-1], collapse="|"), colnames(data_for_EM))))
-# Y=data_for_EM$Y
-# beta.a = NULL; beta.n = NULL; iter.max = 200; error0 = 10^-6; Trace = TRUE
+
 
 PSPS_M_weighting = function(Z, D, X, Y, 
                             trc = FALSE, ep1 = 1, ep0 = 1,

@@ -3,14 +3,16 @@ gamma_as = as.numeric(mat_gamma[1, c(1:dim_x)])
 gamma_ns =  as.numeric(mat_gamma[1, (dim_x+1): (2*dim_x)])
 
 # misspec_PS: 0 <- NO mis, 2: add transformations to PS model, and remain original X's in ourcome model.
-simulate_data_function = function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, xi, param_n,
+# CHANGE two_log_models=TRUE
+simulate_data_function = function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, xi, two_log_models=FALSE, param_n, 
                                   misspec_PS, funcform_mis_out=FALSE,
                                   funcform_factor_sqr=0, funcform_factor_log=0, only_mean_x_bool=FALSE){
-  if(is.null(seed_num)!=TRUE){set.seed(seed_num)}
+  if(!is.null(seed_num)){set.seed(seed_num)}
   
   # draw covariate matrix
   x_obs <- matrix( c( rep(1,param_n), 
                       mvrnorm(param_n, mu=mean_x, Sigma = diag(var_x, cont_x))), nrow = param_n )
+  print("hi")
   # add categorial variable, if needed (needed if categ_x > 0)
   if(categ_x > 0){
     x_categorial = data.table(list.cbind(lapply(vec_p_categ, function(x) rbinom(n=param_n,prob=x,size=1))))
@@ -18,7 +20,7 @@ simulate_data_function = function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, 
   }
   colnames(x_obs) = paste0("X", c(1:dim_x))
   
-  # misspecation
+  # misspecification
   if(misspec_PS == 0){
     x = x_obs; x_PS = x_obs
     gamma_as_adj = gamma_as; gamma_ns_adj = gamma_ns; gamma_pro_adj = gamma_pro; betas_GPI_adj = betas_GPI 
@@ -44,22 +46,27 @@ simulate_data_function = function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, 
     colnames(betas_GPI_adj) = rep("", ncol(betas_GPI_adj))
   }
   
-  # vector of probabilities
-  vProb = cbind(exp(x_PS%*%gamma_as_adj), exp(x_PS%*%gamma_pro_adj), exp(x_PS%*%gamma_ns_adj)) 
-  prob = vProb / apply(vProb, 1, sum) 
-  probs_mean = apply(vProb, 2, mean) / sum(apply(vProb, 2, mean))
-  # multinomial draws
-  mChoices = t(apply(prob, 1, rmultinom, n = 1, size = 1))
-  # 1-ah, 2-pro, 3-ns
-  g_vec_num = apply(mChoices, 1, function(z) which(z==1))
-  # within ah, randomize to as or har, according to xi
-  g_vec_num[g_vec_num==1] = rbinom( length(g_vec_num[g_vec_num==1]), 1, (1 / (1+xi)) )
-  # 0-har, 1-ah, 2-pro, 3-ns
-  g_vec = mapvalues(g_vec_num, from = c(0:3), to = c("har", "as", "pro", "ns"))
- 
-  # descriptive of the principal scores
-  pi = table(g_vec) / param_n
-  pi = t(c(pi)); colnames(pi) = paste0("pi_", colnames(pi))
+  if(two_log_models==TRUE){
+    
+  }
+  else{
+    # vector of probabilities
+    vProb = cbind(exp(x_PS%*%gamma_as_adj), exp(x_PS%*%gamma_pro_adj), exp(x_PS%*%gamma_ns_adj)) 
+    prob = vProb / apply(vProb, 1, sum) 
+    probs_mean = apply(vProb, 2, mean) / sum(apply(vProb, 2, mean))
+    # multinomial draws
+    mChoices = t(apply(prob, 1, rmultinom, n = 1, size = 1))
+    # 1-ah, 2-pro, 3-ns
+    g_vec_num = apply(mChoices, 1, function(z) which(z==1))
+    # within ah, randomize to as or har, according to xi
+    g_vec_num[g_vec_num==1] = rbinom( length(g_vec_num[g_vec_num==1]), 1, (1 / (1+xi)) )
+    # 0-har, 1-ah, 2-pro, 3-ns
+    g_vec = mapvalues(g_vec_num, from = c(0:3), to = c("har", "as", "pro", "ns"))
+   
+    # descriptive of the principal scores
+    pi = table(g_vec) / param_n
+    pi = t(c(pi)); colnames(pi) = paste0("pi_", colnames(pi))
+  }
   
   # generate data ####
   # data is going to be used in the EM first, in simulate_data_run_EM_and_match. Thus, data contains the "obs" X.
@@ -73,7 +80,7 @@ simulate_data_function = function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, 
   x_pro = filter(mean_by_g, g=="pro") %>% subset(select = grep("X|^A$", colnames(mean_by_g))) %>% as.matrix
   x_ns = filter(mean_by_g, g=="ns") %>% subset(select = grep("X|^A$", colnames(mean_by_g))) %>% as.matrix
   if(only_mean_x_bool==TRUE){
-    return(list(x_as=x_as, x_pro=x_pro, x_ns=x_ns, pi=pi, mean_by_A_g=mean_by_A_g))
+    return(list(x_har=x_har, x_as=x_as, x_pro=x_pro, x_ns=x_ns, pi=pi, mean_by_A_g=mean_by_A_g))
   }
   
   # models for Y(1) & y(0) ####
@@ -131,7 +138,7 @@ simulate_data_function = function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, 
 }
 
 
-simulate_data_run_EM_and_match = function(return_EM_PS = FALSE, index_set_of_params, gamma_as, gamma_ns, gamma_pro,
+simulate_data_run_EM_and_match = function(return_EM_PS = FALSE, index_set_of_params, gamma_as, gamma_ns, gamma_pro, xi,
                                           misspec_PS, funcform_mis_out=FALSE, funcform_factor_sqr=0, funcform_factor_log=0, 
                                           match_and_reg_watch_true_X=FALSE, param_n, param_n_sim, iterations, epsilon_EM = 0.001,
                                           caliper, match_on = NULL, mu_x_fixed=FALSE, x_as){
@@ -156,7 +163,7 @@ simulate_data_run_EM_and_match = function(return_EM_PS = FALSE, index_set_of_par
     print(paste0("this is n_sim ", i, " in simulate_data_run_EM_and_match. ",
                  "index_EM_not_conv: ", index_EM_not_conv, ". real number of iterations: "  , real_iter_ind, "."))
     start_time1 <- Sys.time()
-    list_data_for_EM_and_X = simulate_data_function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, xi, param_n,
+    list_data_for_EM_and_X = simulate_data_function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, xi=xi, two_log_models=FALSE, param_n,
                                                     misspec_PS, funcform_mis_out, funcform_factor_sqr, funcform_factor_log)
     data_for_EM = list_data_for_EM_and_X$dt
     x = list_data_for_EM_and_X$x_obs; x_PS = data.frame(list_data_for_EM_and_X$x_PS)
@@ -204,18 +211,25 @@ simulate_data_run_EM_and_match = function(return_EM_PS = FALSE, index_set_of_par
     }
     
     # Ding estimator
+    
+    #logistic regression S(0)=1, using S|A=0
+    fit_S0_by_A0 = glm(as.formula(paste0("S ~ ",paste(X_sub_cols[-1], collapse="+"))), data=filter(data_for_EM, A==0), family="binomial")
+    beta_S0 = fit_S0_by_A0$coefficients
+    
+    # EM
     #TODO in ding the pis order id PROB[i,] = c(prob.c, prob.a, prob.n)/sum
-    start_timeDing <- Sys.time()
-    est_ding_lst = PSPS_M_weighting(Z=data_for_EM$A, D=data_for_EM$S,
-                                    X=as.matrix(subset(data_for_EM, 
-                                                       select = grep(paste(X_sub_cols[-1], collapse="|"), colnames(data_for_EM)))),  
-                                    Y=data_for_EM$Y, trc = TRUE, ep1 = 1, ep0 = 1, beta.a = NULL, beta.n = NULL,
-                                    iter.max = iterations , error0 = epsilon_EM) 
+    start_timeDing <- Sys.time() 
+    est_ding_lst = xi_2log_PSPS_M_weighting(Z=data_for_EM$A, D=data_for_EM$S,
+                    X=as.matrix(subset(data_for_EM, select = 
+                    grep(paste(X_sub_cols[-1], collapse="|"), colnames(data_for_EM)))), Y=data_for_EM$Y, 
+                    eta=xi, beta.S0=beta_S0, beta.ah=NULL, beta.n=NULL, # beta.S0=beta_S0 # beta.S0=NULL
+                    iter.max=iterations, error0=epsilon_EM) 
+    
     end_timeDing <- Sys.time()
     print(paste0("Ding EM lasts ", difftime(end_timeDing, start_timeDing)))
-    # adjust the cols the same order as in myEM: my order is: as, ns, pro. ding order: c(prob.c, prob.a, prob.n)
-    PS_est = data.frame(est_ding_lst$PROB[,2], est_ding_lst$PROB[,3], est_ding_lst$PROB[,1])
-    colnames(PS_est) = c("EMest_p_as", "EMest_p_ns", "EMest_p_pro")
+    # adjust the cols the same order as in myEM: my order is: har, as, ns, pro. ding order: c(prob.c, prob.d, prob.a, prob.n)
+    PS_est = data.frame(est_ding_lst$ps.score[,2], est_ding_lst$ps.score[,3], est_ding_lst$ps.score[,4], est_ding_lst$ps.score[,1])
+    colnames(PS_est) = c("EMest_p_har", "EMest_p_as", "EMest_p_ns", "EMest_p_pro")
     data_with_PS = data.table(data_for_EM, PS_est)
     
     # if PS_est contains NAS, it probably implies that the EM process diverged, skip this iteration and go to the next

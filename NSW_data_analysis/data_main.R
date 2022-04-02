@@ -17,8 +17,8 @@ source("NSW_data_analysis/data_post_matching_analysis/data_regression_estimators
 source("NSW_data_analysis/data_post_matching_analysis/data_aligned_ranktest.R")
 source("NSW_data_analysis/data_sensitivity_analyses/data_SA_regression_funcs.R")
 source("Ding_Lu/PS_M_weighting.R")
-source("Ding_Lu/PS_M_weighting_SA.R")
-source("Ding_Lu/xi_PS_M_weighting_SA.R")
+#source("Ding_Lu/PS_M_weighting_SA.R")
+source("Ding_Lu/PS_M_weighting_SA_CPSR")
 source("Ding_Lu/DL_SE_boot.R")
 ########################################################################
 

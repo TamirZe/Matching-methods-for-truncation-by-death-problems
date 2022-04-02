@@ -135,24 +135,6 @@ PredTreatEffect_SA = function(Z, D, X, eta = 0,
 }
 
 
-
-
-# X=as.matrix(subset(data_for_EM, 
-#                    select = grep(paste(X_sub_cols[-1], collapse="|"), colnames(data_for_EM))))
-# 
-# Z=data_for_EM$A; D=data_for_EM$S
-# X=as.matrix(subset(data_for_EM, 
-#                    select = grep(paste(X_sub_cols[-1], collapse="|"), colnames(data_for_EM))))
-# Y=data_for_EM$Y
-# beta.a = NULL; beta.n = NULL; iter.max = 200; error0 = 10^-6; Trace = TRUE
-
-#TODO TZ the EM process apriory assumes the sensitivity parameter eta. 
-# as it seems, the only place eta appears is in the EM, not in the formulas for SACE (PP 769)
-# PSPS_M_weighting_SA(Z=tmp$A, D=tmp$S,
-#                     X=as.matrix(subset(tmp, select = covariates_PS)),  
-#                     Y=tmp$Y, eta = xi_sensi_mono_vec[i], # eta = 0 implies monotonicity
-#                     beta.a = NULL, beta.n = NULL)
-
 PSPS_M_weighting_SA = function(Z, D, X, Y, eta = 0,
                                      beta.a = NULL, beta.n = NULL)
 {

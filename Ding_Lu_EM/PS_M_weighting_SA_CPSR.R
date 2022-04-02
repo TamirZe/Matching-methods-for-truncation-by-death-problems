@@ -3,6 +3,7 @@
 #### Principal Stratification Analysis using Propensity Score ####
 ####################### Without Monotonicity #####################
 ###################### Ding and Lu 2015 Oct ######################
+# This script is my adjustment to PS_M_weighting_SA script of Ding and Lu, with my xi, insted of DL's eta
 ##################################################################
 
 
@@ -15,8 +16,6 @@ library(nnet)
 #X: pretreatment covaraites: an N*V matrix WITH constant 1
 #fitting multinomial logistic regression model with principal stratification variable as missing data
 
-# xi_PredTreatEffect_SA(Z, D, X, eta = eta, prob.pred = TRUE,
-#                       beta.c = beta.c, beta.n = beta.n)
 
 #TODO original parameters: iter.max = 10000, error0 = 10^-4
 xi_PredTreatEffect_SA = function(Z, D, X, eta = 0,
