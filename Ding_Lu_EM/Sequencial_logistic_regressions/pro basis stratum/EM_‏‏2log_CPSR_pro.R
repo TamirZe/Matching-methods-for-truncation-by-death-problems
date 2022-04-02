@@ -181,12 +181,11 @@ xi_2log_PredTreatEffect = function(Z, D, X, eta = 0,
     ##three columns corresponding to complier, always taker and never taker
     PROB = matrix(0, N, 4)
     for(i in 1:N) {
-      prob.a = 1/(1  + eta) * exp(t(beta.ah)%*%X[i, ])
       prob.d = eta/(1 + eta) * exp(t(beta.ah)%*%X[i, ])
-      # prob.a + prob.d = 1 := exp(0)
-      beta.c = 1
+      prob.a = 1/(1  + eta) * exp(t(beta.ah)%*%X[i, ])
       prob.n = exp(t(beta.n)%*%X[i, ])
-      sum = prob.c + prob.d + prob.a + prob.n
+      beta.c = 1 #gamma_pro=0
+      sum = prob.d + prob.a + prob.n + prob.c
       
       #PROB[i,] = c(prob.c, prob.d, prob.a, prob.n)/sum
       PROB[i,] = c(prob.d, prob.a, prob.n, prob.c)/sum
@@ -228,10 +227,10 @@ xi_2log_PSPS_M_weighting = function(Z, D, X, Y,
   
   ##the proportions of principal strata
   p1 = sum(Z*D)/sum(Z); p0 = sum((1-Z)*D)/sum(1-Z)
-  pr.c = p1 - ( ( 1 / (1+eta) ) * p0 )
   pr.d = (eta / (1+eta)) * p0
   pr.a = (1 / (1+eta)) * p0
   pr.n = 1 - (pr.c + pr.d + pr.a)
+  pr.c = p1 - ( ( 1 / (1+eta) ) * p0 )
   
   ##indices with mixture distributions
   index11 = (1:N)[Z==1&D==1]

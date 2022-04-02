@@ -1,10 +1,9 @@
-gamma_pro = rep(0, dim_x)
-gamma_as = as.numeric(mat_gamma[1, c(1:dim_x)])
-gamma_ns =  as.numeric(mat_gamma[1, (dim_x+1): (2*dim_x)])
+gamma_ns = rep(0, dim_x)
+gamma_ah = as.numeric(mat_gamma[1, c(1:dim_x)])
+gamma_pro =  as.numeric(mat_gamma[1, (dim_x+1): (2*dim_x)])
 
-# misspec_PS: 0 <- NO mis, 2: add transformations to PS model, and remain original X's in ourcome model.
-# CHANGE two_log_models=TRUE
-simulate_data_function = function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, xi, two_log_models=TRUE, param_n, 
+# misspec_PS: 0 <- NO mis, 2: add transformations to PS model, and remain original X's in outcome model.
+simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_ns, gamma_pro, xi, two_log_models=TRUE, param_n, 
                                   misspec_PS, funcform_mis_out=FALSE,
                                   funcform_factor_sqr=0, funcform_factor_log=0, only_mean_x_bool=FALSE){
   if(!is.null(seed_num)){set.seed(seed_num)}
@@ -12,17 +11,12 @@ simulate_data_function = function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, 
   # draw covariate matrix
   x_obs <- matrix( c( rep(1,param_n), 
                       mvrnorm(param_n, mu=mean_x, Sigma = diag(var_x, cont_x))), nrow = param_n )
-  # add categorial variable, if needed (needed if categ_x > 0)
-  if(categ_x > 0){
-    x_categorial = data.table(list.cbind(lapply(vec_p_categ, function(x) rbinom(n=param_n,prob=x,size=1))))
-    x_obs = as.matrix(cbind(x_obs, x_categorial))
-  }
   colnames(x_obs) = paste0("X", c(1:dim_x))
   
   # misspecification
   if(misspec_PS == 0){
     x = x_obs; x_PS = x_obs
-    gamma_as_adj = gamma_as; gamma_ns_adj = gamma_ns; gamma_pro_adj = gamma_pro; betas_GPI_adj = betas_GPI 
+    gamma_ah_adj = gamma_ah; gamma_ns_adj = gamma_ns; gamma_pro_adj = gamma_pro; betas_GPI_adj = betas_GPI 
   }
   
   # misspec2: replace 2 X's with x^2 and ~log(X), to PS model and possibly to outcome model (if funcform_mis_out == TRUE) 
@@ -38,24 +32,25 @@ simulate_data_function = function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, 
     if(funcform_mis_out == FALSE){
       x = x_obs
     }else{x = x_PS}
-    gamma_as_adj = c(gamma_as[-c((ncol(x_obs) - 1) ,ncol(x_obs))], funcform_factor_sqr*gamma_as[2], funcform_factor_log*gamma_as[2])
+    gamma_ah_adj = c(gamma_ah[-c((ncol(x_obs) - 1) ,ncol(x_obs))], funcform_factor_sqr*gamma_ah[2], funcform_factor_log*gamma_ah[2])
     gamma_ns_adj = c(gamma_ns[-c((ncol(x_obs) - 1) ,ncol(x_obs))], funcform_factor_sqr*gamma_ns[2], funcform_factor_log*gamma_ns[2])
-    gamma_pro_adj = rep(0, length(gamma_as_adj))
+    gamma_pro_adj = rep(0, length(gamma_ah_adj))
     betas_GPI_adj = betas_GPI
     colnames(betas_GPI_adj) = rep("", ncol(betas_GPI_adj))
   }
   
   if(two_log_models==TRUE){ # two logistic models
-    # log reg of S(0)
-    prob_S0 = exp(x_PS%*%gamma_as_adj) / ( 1 + exp(x_PS%*%gamma_as_adj) )
+    #1) log reg of S(0)
+    prob_S0 = exp(x_PS%*%gamma_ah_adj) / ( 1 + exp(x_PS%*%gamma_ah_adj) )
     S0_vec = rbinom( length(prob_S0), 1, prob_S0 )
-    # if S(0)==1, assign to as with p = 1/1+xi and to har, with p = xi/x+xi (log reg with a constant only)
+    
+    #2.a) if S(0)==1, assign to as with p = 1/1+xi and to har, with p = xi/x+xi (log reg with a constant only)
     g_vec_num = S0_vec
     g_vec_num[g_vec_num == 0] = -1
     g_vec_num[g_vec_num == 1] = rbinom( length(g_vec_num[g_vec_num == 1]), 1, (1 / (1+xi)) )
-    #if S(0)==0, log reg for S(1)
+    #2.b) if S(0)==0, log reg for S(1)
     prob_S1 = exp(x_PS%*%gamma_pro_adj) / ( 1 + exp(x_PS%*%gamma_pro_adj) ) # prob_S1=1 given S(0)=0
-    # -1 to switch pro ns - after the -1, ns is 1, and pro is 0, +2 to convert ns to2 and pro to 3
+    # -1 to switch pro ns - after the -1, ns is 1, and pro is 0, +2 for converting ns to 2 and pro to 3
     g_vec_num[g_vec_num == -1] = ( 1 - rbinom(length(prob_S1[g_vec_num == -1]), 1, prob_S1[g_vec_num == -1]) ) + 2 
     
     g_vec = mapvalues(g_vec_num, from = c(0:3), to = c("har", "as", "ns", "pro"))
@@ -63,7 +58,7 @@ simulate_data_function = function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, 
                       prob_ns = (1-prob_S0)*(1-prob_S1), prob_pro = (1-prob_S0)*prob_S1)
     }else{ # multinomial model
     # vector of probabilities
-    vProb = cbind(exp(x_PS%*%gamma_as_adj), exp(x_PS%*%gamma_ns_adj), exp(x_PS%*%gamma_pro_adj)) 
+    vProb = cbind(exp(x_PS%*%gamma_ah_adj), exp(x_PS%*%gamma_ns_adj), exp(x_PS%*%gamma_pro_adj)) 
     prob = vProb / apply(vProb, 1, sum) 
     probs_mean = apply(vProb, 2, mean) / sum(apply(vProb, 2, mean))
     # multinomial draws
@@ -144,14 +139,14 @@ simulate_data_function = function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, 
   pi_as_est = (1 /(1 + xi))*p0
   pi_ns_est = 1 - p1 - (xi/(1+xi))*p0
   pi_pro_est = p1 - (1/(1+xi))*p0
-  pis_est = c(pi_har_est = pi_har_est, pi_as_est = pi_as_est, pi_pro_est = pi_pro_est, pi_ns_est = pi_ns_est)
+  pis_est = c(pi_har_est = pi_har_est, pi_as_est = pi_as_est, pi_ns_est = pi_ns_est, pi_pro_est = pi_pro_est,)
   
   return(list(dt=dt, x_obs=x_obs, x_PS=x_PS, x_outcome=x,
               OBS_table=OBS_table, pi=pi, pis_est=pis_est, probs_mean=probs_mean))
 }
 
 
-simulate_data_run_EM_and_match = function(return_EM_PS = FALSE, index_set_of_params, gamma_as, gamma_ns, gamma_pro, xi,
+simulate_data_run_EM_and_match = function(return_EM_PS = FALSE, index_set_of_params, gamma_ah, gamma_ns, gamma_pro, xi,
                                           misspec_PS, funcform_mis_out=FALSE, funcform_factor_sqr=0, funcform_factor_log=0, 
                                           match_and_reg_watch_true_X=FALSE, param_n, param_n_sim, iterations, epsilon_EM = 0.001,
                                           caliper, match_on = NULL, mu_x_fixed=FALSE, x_as){
@@ -176,7 +171,7 @@ simulate_data_run_EM_and_match = function(return_EM_PS = FALSE, index_set_of_par
     print(paste0("this is n_sim ", i, " in simulate_data_run_EM_and_match. ",
                  "index_EM_not_conv: ", index_EM_not_conv, ". real number of iterations: "  , real_iter_ind, "."))
     start_time1 <- Sys.time()
-    list_data_for_EM_and_X = simulate_data_function(seed_num=NULL, gamma_as, gamma_ns, gamma_pro, xi=xi, two_log_models=FALSE, param_n,
+    list_data_for_EM_and_X = simulate_data_function(seed_num=NULL, gamma_ah, gamma_ns, gamma_pro, xi=xi, two_log_models=FALSE, param_n,
                                                     misspec_PS, funcform_mis_out, funcform_factor_sqr, funcform_factor_log)
     data_for_EM = list_data_for_EM_and_X$dt
     x = list_data_for_EM_and_X$x_obs; x_PS = data.frame(list_data_for_EM_and_X$x_PS)
@@ -533,7 +528,7 @@ simulate_data_run_EM_and_match = function(return_EM_PS = FALSE, index_set_of_par
   coeffs = data.table(coeffs)
   #TODO genefilter package: coeffs[, `:=` (SD = rowSds(as.matrix(coeffs)), mean = rowMeans(coeffs))]
   coeffs = data.frame(coeffs, SD = apply(coeffs, 1, sd), mean = apply(coeffs, 1, mean))
-  coeffs$parameter = c(gamma_as, gamma_ns)
+  coeffs$parameter = c(gamma_ah, gamma_ns)
   coeffs$diff = coeffs$mean - coeffs$parameter 
   coeffs$perc = coeffs$diff / abs(coeffs$parameter)
   coeffs_df = data.frame(coeffs)

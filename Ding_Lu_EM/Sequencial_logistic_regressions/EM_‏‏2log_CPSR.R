@@ -20,14 +20,14 @@ library(nnet)
 
 #TODO original parameters: iter.max = 10000, error0 = 10^-4
 xi_2log_PredTreatEffect = function(Z, D, X, eta = 0,
-                              beta.S0=beta.S0, beta.ah = beta.ah, beta.n = beta.n, 
+                              beta.S0=beta.S0, beta.ah = beta.ah, beta.c = beta.c, 
                               iter.max = 10000, error0 = 10^-4,
                               prob.pred = FALSE, verbose = FALSE, out.length = 10) {
   N = dim(X)[1]
   V = dim(X)[2]
   
   if(is.null(beta.ah))   beta.ah = rep(0, V)
-  if(is.null(beta.n))   beta.n = rep(0, V)
+  if(is.null(beta.c))   beta.c = rep(0, V)
   
   iter = 1  
   error.rec = NULL
@@ -37,7 +37,7 @@ xi_2log_PredTreatEffect = function(Z, D, X, eta = 0,
     print(k)
     #initial values of iteration
     beta.ah_old = beta.ah
-    beta.n_old = beta.n
+    beta.c_old = beta.c
    
     if(verbose == TRUE & iter%%out.length == 0) {
       print(paste(iter, "/", iter.max, sep = ""))
@@ -53,7 +53,7 @@ xi_2log_PredTreatEffect = function(Z, D, X, eta = 0,
         
         if(Z[i]==1&D[i]==1) {
           #posterior probabilities
-          prob.10 = exp(t(beta.ah_old)%*%X[i, ]) / (exp(t(beta.ah_old)%*%X[i, ]) + (1 + eta))
+          prob.10 = exp(t(beta.ah_old)%*%X[i, ]) / (exp(t(beta.ah_old)%*%X[i, ]) + (1 + eta)*exp(t(beta.c_old)%*%X[i, ]))
           prob.c = 1 - prob.10
           
           # data arranged as: outcome, X, weight
@@ -67,7 +67,7 @@ xi_2log_PredTreatEffect = function(Z, D, X, eta = 0,
         
         if(Z[i]==1&D[i]==0) {
           #posterior probabilities
-          prob.10 = eta*exp(t(beta.ah_old)%*%X[i, ]) / (eta*exp(t(beta.ah_old)%*%X[i, ]) + (1 + eta)*exp(t(beta.n_old)%*%X[i, ]))
+          prob.10 = eta*exp(t(beta.ah_old)%*%X[i, ]) / (eta*exp(t(beta.ah_old)%*%X[i, ]) + (1 + eta))
           prob.n = 1 - prob.10
           
           # augmented data for S(0)=1
@@ -88,7 +88,7 @@ xi_2log_PredTreatEffect = function(Z, D, X, eta = 0,
         
         if(Z[i]==0&D[i]==0) {
           ##posterior probabilities
-          prob.c = 1/( 1 + exp(t(beta.n_old)%*%X[i, ]) )
+          prob.c = exp(t(beta.c_old)%*%X[i, ]) / ( 1 + exp(t(beta.c_old)%*%X[i, ]) )
           prob.n = 1 - prob.c
           
           # augmented data for S(0)=1
@@ -102,7 +102,7 @@ xi_2log_PredTreatEffect = function(Z, D, X, eta = 0,
         
         if(Z[i]==1&D[i]==1) {
           #posterior probabilities
-          prob.10 = exp(t(beta.S0)%*%X[i, ]) / (exp(t(beta.S0)%*%X[i, ]) + (1 + eta))
+          prob.10 = exp(t(beta.S0)%*%X[i, ]) / (exp(t(beta.S0)%*%X[i, ]) + (1 + eta)*exp(t(beta.c_old)%*%X[i, ]))
           prob.c = 1 - prob.10
           
           # data arranged as: outcome, X, weight
@@ -116,7 +116,7 @@ xi_2log_PredTreatEffect = function(Z, D, X, eta = 0,
         
         if(Z[i]==1&D[i]==0) {
           #posterior probabilities
-          prob.10 = eta*exp(t(beta.S0)%*%X[i, ]) / (eta*exp(t(beta.S0)%*%X[i, ]) + (1 + eta)*exp(t(beta.n_old)%*%X[i, ]))
+          prob.10 = eta*exp(t(beta.S0)%*%X[i, ]) / (eta*exp(t(beta.S0)%*%X[i, ]) + (1 + eta))
           prob.n = 1 - prob.10
           
           # augmented data for S(0)=1
@@ -137,7 +137,7 @@ xi_2log_PredTreatEffect = function(Z, D, X, eta = 0,
         
         if(Z[i]==0&D[i]==0) {
           ##posterior probabilities
-          prob.c = 1/( 1 + exp(t(beta.n_old)%*%X[i, ]) )
+          prob.c = exp(t(beta.c_old)%*%X[i, ]) / ( 1 + exp(t(beta.c_old)%*%X[i, ]) )
           prob.n = 1 - prob.c
           
           # augmented data for S(0)=1
@@ -163,13 +163,11 @@ xi_2log_PredTreatEffect = function(Z, D, X, eta = 0,
       beta.ah  = beta.S0
     }
     
-    # 1-AugData_S1[, 1] BECAUSE WE ACTUALLY SEARCH FOR beta_n and not beta_pro
-    # so we actually run logistic regression of S(1)=0
-    fit_S1 = glm(1-AugData_S1[, 1] ~ AugData_S1[, (3:(V+1))], weights = AugData_S1[, (V+2)], family="binomial")
-    beta.n = coef(fit_S1)
+    fit_S1 = glm(AugData_S1[, 1] ~ AugData_S1[, (3:(V+1))], weights = AugData_S1[, (V+2)], family="binomial")
+    beta.c = coef(fit_S1)
     
     iter = iter + 1
-    error = ifelse(is.null(beta.S0) ,sum((beta.ah - beta.ah_old)^2) + sum((beta.n - beta.n_old)^2), sum((beta.n - beta.n_old)^2))
+    error = ifelse(is.null(beta.S0) ,sum((beta.ah - beta.ah_old)^2) + sum((beta.c - beta.c_old)^2), sum((beta.c - beta.c_old)^2))
     error.rec = c(error.rec, error)
     if(iter>iter.max||error<error0)   break           
     
@@ -180,12 +178,11 @@ xi_2log_PredTreatEffect = function(Z, D, X, eta = 0,
     ##three columns corresponding to complier, always taker and never taker
     PROB = matrix(0, N, 4)
     for(i in 1:N) {
-      prob.a = 1/(1  + eta) * exp(t(beta.ah)%*%X[i, ])
       prob.d = eta/(1 + eta) * exp(t(beta.ah)%*%X[i, ])
-      # prob.a + prob.d = 1 := exp(0)
-      beta.c = 1
-      prob.n = exp(t(beta.n)%*%X[i, ])
-      sum = prob.c + prob.d + prob.a + prob.n
+      prob.a = 1/(1  + eta) * exp(t(beta.ah)%*%X[i, ])
+      prob.n = 1 #gamma_ns=0
+      beta.c = exp(t(beta.c)%*%X[i, ])
+      sum = prob.d + prob.a + prob.n + prob.c
       
       #PROB[i,] = c(prob.c, prob.d, prob.a, prob.n)/sum
       PROB[i,] = c(prob.d, prob.a, prob.n, prob.c)/sum
@@ -211,7 +208,7 @@ xi_2log_PredTreatEffect = function(Z, D, X, eta = 0,
 
 
 xi_2log_PSPS_M_weighting = function(Z, D, X, Y, 
-          eta = 0, beta.S0=NULL, beta.ah = NULL, beta.n = NULL, iter.max = 10000, error0 = 10^-4)
+          eta = 0, beta.S0=NULL, beta.ah = NULL, beta.c = NULL, iter.max = 10000, error0 = 10^-4)
 {
   
   N = length(Z)
@@ -220,18 +217,18 @@ xi_2log_PSPS_M_weighting = function(Z, D, X, Y,
   ##estimate the propensity scores using Multinomial Logistic Regression
   ##PS_pred returns 4 columns: c, d, a, n
   ps.score.fit = xi_2log_PredTreatEffect(Z=Z, D=D, X=X, eta = eta, 
-                             beta.S0=beta.S0, beta.ah = beta.ah, beta.n = beta.n, 
+                             beta.S0=beta.S0, beta.ah = beta.ah, beta.c = beta.c, 
                              iter.max=iter.max, error0=error0, prob.pred = TRUE,)
   # c(prob.c, prob.d, prob.a, prob.n)
   ps.score  = ps.score.fit$PROB
   
   ##the proportions of principal strata
   p1 = sum(Z*D)/sum(Z); p0 = sum((1-Z)*D)/sum(1-Z)
-  pr.c = p1 - ( ( 1 / (1+eta) ) * p0 )
   pr.d = (eta / (1+eta)) * p0
   pr.a = (1 / (1+eta)) * p0
   pr.n = 1 - (pr.c + pr.d + pr.a)
-  
+  pr.c = p1 - ( ( 1 / (1+eta) ) * p0 )
+
   ##indices with mixture distributions
   index11 = (1:N)[Z==1&D==1]
   index01 = (1:N)[Z==0&D==1]
