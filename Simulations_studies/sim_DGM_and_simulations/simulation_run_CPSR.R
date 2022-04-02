@@ -2,8 +2,22 @@ gamma_ns = rep(0, dim_x)
 gamma_ah = as.numeric(mat_gamma[1, c(1:dim_x)])
 gamma_pro =  as.numeric(mat_gamma[1, (dim_x+1): (2*dim_x)])
 
+
+one_log_EM = simulate_data_run_EM_and_match(only_EM_bool=TRUE, return_EM_PS=FALSE, index_set_of_params=1,
+                 gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns, xi=xi,
+                 misspec_PS=misspec_PS, funcform_mis_out=FALSE,
+                 funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log, 
+                 match_and_reg_watch_true_X=FALSE, param_n=param_n, param_n_sim=param_n_sim,
+                 iterations=iterations, epsilon_EM=epsilon_EM, caliper=caliper,
+                 match_on=match_on, mu_x_fixed=mu_x_fixed, x_as=mat_x_as[k,])
+
+coeff_ah = list.rbind(one_log_EM[[1]])
+apply(coeff_ah, 2, mean)
+coeff_pro = list.rbind(one_log_EM[[2]])
+apply(coeff_pro, 2, mean)
+
 # misspec_PS: 0 <- NO mis, 2: add transformations to PS model, and remain original X's in outcome model.
-simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_ns, gamma_pro, xi, two_log_models=TRUE, param_n, 
+simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, xi, two_log_models=TRUE, param_n, 
                                   misspec_PS, funcform_mis_out=FALSE,
                                   funcform_factor_sqr=0, funcform_factor_log=0, only_mean_x_bool=FALSE){
   if(!is.null(seed_num)){set.seed(seed_num)}
@@ -146,13 +160,13 @@ simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_ns, gamma_pro, 
 }
 
 
-simulate_data_run_EM_and_match = function(return_EM_PS = FALSE, index_set_of_params, gamma_ah, gamma_ns, gamma_pro, xi, two_log_models=TRUE,
+simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE, index_set_of_params, gamma_ah, gamma_pro, gamma_ns, xi, two_log_models=TRUE,
                                           misspec_PS, funcform_mis_out=FALSE, funcform_factor_sqr=0, funcform_factor_log=0, 
                                           match_and_reg_watch_true_X=FALSE, param_n, param_n_sim, iterations, epsilon_EM = 0.001,
-                                          caliper, match_on = NULL, mu_x_fixed=FALSE, x_as){
+                                          caliper, match_on = NULL, mu_x_fixed=FALSE, x_as, only_naive_bool=FALSE){
   
   X_sub_cols = paste0("X", c(1:(dim_x)))
-  list_dat_EM <- list_coeff_ah <- list_coeff_ns <- list()
+  list_dat_EM <- list_coeff_ah <- list_coeff_pro <- list()
   # run over param_n_sim different samples, each with param_n observations
   WLS_NOint_mat_reg_estimators <- WLS_YESint_mat_reg_estimators <-
     OLS_NOint_mat_reg_estimators <- OLS_YESint_mat_reg_estimators <-
@@ -171,7 +185,7 @@ simulate_data_run_EM_and_match = function(return_EM_PS = FALSE, index_set_of_par
     print(paste0("this is n_sim ", i, " in simulate_data_run_EM_and_match. ",
                  "index_EM_not_conv: ", index_EM_not_conv, ". real number of iterations: "  , real_iter_ind, "."))
     start_time1 <- Sys.time()
-    list_data_for_EM_and_X = simulate_data_function(seed_num=NULL, gamma_ah=gamma_ah, gamma_ns=gamma_ns, gamma_pro=gamma_pro, 
+    list_data_for_EM_and_X = simulate_data_function(seed_num=NULL, gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns, 
             xi=xi, two_log_models=two_log_models, param_n=param_n,
             misspec_PS=misspec_PS, funcform_mis_out=funcform_mis_out, funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log)
     
@@ -225,12 +239,14 @@ simulate_data_run_EM_and_match = function(return_EM_PS = FALSE, index_set_of_par
     start_timeDing <- Sys.time()
     # est_ding_lst
     # one_log_EM - beta.S0=beta_S0_given_A0 # two_log_EM - beta.S0=NULL
-    one_log_EM = xi_2log_PSPS_M_weighting(Z=data_for_EM$A, D=data_for_EM$S,
+    est_ding_lst = xi_2log_PSPS_M_weighting(Z=data_for_EM$A, D=data_for_EM$S,
                     X=as.matrix(subset(data_for_EM, select = 
                     grep(paste(X_sub_cols[-1], collapse="|"), colnames(data_for_EM)))), Y=data_for_EM$Y, 
                     eta=xi, beta.S0=beta_S0_given_A0, beta.ah=NULL, beta.c=NULL, # beta.S0=beta_S0_given_A0 # beta.S0=NULL
-                    iter.max=iterations, error0=epsilon_EM) 
-    
+                    iter.max=iterations, error0=epsilon_EM)
+    coeff_ah = est_ding_lst$beta.ah ; coeff_pro = est_ding_lst$beta.c
+    list_coeff_ah[[i]] = coeff_ah; list_coeff_pro[[i]] = coeff_pro
+    EM_coeffs = rbind(est_ding_lst$beta.ah, est_ding_lst$beta.c)
     end_timeDing <- Sys.time()
     print(paste0("Ding EM lasts ", difftime(end_timeDing, start_timeDing)))
     #adjust the cols the same order as in myEM: my order is: har, as, ns, pro. ding order: c(prob.c, prob.d, prob.a, prob.n)
@@ -241,8 +257,8 @@ simulate_data_run_EM_and_match = function(return_EM_PS = FALSE, index_set_of_par
     if( sum(is.na(PS_est)) > 0 ){
       index_EM_not_conv = index_EM_not_conv + 1
       list_EM_not_conv$probs[[index_EM_not_conv]] = PS_est
-      coeff_ah = est_ding_lst$beta.ah ; coeff_ns = est_ding_lst$beta.n
-      list_EM_not_conv$coeffs[[index_EM_not_conv]] = data.frame(rbind(coeff_ah=coeff_ah, coeff_ns=coeff_ns))
+      #coeff_ah = est_ding_lst$beta.ah ; coeff_pro = est_ding_lst$coeff_pro
+      list_EM_not_conv$coeffs[[index_EM_not_conv]] = data.frame(rbind(coeff_ah=coeff_ah, coeff_pro=coeff_pro))
       colnames(list_EM_not_conv$coeffs[[index_EM_not_conv]]) = X_sub_cols
       list_EM_not_conv$probs_nas[[index_EM_not_conv]] = c(total_na = sum(is.na(PS_est)), 
                                                           prop_na = sum(is.na(PS_est)) / ( nrow(PS_est) * ncol(PS_est) ) ) %>% round(3)
@@ -252,8 +268,11 @@ simulate_data_run_EM_and_match = function(return_EM_PS = FALSE, index_set_of_par
     
     DING_est = est_ding_lst$AACE
     DING_model_assisted_est_ps = est_ding_lst$AACE.reg
-    coeff_ah = est_ding_lst$beta.ah ; coeff_ns = est_ding_lst$beta.n
-    list_coeff_ah[[i]] = coeff_ah; list_coeff_ns[[i]] = coeff_ns
+    
+    if(only_EM_bool){
+      i = i + 1
+      next()
+    }
     
     # EM summary
     if(return_EM_PS == TRUE){
@@ -261,9 +280,14 @@ simulate_data_run_EM_and_match = function(return_EM_PS = FALSE, index_set_of_par
       PS_true_EM_compr = rapply(object = PS_true_EM_compr, f = round, classes = "numeric", how = "replace", digits = 3)
       PS_true_EM_compr = data.frame(id = PS_true_EM_compr$id, g = PS_true_EM_compr$g,
         prob_as = PS_true_EM_compr$prob_as, EMest_p_as=PS_true_EM_compr$EMest_p_as, diff = PS_true_EM_compr$prob_as - PS_true_EM_compr$EMest_p_as,
-        prob_pro = PS_true_EM_compr$prob_pro, EMest_p_pro=PS_true_EM_compr$EMest_p_pro, prob_ns = PS_true_EM_compr$prob_ns, EMest_p_ns=PS_true_EM_compr$EMest_p_ns)
-      return(list(PS_true_EM_compr=PS_true_EM_compr,OBS_table=OBS_table, pis=pis, EM_coeffs=EM_coeffs))
+        prob_har = PS_true_EM_compr$prob_har, EMest_p_har=PS_true_EM_compr$EMest_p_har, 
+        prob_ns = PS_true_EM_compr$prob_ns, EMest_p_ns=PS_true_EM_compr$EMest_p_ns,
+        prob_pro = PS_true_EM_compr$prob_pro, EMest_p_pro=PS_true_EM_compr$EMest_p_pro)
+      return(list(data_with_PS=data_with_PS, PS_true_EM_compr=PS_true_EM_compr,
+                  OBS_table=OBS_table, pis=pis, pis_est=pis_est, EM_coeffs=EM_coeffs, beta_S0_given_A0=beta_S0_given_A0))
     }
+    
+    
     
     # calculate O11_prior_ratio, O11_posterior_ratio and W_1_as
     O11_prior_ratio = pis_est["pi_as_est"] / (pis_est["pi_as_est"] + pis_est["pi_pro_est"])
@@ -478,6 +502,9 @@ simulate_data_run_EM_and_match = function(return_EM_PS = FALSE, index_set_of_par
   }
   # out of for loop for all the samples (all in all: param_n_sim samples)
   
+  if(only_EM_bool){
+    return(list(list_coeff_ah=list_coeff_ah, list_coeff_pro=list_coeff_pro))
+  }
   
   # TODO 1.
   # summary of mat_param_estimators: mean and sd
@@ -522,10 +549,10 @@ simulate_data_run_EM_and_match = function(return_EM_PS = FALSE, index_set_of_par
   coeffs_ah = lapply(c(1:dim_x), function(l){
     sapply(list_coeff_ah, "[[", l)
   })
-  coeffs_ns = lapply(c(1:dim_x), function(l){
-    sapply(list_coeff_ns, "[[", l)
+  coeffs_pro = lapply(c(1:dim_x), function(l){
+    sapply(list_coeff_pro, "[[", l)
   })
-  coeffs = data.table( rbind( list.rbind(coeffs_ah), list.rbind(coeffs_ns) ) )
+  coeffs = data.table( rbind( list.rbind(coeffs_ah), list.rbind(coeffs_pro) ) )
   
   #TODO FIX THIS HERE
   print("mean and sd")
@@ -537,7 +564,7 @@ simulate_data_run_EM_and_match = function(return_EM_PS = FALSE, index_set_of_par
   coeffs$perc = coeffs$diff / abs(coeffs$parameter)
   coeffs_df = data.frame(coeffs)
   rownames(coeffs_df) = colnames(mat_gamma)
-  #rownames(coeffs_df) = c("coeff_ah_0", "coeff_ah_1","coeff_ns_0", "coeff_ns_1")
+  #rownames(coeffs_df) = c("coeff_ah_0", "coeff_ah_1","coeff_pro_0", "coeff_pro_1")
   
   # TODO 2. mean and sd for mat_excluded_included_matching
   mat_excluded_included_matching = rbind(mat_excluded_included_matching, 

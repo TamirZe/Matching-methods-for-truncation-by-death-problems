@@ -33,8 +33,10 @@ funcform_factor_sqr=-3; funcform_factor_log=3
 mean_x_misspec = rep(0.5, dim_x_misspec)
 misspec_PS = 0 # 0: no misspec of PS model # 2: PS functional form misspecification
 
-# CPSR parameter
+# CPSR parameter 
 xi = 0
+# for now, xi for DGM and xi for estimation are the same
+# xi_est (or call THIS eta, as in DL EM)
 
 # EM convergence parameters
 iterations = 200; epsilon_EM = 10^-6
@@ -142,9 +144,10 @@ for( k in c(1 : nrow(mat_gamma)) ){
 }
 #############################################################################################
 
-param_n = 2000; param_n_sim = 3 # param_n = 2000; param_n_sim = 1000
+param_n = 2000; param_n_sim = 1000 # param_n = 2000; param_n_sim = 1000
 caliper = 0.25; match_on = "O11_posterior_ratio" 
 mu_x_fixed = FALSE; mat_x_as; x_as = mat_x_as[1,]
+
 
 param_measures = c("mean","med","sd","MSE"); num_of_param_measures_per_param_set = length(param_measures)
 list_all_mat_SACE_estimators <- list_all_WLS_NOint_regression_estimators <- list_all_WLS_YESint_regression_estimators <-
@@ -163,7 +166,7 @@ for ( k in c(1 : nrow(mat_gamma)) ){
   start_time <- Sys.time()
   
   EM_and_matching = simulate_data_run_EM_and_match(return_EM_PS=FALSE, index_set_of_params=k,
-                                                   gamma_as=gamma_as, gamma_ns=gamma_ns, gamma_pro=gamma_pro, xi=xi,
+                                                   gamma_ah=gamma_ah, gamma_ns=gamma_ns, gamma_pro=gamma_pro, xi=xi,
                                                    misspec_PS=misspec_PS, funcform_mis_out=FALSE, funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log, 
                                                    match_and_reg_watch_true_X=FALSE, param_n=param_n, param_n_sim=param_n_sim,
                                                    iterations=iterations, epsilon_EM=epsilon_EM, caliper=caliper,
