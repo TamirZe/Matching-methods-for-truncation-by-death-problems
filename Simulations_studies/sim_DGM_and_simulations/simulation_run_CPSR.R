@@ -56,16 +56,16 @@ simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, 
   if(two_log_models==TRUE){ # two logistic models
     #1) log reg of S(0)
     prob_S0 = exp(x_PS%*%gamma_ah_adj) / ( 1 + exp(x_PS%*%gamma_ah_adj) )
-    S0_vec = rbinom( length(prob_S0), 1, prob_S0 )
+    S0_vec = rbinom( length(prob_S0), 1, prob_S0 ) # ah - 1, pro and ns - 0
     
     #2.a) if S(0)==1, assign to as with p = 1/1+xi and to har, with p = xi/x+xi (log reg with a constant only)
     g_vec_num = S0_vec
-    g_vec_num[g_vec_num == 0] = -1
-    g_vec_num[g_vec_num == 1] = rbinom( length(g_vec_num[g_vec_num == 1]), 1, (1 / (1+xi)) )
+    g_vec_num[g_vec_num == 0] = -1 # pro and ns
+    g_vec_num[g_vec_num == 1] = rbinom( length(g_vec_num[g_vec_num == 1]), 1, (1 / (1+xi)) ) # as - 1, har - 0
     #2.b) if S(0)==0, log reg for S(1)
     prob_S1 = exp(x_PS%*%gamma_pro_adj) / ( 1 + exp(x_PS%*%gamma_pro_adj) ) # prob_S1=1 given S(0)=0
-    # -1 to switch pro ns - after the -1, ns is 1, and pro is 0, +2 for converting ns to 2 and pro to 3
-    g_vec_num[g_vec_num == -1] = ( 1 - rbinom(length(prob_S1[g_vec_num == -1]), 1, prob_S1[g_vec_num == -1]) ) + 2 
+    # +2 for converting ns to 2 and pro to 3
+    g_vec_num[g_vec_num == -1] = rbinom(length(prob_S1[g_vec_num == -1]), 1, prob_S1[g_vec_num == -1]) + 2 # ns - 2 and pro - 3 
     
     g_vec = mapvalues(g_vec_num, from = c(0:3), to = c("har", "as", "ns", "pro"))
     prob = data.frame(prob_har = prob_S0*(xi/(1+xi)), prob_as = prob_S0*(1/(1+xi)), 
@@ -234,8 +234,7 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
     fit_S0_in_A0 = glm(as.formula(paste0("S ~ ",paste(X_sub_cols[-1], collapse="+"))), data=filter(data_for_EM, A==0), family="binomial")
     beta_S0 = fit_S0_in_A0$coefficients
     P_S0 = predict(fit_S0_in_A0, newdata=data_for_EM, type = "response") # fit_S0_in_A0$fitted.values
-    # P_S0[i] # exp(predict(fit_S0_in_A0, newdata=data_for_EM)[i]) / (1 +  exp(predict(fit_S0_in_A0, newdata=data_for_EM)[i]))
-    # expit(t(beta_S0)%*%X[i, ])
+    # P_S0[i] # expit(predict(fit_S0_in_A0, newdata=data_for_EM)[i]) # expit(t(beta_S0)%*%X[i, ])
     
     # EM
     #TODO in ding the pis order is PROB[i,] = c(prob.c, prob.a, prob.n)/sum
@@ -245,7 +244,7 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
     est_ding_lst = xi_2log_PSPS_M_weighting(Z=data_for_EM$A, D=data_for_EM$S,
                     X=as.matrix(subset(data_for_EM, select = 
                     grep(paste(X_sub_cols[-1], collapse="|"), colnames(data_for_EM)))), Y=data_for_EM$Y, 
-                    eta=xi, beta.S0=beta_S0, beta.ah=NULL, beta.c=NULL, # beta.S0=beta_S0 # beta.S0=NULL
+                    eta=xi, beta.S0=NULL, beta.ah=NULL, beta.c=NULL, # beta.S0=beta_S0 # beta.S0=NULL
                     iter.max=iterations, error0=epsilon_EM)
     coeff_ah = est_ding_lst$beta.ah ; coeff_pro = est_ding_lst$beta.c
     list_coeff_ah[[i]] = coeff_ah; list_coeff_pro[[i]] = coeff_pro

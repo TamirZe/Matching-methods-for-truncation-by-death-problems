@@ -105,7 +105,7 @@ xi_2log_PredTreatEffect = function(Z, D, X, eta = 0,
         if(Z[i]==1&D[i]==1) {
           #posterior probabilities
           prob.10 = expit(t(beta.S0)%*%X[i, ]) / ( expit(t(beta.S0)%*%X[i, ]) + (1 + eta)*expit(t(beta.c_old)%*%X[i, ]) )
-          # the same as prob.10 = P_S0[i] * (1 / (1+eta)) / ( (P_S0[i] * (1 / (1+eta))) + expit(t(beta.c_old)%*%X[i, ]) )
+          # Notice, this is the same as prob.10 = P_S0[i] * (1 / (1+eta)) / ( (P_S0[i] * (1 / (1+eta))) + expit(t(beta.c_old)%*%X[i, ]) )
           prob.c = 1 - prob.10
           
           # data arranged as: outcome, X, weight
