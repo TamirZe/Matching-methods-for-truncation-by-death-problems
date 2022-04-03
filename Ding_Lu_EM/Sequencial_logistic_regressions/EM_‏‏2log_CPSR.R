@@ -53,7 +53,7 @@ xi_2log_PredTreatEffect = function(Z, D, X, eta = 0,
         
         if(Z[i]==1&D[i]==1) {
           #posterior probabilities
-          prob.10 = exp(t(beta.ah_old)%*%X[i, ]) / (exp(t(beta.ah_old)%*%X[i, ]) + (1 + eta)*exp(t(beta.c_old)%*%X[i, ]))
+          prob.10 = expit(t(beta.ah_old)%*%X[i, ]) / (expit(t(beta.ah_old)%*%X[i, ]) + (1 + eta)*expit(t(beta.c_old)%*%X[i, ]))
           prob.c = 1 - prob.10
           
           # data arranged as: outcome, X, weight
@@ -67,7 +67,9 @@ xi_2log_PredTreatEffect = function(Z, D, X, eta = 0,
         
         if(Z[i]==1&D[i]==0) {
           #posterior probabilities
-          prob.10 = eta*exp(t(beta.ah_old)%*%X[i, ]) / (eta*exp(t(beta.ah_old)%*%X[i, ]) + (1 + eta))
+          prob.10 = eta*expit(t(beta.ah_old)%*%X[i, ]) / 
+            ( eta*expit(t(beta.ah_old)%*%X[i, ]) + (1 + eta)*(1 - expit(t(beta.c_old)%*%X[i, ])) )
+          #1 - expit(t(beta.c_old)%*%X[i, ]) = (1 / (exp(t(beta.c_old)%*%X[i, ]) + 1))
           prob.n = 1 - prob.10
   
           # augmented data for S(0)=1
@@ -98,30 +100,25 @@ xi_2log_PredTreatEffect = function(Z, D, X, eta = 0,
           AugData_S1 = rbind(AugData_S1, c(1, X[i, ], prob.c)) # S(1)=1, with weight prob.c
           AugData_S1 = rbind(AugData_S1, c(0, X[i, ], prob.n)) # S(1)=0, with weight prob.n
         }
-      }else{ # Employ one logitic regression, using beta.S0 from the logistic regression of S on A=0
+      }else{ # Employ one logistic regression, using beta.S0 from the logistic regression of S on A=0
         
         if(Z[i]==1&D[i]==1) {
           #posterior probabilities
-          prob.10 = exp(t(beta.S0)%*%X[i, ]) / (exp(t(beta.S0)%*%X[i, ]) + (1 + eta)*exp(t(beta.c_old)%*%X[i, ]))
+          prob.10 = expit(t(beta.S0)%*%X[i, ]) / ( expit(t(beta.S0)%*%X[i, ]) + (1 + eta)*expit(t(beta.c_old)%*%X[i, ]) )
+          # the same as prob.10 = P_S0[i] * (1 / (1+eta)) / ( (P_S0[i] * (1 / (1+eta))) + expit(t(beta.c_old)%*%X[i, ]) )
           prob.c = 1 - prob.10
           
           # data arranged as: outcome, X, weight
-          # augmented data for S(0)=1
-          AugData_S0 = rbind(AugData_S0, c(1, X[i, ], prob.10)) # S(0)=1, with weight prob.10 (as)
-          AugData_S0 = rbind(AugData_S0, c(0, X[i, ], prob.c)) # S(0)=1, with weight prob.c
-          
           # augmented data for S(1)=1, given S(0)=0
           AugData_S1 = rbind(AugData_S1, c(1, X[i, ], prob.c)) # S(1)=1, with weight prob.c
         }
         
         if(Z[i]==1&D[i]==0) {
           #posterior probabilities
-          prob.10 = eta*exp(t(beta.S0)%*%X[i, ]) / (eta*exp(t(beta.S0)%*%X[i, ]) + (1 + eta))
+          prob.10 = eta*expit(t(beta.S0)%*%X[i, ]) / 
+            ( eta*expit(t(beta.S0)%*%X[i, ]) + (1 + eta)*(1 - expit(t(beta.c_old)%*%X[i, ])) )
+          #1 - expit(t(beta.c_old)%*%X[i, ]) = (1 / (exp(t(beta.c_old)%*%X[i, ]) + 1))
           prob.n = 1 - prob.10
-          
-          # augmented data for S(0)=1
-          AugData_S0 = rbind(AugData_S0, c(1, X[i, ], prob.10)) # S(0)=1, with weight prob.10 (har)
-          AugData_S0 = rbind(AugData_S0, c(0, X[i, ], prob.n)) # S(0)=0, with weight prob.n
           
           # augmented data for S(1)=1, given S(0)=0
           AugData_S1 = rbind(AugData_S1, c(0, X[i, ], prob.n)) # S(1)=0, with weight prob.n
@@ -130,9 +127,6 @@ xi_2log_PredTreatEffect = function(Z, D, X, eta = 0,
         if(Z[i]==0&D[i]==1) {
           prob.10 = 1
           prob.a = 0
-          
-          # augmented data for S(0)=1
-          AugData_S0 = rbind(AugData_S0, c(1, X[i, ], prob.10)) # S(0)=1, with weight 1
         }
         
         if(Z[i]==0&D[i]==0) {
@@ -140,18 +134,14 @@ xi_2log_PredTreatEffect = function(Z, D, X, eta = 0,
           prob.c = exp(t(beta.c_old)%*%X[i, ]) / ( 1 + exp(t(beta.c_old)%*%X[i, ]) )
           prob.n = 1 - prob.c
           
-          # augmented data for S(0)=1
-          AugData_S0 = rbind(AugData_S0, c(0, X[i, ], prob.c+prob.n)) # S(0)=0, with weight 1
-          
           # augmented data for S(1)=1, given S(0)=0
           AugData_S1 = rbind(AugData_S1, c(1, X[i, ], prob.c)) # S(1)=1, with weight prob.c
           AugData_S1 = rbind(AugData_S1, c(0, X[i, ], prob.n)) # S(1)=0, with weight prob.n
         }
       } # end one logistic regression EM  
-    }#end "for" every i
+    }# end "for" all i
     
-    #make AugData_S0 into a dataframe
-    #AugData_S0 = data.frame(AugData_S0)
+    #make AugData_S0 into a dataframe #AugData_S0 = data.frame(AugData_S0)
     #colnames(AugData_S0) = c("U", "X", "Weight")
     
     if(is.null(beta.S0)){ # Employ two logitic regressions, extract M step beta.ah 
@@ -178,14 +168,11 @@ xi_2log_PredTreatEffect = function(Z, D, X, eta = 0,
     ##three columns corresponding to complier, always taker and never taker
     PROB = matrix(0, N, 4)
     for(i in 1:N) {
-      prob.d = eta/(1 + eta) * exp(t(beta.ah)%*%X[i, ])
-      prob.a = 1/(1  + eta) * exp(t(beta.ah)%*%X[i, ])
-      prob.n = 1 #gamma_ns=0
-      prob.c = exp(t(beta.c)%*%X[i, ])
-      sum = prob.d + prob.a + prob.n + prob.c
-      
-      #PROB[i,] = c(prob.c, prob.d, prob.a, prob.n)/sum
-      PROB[i,] = c(prob.d, prob.a, prob.n, prob.c)/sum
+      prob.d = expit(t(beta.ah)%*%X[i, ]) * eta/(1 + eta) 
+      prob.a = expit(t(beta.ah)%*%X[i, ]) * 1/(1  + eta) 
+      prob.n = (1 - expit(t(beta.ah)%*%X[i, ])) * (1 - expit(t(beta.c)%*%X[i, ]))
+      prob.c = (1 - expit(t(beta.ah)%*%X[i, ])) * (expit(t(beta.c)%*%X[i, ]))
+      PROB[i,] = c(prob.d, prob.a, prob.n, prob.c)
     }	
     
     ##the results

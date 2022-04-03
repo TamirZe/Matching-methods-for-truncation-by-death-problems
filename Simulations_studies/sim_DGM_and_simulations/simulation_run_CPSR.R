@@ -3,8 +3,8 @@ gamma_ah = as.numeric(mat_gamma[1, c(1:dim_x)])
 gamma_pro =  as.numeric(mat_gamma[1, (dim_x+1): (2*dim_x)])
 
 
-one_log_EM = simulate_data_run_EM_and_match(only_EM_bool=TRUE, return_EM_PS=FALSE, index_set_of_params=1,
-                 gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns, xi=xi,
+two_log_EM = simulate_data_run_EM_and_match(only_EM_bool=TRUE, return_EM_PS=FALSE, index_set_of_params=1,
+                 gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns, xi=xi, two_log_models=TRUE,
                  misspec_PS=misspec_PS, funcform_mis_out=FALSE,
                  funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log, 
                  match_and_reg_watch_true_X=FALSE, param_n=param_n, param_n_sim=param_n_sim,
@@ -30,7 +30,7 @@ simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, 
   # misspecification
   if(misspec_PS == 0){
     x = x_obs; x_PS = x_obs
-    gamma_ah_adj = gamma_ah; gamma_ns_adj = gamma_ns; gamma_pro_adj = gamma_pro; betas_GPI_adj = betas_GPI 
+    gamma_ah_adj = gamma_ah; gamma_pro_adj = gamma_pro; gamma_ns_adj = gamma_ns; betas_GPI_adj = betas_GPI 
   }
   
   # misspec2: replace 2 X's with x^2 and ~log(X), to PS model and possibly to outcome model (if funcform_mis_out == TRUE) 
@@ -231,18 +231,21 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
     # Ding estimator
     
     #logistic regression S(0)=1 on X, using S|A=0
-    fit_S0_given_A0 = glm(as.formula(paste0("S ~ ",paste(X_sub_cols[-1], collapse="+"))), data=filter(data_for_EM, A==0), family="binomial")
-    beta_S0_given_A0 = fit_S0_given_A0$coefficients
+    fit_S0_in_A0 = glm(as.formula(paste0("S ~ ",paste(X_sub_cols[-1], collapse="+"))), data=filter(data_for_EM, A==0), family="binomial")
+    beta_S0 = fit_S0_in_A0$coefficients
+    P_S0 = predict(fit_S0_in_A0, newdata=data_for_EM, type = "response") # fit_S0_in_A0$fitted.values
+    # P_S0[i] # exp(predict(fit_S0_in_A0, newdata=data_for_EM)[i]) / (1 +  exp(predict(fit_S0_in_A0, newdata=data_for_EM)[i]))
+    # expit(t(beta_S0)%*%X[i, ])
     
     # EM
     #TODO in ding the pis order is PROB[i,] = c(prob.c, prob.a, prob.n)/sum
     start_timeDing <- Sys.time()
     # est_ding_lst
-    # one_log_EM - beta.S0=beta_S0_given_A0 # two_log_EM - beta.S0=NULL
+    # one_log_EM - beta.S0=beta_S0 # two_log_EM - beta.S0=NULL
     est_ding_lst = xi_2log_PSPS_M_weighting(Z=data_for_EM$A, D=data_for_EM$S,
                     X=as.matrix(subset(data_for_EM, select = 
                     grep(paste(X_sub_cols[-1], collapse="|"), colnames(data_for_EM)))), Y=data_for_EM$Y, 
-                    eta=xi, beta.S0=beta_S0_given_A0, beta.ah=NULL, beta.c=NULL, # beta.S0=beta_S0_given_A0 # beta.S0=NULL
+                    eta=xi, beta.S0=beta_S0, beta.ah=NULL, beta.c=NULL, # beta.S0=beta_S0 # beta.S0=NULL
                     iter.max=iterations, error0=epsilon_EM)
     coeff_ah = est_ding_lst$beta.ah ; coeff_pro = est_ding_lst$beta.c
     list_coeff_ah[[i]] = coeff_ah; list_coeff_pro[[i]] = coeff_pro
