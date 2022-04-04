@@ -228,31 +228,33 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
       next()
     }
     
-    # Ding estimator
+    # Ding estimator ####
     
     #logistic regression S(0)=1 on X, using S|A=0
     fit_S0_in_A0 = glm(as.formula(paste0("S ~ ",paste(X_sub_cols[-1], collapse="+"))), data=filter(data_for_EM, A==0), family="binomial")
     beta_S0 = fit_S0_in_A0$coefficients
-    P_S0 = predict(fit_S0_in_A0, newdata=data_for_EM, type = "response") # fit_S0_in_A0$fitted.values
-    # P_S0[i] # expit(predict(fit_S0_in_A0, newdata=data_for_EM)[i]) # expit(t(beta_S0)%*%X[i, ])
+    # P_S0 = predict(fit_S0_in_A0, newdata=data_for_EM, type = "response") 
+    # P_S0[i] # expit(predict(fit_S0_in_A0, newdata=data_for_EM)[i]) # expit(t(beta_S0)%*%X[i, ]) # fit_S0_in_A0$fitted.values
+    
+    #logistic regression S(1)=1 on X, using S|A=1 (1 for pro) with weights 1-P_S0, so ah get less weight
+    #fit_pseudo_S1_given_A1 = glm(as.formula(paste0("S ~ ",paste(X_sub_cols[-1], collapse="+"))), data=filter(data_for_EM, A==1),
+    #                             weights = 1-P_S0[data_for_EM$A==1], family="quasibinomial")
+    #beta_S1 = fit_pseudo_S1_given_A1$coefficients
+    #predict(fit_pseudo_S1_given_A1, newdata=filter(data_for_EM, A==1), type = "response")
     
     # EM
-    #TODO in ding the pis order is PROB[i,] = c(prob.c, prob.a, prob.n)/sum
     start_timeDing <- Sys.time()
     # est_ding_lst
-    # one_log_EM - beta.S0=beta_S0 # two_log_EM - beta.S0=NULL
     est_ding_lst = xi_2log_PSPS_M_weighting(Z=data_for_EM$A, D=data_for_EM$S,
                     X=as.matrix(subset(data_for_EM, select = 
                     grep(paste(X_sub_cols[-1], collapse="|"), colnames(data_for_EM)))), Y=data_for_EM$Y, 
-                    eta=xi, beta.S0=NULL, beta.ah=NULL, beta.c=NULL, # beta.S0=beta_S0 # beta.S0=NULL
+                    eta=xi, beta.S0=NULL, beta.ah=NULL, beta.c=NULL, # beta.S0=beta_S0 # beta.S0=NULL # beta.c=beta_S1 # beta.c=NULL
                     iter.max=iterations, error0=epsilon_EM)
     coeff_ah = est_ding_lst$beta.ah ; coeff_pro = est_ding_lst$beta.c
     list_coeff_ah[[i]] = coeff_ah; list_coeff_pro[[i]] = coeff_pro
     EM_coeffs = rbind(est_ding_lst$beta.ah, est_ding_lst$beta.c)
     end_timeDing <- Sys.time()
     print(paste0("Ding EM lasts ", difftime(end_timeDing, start_timeDing)))
-    #adjust the cols the same order as in myEM: my order is: har, as, ns, pro. ding order: c(prob.c, prob.d, prob.a, prob.n)
-    #PS_est = data.frame(est_ding_lst$ps.score[,2], est_ding_lst$ps.score[,3], est_ding_lst$ps.score[,4], est_ding_lst$ps.score[,1])
     data_with_PS = data.table(data_for_EM, est_ding_lst$ps.score)
     
     # if PS_est contains NAS, it probably implies that the EM process diverged, skip this iteration and go to the next
@@ -270,7 +272,7 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
     
     DING_est = est_ding_lst$AACE
     DING_model_assisted_est_ps = est_ding_lst$AACE.reg
-    
+    # return only EM coefficients
     if(only_EM_bool){
       i = i + 1
       next()

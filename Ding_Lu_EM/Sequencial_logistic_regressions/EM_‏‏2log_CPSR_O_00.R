@@ -20,9 +20,9 @@
 
 #TODO original parameters: iter.max = 10000, error0 = 10^-4
 xi_2log_PredTreatEffect = function(Z, D, X, eta = 0,
-                              beta.S0=NULL, beta.ah = beta.ah, beta.c = beta.c, 
-                              iter.max = 10000, error0 = 10^-4,
-                              prob.pred = FALSE, verbose = FALSE, out.length = 10) {
+                                   beta.S0=NULL, beta.ah = beta.ah, beta.c = beta.c, 
+                                   iter.max = 10000, error0 = 10^-4,
+                                   prob.pred = FALSE, verbose = FALSE, out.length = 10) {
   N = dim(X)[1]
   V = dim(X)[2]
   
@@ -38,7 +38,7 @@ xi_2log_PredTreatEffect = function(Z, D, X, eta = 0,
     #initial values of iteration
     beta.ah_old = beta.ah
     beta.c_old = beta.c
-   
+    
     if(verbose == TRUE & iter%%out.length == 0) {
       print(paste(iter, "/", iter.max, sep = ""))
     }
@@ -60,10 +60,8 @@ xi_2log_PredTreatEffect = function(Z, D, X, eta = 0,
           # data arranged as: outcome, X, weight
           # augmented data for S(0)=1
           AugData_S0 = rbind(AugData_S0, c(1, X[i, ], prob.10)) # S(0)=1, with weight prob.10 (as)
-          AugData_S0 = rbind(AugData_S0, c(0, X[i, ], prob.c)) # S(0)=1, with weight prob.c
+          AugData_S0 = rbind(AugData_S0, c(0, X[i, ], prob.c)) # S(0)=0, with weight prob.c
           
-          # augmented data for S(1)=1, given S(0)=0
-          AugData_S1 = rbind(AugData_S1, c(1, X[i, ], prob.c)) # S(1)=1, with weight prob.c
         }
         
         if(Z[i]==1&D[i]==0) {
@@ -72,13 +70,11 @@ xi_2log_PredTreatEffect = function(Z, D, X, eta = 0,
             ( eta*expit(t(beta.ah_old)%*%X[i, ]) + (1 + eta)*(1 - expit(t(beta.ah_old)%*%X[i, ]))*(1 - expit(t(beta.c_old)%*%X[i, ])) )
           #1 - expit(t(beta.c_old)%*%X[i, ]) = (1 / (exp(t(beta.c_old)%*%X[i, ]) + 1))
           prob.n = 1 - prob.10
-  
+          
           # augmented data for S(0)=1
           AugData_S0 = rbind(AugData_S0, c(1, X[i, ], prob.10)) # S(0)=1, with weight prob.10 (har)
           AugData_S0 = rbind(AugData_S0, c(0, X[i, ], prob.n)) # S(0)=0, with weight prob.n
           
-          # augmented data for S(1)=1, given S(0)=0
-          AugData_S1 = rbind(AugData_S1, c(0, X[i, ], prob.n)) # S(1)=0, with weight prob.n
         }
         
         if(Z[i]==0&D[i]==1) {
@@ -93,7 +89,7 @@ xi_2log_PredTreatEffect = function(Z, D, X, eta = 0,
           ##posterior probabilities
           prob.c = expit(t(beta.c_old)%*%X[i, ])
           prob.n = 1 - prob.c
-
+          
           # augmented data for S(0)=1
           AugData_S0 = rbind(AugData_S0, c(0, X[i, ], prob.c+prob.n)) # S(0)=0, with weight 1
           
@@ -102,35 +98,6 @@ xi_2log_PredTreatEffect = function(Z, D, X, eta = 0,
           AugData_S1 = rbind(AugData_S1, c(0, X[i, ], prob.n)) # S(1)=0, with weight prob.n
         }
       }else{ # Employ one logistic regression, using beta.S0 from the logistic regression of S on A=0
-        
-        if(Z[i]==1&D[i]==1) {
-          #posterior probabilities
-          prob.10 = expit(t(beta.S0)%*%X[i, ]) / 
-            ( expit(t(beta.S0)%*%X[i, ]) + (1 + eta)*(1 - expit(t(beta.S0)%*%X[i, ]))*expit(t(beta.c_old)%*%X[i, ]) )
-          # Notice, this is the same as 
-          #prob.10 = P_S0[i] * (1 / (1+eta)) / ( (P_S0[i] * (1 / (1+eta))) + (1 - P_S0[i]) * expit(t(beta.c_old)%*%X[i, ]) )
-          prob.c = 1 - prob.10
-          
-          # data arranged as: outcome, X, weight
-          # augmented data for S(1)=1, given S(0)=0
-          AugData_S1 = rbind(AugData_S1, c(1, X[i, ], prob.c)) # S(1)=1, with weight prob.c
-        }
-        
-        if(Z[i]==1&D[i]==0) {
-          #posterior probabilities
-          prob.10 = eta*expit(t(beta.S0)%*%X[i, ]) / 
-            ( eta*expit(t(beta.S0)%*%X[i, ]) + (1 + eta)*(1 - expit(t(beta.S0)%*%X[i, ]))*(1 - expit(t(beta.c_old)%*%X[i, ])) )
-          #1 - expit(t(beta.c_old)%*%X[i, ]) = (1 / (exp(t(beta.c_old)%*%X[i, ]) + 1))
-          prob.n = 1 - prob.10
-          
-          # augmented data for S(1)=1, given S(0)=0
-          AugData_S1 = rbind(AugData_S1, c(0, X[i, ], prob.n)) # S(1)=0, with weight prob.n
-        }
-        
-        if(Z[i]==0&D[i]==1) {
-          prob.10 = 1
-          prob.a = 0
-        }
         
         if(Z[i]==0&D[i]==0) {
           ##posterior probabilities
@@ -148,10 +115,10 @@ xi_2log_PredTreatEffect = function(Z, D, X, eta = 0,
     #colnames(AugData_S0) = c("U", "X", "Weight")
     
     if(is.null(beta.S0)){ # Employ two logitic regressions, extract M step beta.ah 
-    #set.seed(100)
-    #Two logistic regressions using, for S(0), and S(1) given S(0)=0
-    fit_S0 = glm(AugData_S0[, 1] ~ AugData_S0[, (3:(V+1))], weights = AugData_S0[, (V+2)], family="binomial")
-    beta.ah = coef(fit_S0)
+      #set.seed(100)
+      #Two logistic regressions using, for S(0), and S(1) given S(0)=0
+      fit_S0 = glm(AugData_S0[, 1] ~ AugData_S0[, (3:(V+1))], weights = AugData_S0[, (V+2)], family="binomial")
+      beta.ah = coef(fit_S0)
     }else{ # if we employ only one logitic regression during the EM, assign beta.S0 as beta.ah
       beta.ah  = beta.S0
     }
@@ -196,7 +163,7 @@ xi_2log_PredTreatEffect = function(Z, D, X, eta = 0,
 
 
 xi_2log_PSPS_M_weighting = function(Z, D, X, Y, 
-          eta = 0, beta.S0=NULL, beta.ah = NULL, beta.c = NULL, iter.max = 10000, error0 = 10^-4)
+                                    eta = 0, beta.S0=NULL, beta.ah = NULL, beta.c = NULL, iter.max = 10000, error0 = 10^-4)
 {
   
   N = length(Z)
@@ -205,8 +172,8 @@ xi_2log_PSPS_M_weighting = function(Z, D, X, Y,
   ##estimate the propensity scores using Multinomial Logistic Regression
   ##PS_pred returns 4 columns: c, d, a, n
   ps.score.fit = xi_2log_PredTreatEffect(Z=Z, D=D, X=X, eta = eta, 
-                             beta.S0=beta.S0, beta.ah = beta.ah, beta.c = beta.c, 
-                             iter.max=iter.max, error0=error0, prob.pred = TRUE)
+                                         beta.S0=beta.S0, beta.ah = beta.ah, beta.c = beta.c, 
+                                         iter.max=iter.max, error0=error0, prob.pred = TRUE)
   # c(prob.c, prob.d, prob.a, prob.n)
   ps.score  = ps.score.fit$PROB
   
@@ -216,7 +183,7 @@ xi_2log_PSPS_M_weighting = function(Z, D, X, Y,
   pr.a = (1 / (1+eta)) * p0
   pr.n = 1 - (pr.c + pr.d + pr.a)
   pr.c = p1 - ( ( 1 / (1+eta) ) * p0 )
-
+  
   ##indices with mixture distributions
   index11 = (1:N)[Z==1&D==1]
   index01 = (1:N)[Z==0&D==1]
