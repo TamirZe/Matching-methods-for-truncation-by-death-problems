@@ -9,7 +9,7 @@ two_log_EM_initial_ah = simulate_data_run_EM_and_match(only_EM_bool=TRUE, return
                  gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns, xi=xi, two_log_models=TRUE,
                  misspec_PS=misspec_PS, funcform_mis_out=FALSE,
                  funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log, 
-                 match_and_reg_watch_true_X=FALSE, param_n=param_n, param_n_sim=param_n_sim,
+                 param_n=param_n, param_n_sim=param_n_sim,
                  iterations=iterations, epsilon_EM=epsilon_EM, caliper=caliper,
                  match_on=match_on, mu_x_fixed=mu_x_fixed, x_as=mat_x_as[k,])
 
@@ -31,6 +31,9 @@ simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, 
   colnames(x_obs) = paste0("X", c(1:dim_x))
   # x are the outcome (Y) covariates 
   x = x_obs
+  # x_misspec for PS misspec
+  x_misspec = as.matrix(data.frame(X_sqr = x_obs[,(ncol(x_obs) - 1)]^2,
+                                   X_log = log(x_obs[,ncol(x_obs)] - (min(x_obs[,ncol(x_obs)]) - 0.1)))) %>% as.data.frame
   
   # no PS misspecification
   if(misspec_PS == 0){
@@ -39,10 +42,6 @@ simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, 
   }
   
   # misspec2: replace 2 X's with x^2 and ~log(X), to PS model and possibly to outcome model (if funcform_mis_out == TRUE) 
-  x_misspec = as.matrix(data.frame(x_obs[,(ncol(x_obs) - 1)]^2,
-                                   log(x_obs[,ncol(x_obs)] - (min(x_obs[,ncol(x_obs)]) - 0.1)))) %>% as.data.frame
-  colnames(x_misspec) = c("X_sqr", "X_log")
-  
   if(misspec_PS == 2){
     # PS true model covariates
     x_PS = as.matrix( data.frame( x_obs[,-c((ncol(x_obs) - 1) ,ncol(x_obs))], x_misspec ) )
@@ -57,8 +56,7 @@ simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, 
   # Y true model covariates:
   # if funcform_mis_out == FALSE (default), Y on original (obs) X 
   # if funcform_mis_out == TRUE, Y on the transformation of X, as in the misspec in the PS model
-  #TODO change it so Y misspec is not the same as PS misspec
-  if(funcform_mis_out == TRUE){x = x_misspec} 
+  if(funcform_mis_out == TRUE){x = x_misspec} #TODO change it so Y misspec is not necessarily the same as PS misspec 
   
   if(two_log_models==TRUE){ # two logistic models for s(0) and S(1) given S(0)=1
     #1) log reg of S(0)
@@ -98,7 +96,7 @@ simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, 
   pis = t(c(pis)); colnames(pis) = paste0("pi_", colnames(pis))
   
   # generate data ####
-  # data is going to be used in the EM first, in simulate_data_run_EM_and_match. Thus, data contains the "obs" X.
+  # data is going to be used in the EM first, in simulate_data_run_EM_and_match. Thus, data contains the "obs" X (x_obs).
   data = data.frame(prob, x_obs, g = g_vec, g_num = g_vec_num,
                     A = rbinom(param_n, 1, prob_A))
   data$S = ifelse((data$g == "as") | (data$g == "pro" & data$A == 1) | (data$g == "har" & data$A == 0), 1, 0)
@@ -112,7 +110,7 @@ simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, 
     return(list(x_har=x_har, x_as=x_as, x_pro=x_pro, x_ns=x_ns, pis=pis, mean_by_A_g=mean_by_A_g))
   }
   
-  # models for Y(1) & y(0) ####
+  # models for Y(1) & y(0) 
   PO_by_treatment_and_stratum = function(n, x_outcome, dim_x, coeffs, sigma_square_param){
     return(rnorm(n, mean = x_outcome %*% matrix(coeffs,nrow = dim_x, ncol = 1), sd = sqrt(sigma_square_param)))
   }
@@ -143,11 +141,11 @@ simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, 
   colnames(two_PO) = c("Y1", "Y0")
   mean(two_PO$Y1, na.rm = T); mean(two_PO$Y0, na.rm = T)
   dt = data.frame(data, two_PO)
-  
   # generate Y with SUTVA
   dt$Y = (dt$A * dt$Y1 + (1 - dt$A) * dt$Y0) * dt$S
   dt = data.table(id = c(1:param_n), dt)
   dt$OBS = paste0("O(", dt$A, ",", dt$S, ")")
+  
   #OBS table
   obs_table = table(dt$OBS)
   OBS_table = matrix(c(obs_table[1], obs_table[3], obs_table[2], obs_table[4]), nrow = 2, ncol = 2)
@@ -169,7 +167,7 @@ simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, 
 
 simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE, index_set_of_params, gamma_ah, gamma_pro, gamma_ns, xi, two_log_models=TRUE,
                                           misspec_PS, funcform_mis_out=FALSE, funcform_factor_sqr=0, funcform_factor_log=0, 
-                                          match_and_reg_watch_true_X=FALSE, param_n, param_n_sim, iterations, epsilon_EM = 0.001,
+                                          param_n, param_n_sim, iterations, epsilon_EM = 0.001,
                                           caliper, match_on = NULL, mu_x_fixed=FALSE, x_as, only_naive_bool=FALSE){
   
   X_sub_cols = paste0("X", c(1:(dim_x)))
@@ -236,13 +234,13 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
     
     # Ding estimator ####
     
-    #logistic regression S(0)=1 on X, using S|A=0
+    #S(0)=1: Logistic regression S(0)=1 on X, using S|A=0
     fit_S0_in_A0 = glm(as.formula(paste0("S ~ ",paste(X_sub_cols[-1], collapse="+"))), data=filter(data_for_EM, A==0), family="binomial")
     beta_S0 = fit_S0_in_A0$coefficients
     #P_S0 = predict(fit_S0_in_A0, newdata=data_for_EM, type = "response") 
     # P_S0[i] # expit(predict(fit_S0_in_A0, newdata=data_for_EM)[i]) # expit(t(beta_S0)%*%X[i, ]) # fit_S0_in_A0$fitted.values
     
-    #logistic regression S(1)=1 on X, using S|A=1 (1 for pro) with weights 1-P_S0, so ah get less weight
+    #S(1)=1: logistic regression S(1)=1 on X, using S|A=1 (1 for pro) with weights 1-P_S0, so ah get less weight
     #fit_pseudo_S1_given_A1 = glm(as.formula(paste0("S ~ ",paste(X_sub_cols[-1], collapse="+"))), data=filter(data_for_EM, A==1),
     #                            weights = 1-P_S0[data_for_EM$A==1], family="quasibinomial")
     #beta_S1 = fit_pseudo_S1_given_A1$coefficients
