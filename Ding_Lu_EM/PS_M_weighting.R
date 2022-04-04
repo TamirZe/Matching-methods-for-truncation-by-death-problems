@@ -120,7 +120,6 @@ PS_pred = function(Z, D, X,
 #beta.a, beta.n: initial values for the paramaters in the multiple logistic regression
 
 
-
 PSPS_M_weighting = function(Z, D, X, Y, 
                             trc = FALSE, ep1 = 1, ep0 = 1,
                             beta.a = NULL, beta.n = NULL,

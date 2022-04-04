@@ -33,9 +33,6 @@ funcform_factor_sqr=-3; funcform_factor_log=3
 mean_x_misspec = rep(0.5, dim_x_misspec)
 misspec_PS = 0 # 0: no misspec of PS model # 2: PS functional form misspecification
 
-# CPSR parameter
-xi = 0
-
 # EM convergence parameters
 iterations = 200; epsilon_EM = 10^-6
 #############################################################################################

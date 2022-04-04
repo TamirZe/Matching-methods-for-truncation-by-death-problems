@@ -1,8 +1,10 @@
+#################################################################################################################
 gamma_ns = rep(0, dim_x)
 gamma_ah = as.numeric(mat_gamma[1, c(1:dim_x)])
 gamma_pro =  as.numeric(mat_gamma[1, (dim_x+1): (2*dim_x)])
+#################################################################################################################
 
-
+#################################################################################################################
 two_log_EM_initial_ah = simulate_data_run_EM_and_match(only_EM_bool=TRUE, return_EM_PS=FALSE, index_set_of_params=1,
                  gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns, xi=xi, two_log_models=TRUE,
                  misspec_PS=misspec_PS, funcform_mis_out=FALSE,
@@ -15,6 +17,7 @@ coeff_ah = list.rbind(two_log_EM_initial_ah[[1]])
 apply(coeff_ah, 2, mean)
 coeff_pro = list.rbind(two_log_EM_initial_ah[[2]])
 apply(coeff_pro, 2, mean)
+#################################################################################################################
 
 # misspec_PS: 0 <- NO mis, 2: add transformations to PS model, and remain original X's in outcome model.
 simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, xi, two_log_models=TRUE, param_n, 
@@ -26,26 +29,24 @@ simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, 
   x_obs <- matrix( c( rep(1,param_n), 
                       mvrnorm(param_n, mu=mean_x, Sigma = diag(var_x, cont_x))), nrow = param_n )
   colnames(x_obs) = paste0("X", c(1:dim_x))
+  # x are the outcome (Y) covariates 
+  x = x_obs
   
-  # misspecification
+  # no PS misspecification
   if(misspec_PS == 0){
-    x = x_obs; x_PS = x_obs
+    x_PS = x_obs
     gamma_ah_adj = gamma_ah; gamma_pro_adj = gamma_pro; gamma_ns_adj = gamma_ns; betas_GPI_adj = betas_GPI 
   }
   
   # misspec2: replace 2 X's with x^2 and ~log(X), to PS model and possibly to outcome model (if funcform_mis_out == TRUE) 
+  x_misspec = as.matrix(data.frame(x_obs[,(ncol(x_obs) - 1)]^2,
+                                   log(x_obs[,ncol(x_obs)] - (min(x_obs[,ncol(x_obs)]) - 0.1)))) %>% as.data.frame
+  colnames(x_misspec) = c("X_sqr", "X_log")
+  
   if(misspec_PS == 2){
-    x_misspec = as.matrix(data.frame(x_obs[,(ncol(x_obs) - 1)]^2,
-                                     log(x_obs[,ncol(x_obs)] - (min(x_obs[,ncol(x_obs)]) - 0.1)))) %>% as.data.frame
-    colnames(x_misspec) = c("X_sqr", "X_log")
     # PS true model covariates
     x_PS = as.matrix( data.frame( x_obs[,-c((ncol(x_obs) - 1) ,ncol(x_obs))], x_misspec ) )
-    # Y true model covariates:
-    # if funcform_mis_out == FALSE (default), Y on original (obs) X 
-    # if funcform_mis_out == TRUE, Y on the transformation of X 
-    if(funcform_mis_out == FALSE){
-      x = x_obs
-    }else{x = x_PS}
+    
     gamma_ah_adj = c(gamma_ah[-c((ncol(x_obs) - 1) ,ncol(x_obs))], funcform_factor_sqr*gamma_ah[2], funcform_factor_log*gamma_ah[2])
     gamma_ns_adj = c(gamma_ns[-c((ncol(x_obs) - 1) ,ncol(x_obs))], funcform_factor_sqr*gamma_ns[2], funcform_factor_log*gamma_ns[2])
     gamma_pro_adj = rep(0, length(gamma_ah_adj))
@@ -53,7 +54,13 @@ simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, 
     colnames(betas_GPI_adj) = rep("", ncol(betas_GPI_adj))
   }
   
-  if(two_log_models==TRUE){ # two logistic models
+  # Y true model covariates:
+  # if funcform_mis_out == FALSE (default), Y on original (obs) X 
+  # if funcform_mis_out == TRUE, Y on the transformation of X, as in the misspec in the PS model
+  #TODO change it so Y misspec is not the same as PS misspec
+  if(funcform_mis_out == TRUE){x = x_misspec} 
+  
+  if(two_log_models==TRUE){ # two logistic models for s(0) and S(1) given S(0)=1
     #1) log reg of S(0)
     prob_S0 = exp(x_PS%*%gamma_ah_adj) / ( 1 + exp(x_PS%*%gamma_ah_adj) )
     S0_vec = rbinom( length(prob_S0), 1, prob_S0 ) # ah - 1, pro and ns - 0
@@ -70,7 +77,7 @@ simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, 
     g_vec = mapvalues(g_vec_num, from = c(0:3), to = c("har", "as", "ns", "pro"))
     prob = data.frame(prob_har = prob_S0*(xi/(1+xi)), prob_as = prob_S0*(1/(1+xi)), 
                       prob_ns = (1-prob_S0)*(1-prob_S1), prob_pro = (1-prob_S0)*prob_S1)
-    }else{ # multinomial model
+    }else{ # single multinomial model for G
     # vector of probabilities
     vProb = cbind(exp(x_PS%*%gamma_ah_adj), exp(x_PS%*%gamma_ns_adj), exp(x_PS%*%gamma_pro_adj)) 
     prob = vProb / apply(vProb, 1, sum) 
@@ -106,8 +113,8 @@ simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, 
   }
   
   # models for Y(1) & y(0) ####
-  PO_by_treatment_and_stratum = function(coeffs, sigma_square_param){
-    return(rnorm(n, mean = x %*% matrix(coeffs,nrow = dim_x, ncol = 1), sd = sqrt(sigma_square_param)))
+  PO_by_treatment_and_stratum = function(n, x_outcome, dim_x, coeffs, sigma_square_param){
+    return(rnorm(n, mean = x_outcome %*% matrix(coeffs,nrow = dim_x, ncol = 1), sd = sqrt(sigma_square_param)))
   }
   
   # TODO model with PI with pair dependent errors 
@@ -128,7 +135,7 @@ simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, 
     print(paste0("rho_GPI_PO", " is ", 0))
     # wout dependency
     two_PO = lapply(1 : nrow(betas_GPI_adj), function(l){
-      PO_by_treatment_and_stratum(betas_GPI_adj[l,], sigma_square_ding[l])
+      PO_by_treatment_and_stratum(n=param_n, x_outcome=x, dim_x=dim_x, coeffs=betas_GPI_adj[l,], sigma_square_param=sigma_square_ding[l])
     })
     two_PO = data.frame(list.cbind(two_PO))
   }
@@ -310,9 +317,9 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
     }
     
     
-    # TODO 1.
+    # matching_estimators 
     matching_estimators = lapply(1:length(replace_vec), function(j){
-      data.frame(t(unlist(list.rbind(lapply(lst_matching_estimators_end_excluded_included[[j]], head, 8))))) # 8
+      data.frame(t(unlist(list.rbind(lapply(lst_matching_estimators_end_excluded_included[[j]], head, 8))))) 
     })
     
     # MULTIPLE MATCHING WITH BC
@@ -376,11 +383,10 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
     OLS_YESint_matching_reg_estimators = arrange_lin_reg_estimators(1, "OLS_YESinteractions_reg_adj_estimators_and_se")
     OLS_YESint_matching_reg_estimators_CI = arrange_lin_reg_estimators(1, "OLS_YESinteractions_reg_adj_estimators_and_se", "CI_LS", name="OLS_YESint")
     
-    
     # TODO Coverage CI
     
     
-    # TODO 7. means_by_subset
+    # means_by_subset
     means_by_subset_lst = lapply(1:length(replace_vec), function(j){
       lapply(lst_matching_estimators_end_excluded_included[[j]], "[[", "means_by_subset")})
     means_by_subset_mat = list.rbind(unlist(means_by_subset_lst, recursive = FALSE))
@@ -394,8 +400,8 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
                         "[[", "BCclpr_untrt_surv_matched_untrt_matched_trt"))
     })
     
-    
-    # TODO 1. put all results together in the current row of mat_param_estimators
+    # SUMMARIES
+    # put all results together in the current row of mat_param_estimators
     mat_param_estimators = rbind( mat_param_estimators,
                                   data.frame(SACE, SACE_conditional,
                                              DING_est, DING_model_assisted_est_ps
@@ -404,7 +410,7 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
                                              ,pis, t(pis_est), vec_OBS_table
                                   ))
     
-    # TODO regression estimators
+    # regression estimators
     WLS_NOint_mat_reg_estimators = rbind(WLS_NOint_mat_reg_estimators,
                                          data.frame(SACE, SACE_conditional, WLS_NOint_matching_reg_estimators) )
     
@@ -424,7 +430,7 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
                                        ,OLS_NOint_matching_reg_estimators_CI, OLS_YESint_matching_reg_estimators_CI) )
     
     
-    # TODO 7. list_means_by_subset
+    # list_means_by_subset
     list_means_by_subset[[i]] = means_by_subset_mat
     
     # check ties in BC caliper
@@ -443,7 +449,6 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
     return(list(list_coeff_ah=list_coeff_ah, list_coeff_pro=list_coeff_pro))
   }
   
-  # TODO 1.
   # summary of mat_param_estimators: mean and sd
   param_SACE = mean(mat_param_estimators$SACE)
   MSE_fun <- function (x) mean((x-param_SACE)^2) # param_SACE SACE mean(x)
@@ -457,13 +462,12 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
   rownames(mat_param_estimators) = 
     c(c(1:param_n_sim),c("mean","med","sd","MSE"))
   
-  #TODO if only_naive_bool==TRUE, i.e. we ant only naive, stop here
+  #TODO if only_naive_bool==TRUE, i.e. we want only naive, stop here
   if(only_naive_bool==TRUE){
     CI_mat$SACE = mean(CI_mat$SACE)
     return(list(mat_param_estimators=mat_param_estimators, CI_mat=CI_mat))
   }
   
-  # TODO 1.b
   # summary of mat_param_estimators: mean and sd
   list_reg_LS = list(WLS_NOint_mat_reg_estimators=WLS_NOint_mat_reg_estimators, WLS_YESint_mat_reg_estimators=WLS_YESint_mat_reg_estimators,
                      OLS_NOint_mat_reg_estimators=OLS_NOint_mat_reg_estimators, OLS_YESint_mat_reg_estimators=OLS_YESint_mat_reg_estimators)

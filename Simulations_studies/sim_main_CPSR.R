@@ -13,8 +13,8 @@ source("Simulations_studies/sim_matching_procedure/matching_PS_multiple.R")
 source("Simulations_studies/sim_post_matching_analysis/sim_regression_estimators.R")
 source("Simulations_studies/sim_tables_and_figures/table_design_multiple_func.R")
 source("Simulations_studies/sim_tables_and_figures/coverage_naive_est.R")
-source("Ding_Lu/PS_M_weighting.R")
-source("Ding_Lu/PS_M_weighting_SA.R")
+#source("Ding_Lu/PS_M_weighting.R")
+source("Ding_Lu/Sequencial_logistic_regressions/EM_2log_CPSR")
 #############################################################################################
 
 #############################################################################################
