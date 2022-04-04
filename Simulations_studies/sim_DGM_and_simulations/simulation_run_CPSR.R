@@ -3,7 +3,7 @@ gamma_ah = as.numeric(mat_gamma[1, c(1:dim_x)])
 gamma_pro =  as.numeric(mat_gamma[1, (dim_x+1): (2*dim_x)])
 
 
-two_log_EM = simulate_data_run_EM_and_match(only_EM_bool=TRUE, return_EM_PS=FALSE, index_set_of_params=1,
+two_log_EM_initial_ah = simulate_data_run_EM_and_match(only_EM_bool=TRUE, return_EM_PS=FALSE, index_set_of_params=1,
                  gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns, xi=xi, two_log_models=TRUE,
                  misspec_PS=misspec_PS, funcform_mis_out=FALSE,
                  funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log, 
@@ -11,9 +11,9 @@ two_log_EM = simulate_data_run_EM_and_match(only_EM_bool=TRUE, return_EM_PS=FALS
                  iterations=iterations, epsilon_EM=epsilon_EM, caliper=caliper,
                  match_on=match_on, mu_x_fixed=mu_x_fixed, x_as=mat_x_as[k,])
 
-coeff_ah = list.rbind(one_log_EM[[1]])
+coeff_ah = list.rbind(two_log_EM_initial_ah[[1]])
 apply(coeff_ah, 2, mean)
-coeff_pro = list.rbind(one_log_EM[[2]])
+coeff_pro = list.rbind(two_log_EM_initial_ah[[2]])
 apply(coeff_pro, 2, mean)
 
 # misspec_PS: 0 <- NO mis, 2: add transformations to PS model, and remain original X's in outcome model.
@@ -219,10 +219,9 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
     colnames(CI_naives_before_matching) = c("naive_without_matching", "survivors_naive_without_matching")
     
     if(only_naive_bool==TRUE){
-      # TODO put all naive estimators together in the current row of mat_param_estimators
+      # TODO all naive estimators together in the current row of mat_param_estimators
       mat_param_estimators = rbind( mat_param_estimators,
-                                    data.frame(SACE, most_naive_est, most_naive_est_se, sur_naive_est, sur_naive_est_se,
-                                               pis, t(pis_est) ))
+            data.frame(SACE, most_naive_est, most_naive_est_se, sur_naive_est, sur_naive_est_se, pis, t(pis_est) ))
       CI_mat = rbind( CI_mat, data.frame(SACE, CI_naives_before_matching) )
       i = i + 1
       next()
@@ -233,14 +232,13 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
     #logistic regression S(0)=1 on X, using S|A=0
     fit_S0_in_A0 = glm(as.formula(paste0("S ~ ",paste(X_sub_cols[-1], collapse="+"))), data=filter(data_for_EM, A==0), family="binomial")
     beta_S0 = fit_S0_in_A0$coefficients
-    # P_S0 = predict(fit_S0_in_A0, newdata=data_for_EM, type = "response") 
+    #P_S0 = predict(fit_S0_in_A0, newdata=data_for_EM, type = "response") 
     # P_S0[i] # expit(predict(fit_S0_in_A0, newdata=data_for_EM)[i]) # expit(t(beta_S0)%*%X[i, ]) # fit_S0_in_A0$fitted.values
     
     #logistic regression S(1)=1 on X, using S|A=1 (1 for pro) with weights 1-P_S0, so ah get less weight
     #fit_pseudo_S1_given_A1 = glm(as.formula(paste0("S ~ ",paste(X_sub_cols[-1], collapse="+"))), data=filter(data_for_EM, A==1),
-    #                             weights = 1-P_S0[data_for_EM$A==1], family="quasibinomial")
+    #                            weights = 1-P_S0[data_for_EM$A==1], family="quasibinomial")
     #beta_S1 = fit_pseudo_S1_given_A1$coefficients
-    #predict(fit_pseudo_S1_given_A1, newdata=filter(data_for_EM, A==1), type = "response")
     
     # EM
     start_timeDing <- Sys.time()
@@ -248,7 +246,7 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
     est_ding_lst = xi_2log_PSPS_M_weighting(Z=data_for_EM$A, D=data_for_EM$S,
                     X=as.matrix(subset(data_for_EM, select = 
                     grep(paste(X_sub_cols[-1], collapse="|"), colnames(data_for_EM)))), Y=data_for_EM$Y, 
-                    eta=xi, beta.S0=NULL, beta.ah=NULL, beta.c=NULL, # beta.S0=beta_S0 # beta.S0=NULL # beta.c=beta_S1 # beta.c=NULL
+                    eta=xi, beta.S0=NULL, beta.ah=beta_S0, beta.c=NULL, # beta.S0=beta_S0 # beta.S0=NULL 
                     iter.max=iterations, error0=epsilon_EM)
     coeff_ah = est_ding_lst$beta.ah ; coeff_pro = est_ding_lst$beta.c
     list_coeff_ah[[i]] = coeff_ah; list_coeff_pro[[i]] = coeff_pro
@@ -257,7 +255,7 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
     print(paste0("Ding EM lasts ", difftime(end_timeDing, start_timeDing)))
     data_with_PS = data.table(data_for_EM, est_ding_lst$ps.score)
     
-    # if PS_est contains NAS, it probably implies that the EM process diverged, skip this iteration and go to the next
+    # if PS_est contains NAS, it probably implies that the EM process has not converged, so skip this iteration and go to the next
     if( sum(is.na(PS_est)) > 0 ){
       index_EM_not_conv = index_EM_not_conv + 1
       list_EM_not_conv$probs[[index_EM_not_conv]] = PS_est
@@ -270,8 +268,14 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
       next()
     }
     
+    # calculate O11_prior_ratio, O11_posterior_ratio and W_1_as
+    O11_prior_ratio = pis_est["pi_as_est"] / (pis_est["pi_as_est"] + pis_est["pi_pro_est"])
+    data_with_PS[, `:=` ( O11_posterior_ratio = EMest_p_as / (EMest_p_as + EMest_p_pro), O11_prior_ratio = O11_prior_ratio )]
+    data_with_PS$W_1_as = data_with_PS2$O11_posterior_ratio / O11_prior_ratio
+    # DL plain estimator and model assisted estimator
     DING_est = est_ding_lst$AACE
     DING_model_assisted_est_ps = est_ding_lst$AACE.reg
+    
     # return only EM coefficients
     if(only_EM_bool){
       i = i + 1
@@ -290,13 +294,6 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
       return(list(data_with_PS=data_with_PS, PS_true_EM_compr=PS_true_EM_compr,
                   OBS_table=OBS_table, pis=pis, pis_est=pis_est, EM_coeffs=EM_coeffs, beta_S0_given_A0=beta_S0_given_A0))
     }
-    
-    
-    
-    # calculate O11_prior_ratio, O11_posterior_ratio and W_1_as
-    O11_prior_ratio = pis_est["pi_as_est"] / (pis_est["pi_as_est"] + pis_est["pi_pro_est"])
-    data_with_PS[, `:=` ( O11_posterior_ratio = EMest_p_as / (EMest_p_as + EMest_p_pro), O11_prior_ratio = O11_prior_ratio )]
-    data_with_PS$W_1_as = data_with_PS2$O11_posterior_ratio / O11_prior_ratio
     
     # run for all options (3 options - full dataset, wout A=0,S=0, only S=1)
     data_list = list(data_with_PS, data_with_PS[OBS != "O(0,0)"], data_with_PS[S==1]) 
@@ -383,48 +380,6 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
     # TODO Coverage CI
     
     
-    # TODO 2.
-    # excluded_included_matching from matching function
-    # if we have replace FALSE or TRUE, use only the FALSE replace,
-    # since when replacing this info is not informative
-    excluded_included_matching = 
-      as.numeric(sapply(lst_matching_estimators_end_excluded_included[[1]], 
-                        "[[", "included_excluded_in_matching"))
-    names(excluded_included_matching) = 
-      paste0(rep(c("all", "wout_O_0_0", "S1" ), each = 5), "_", 
-             rep(colnames(t(sapply(lst_matching_estimators_end_excluded_included[[1]],
-                                   "[[", "included_excluded_in_matching")))))
-    
-    # TODO 3.
-    # repeated_as_and_pro
-    repeated_as_and_pro_lst = lapply(1:length(replace_vec), function(j){
-      lapply(lst_matching_estimators_end_excluded_included[[j]], "[[", "repeated_as_and_pro")})
-    repeated_as_and_pro_lst = unlist(repeated_as_and_pro_lst, recursive = FALSE)
-    
-    # TODO 6. tables_matched_units
-    matched_units_lst = lapply(1:length(replace_vec), function(j){
-      lapply(lst_matching_estimators_end_excluded_included[[j]],  
-             "[[", "tables_matched_units")})
-    matched_units_lst = unlist(matched_units_lst, recursive = FALSE)
-    
-    # TODO 4.
-    # diff_distance_aspr_asas, 1 number per each part, so we have 6 numbers in total
-    diff_distance = lapply(1:length(replace_vec), function(j){
-      data.frame(t(unlist(list.rbind(lapply(lst_matching_estimators_end_excluded_included[[j]],
-                                            "[[", "diff_distance_aspr_asas")))))
-    })
-    diff_distance = list.cbind(diff_distance)
-    colnames(diff_distance) = paste0("d_", paste0( "rep", rep(substr(replace_vec,1,1), each=3), "_",
-                                                   paste0(rep(c("MATCH", "MATCH"), each = 3),
-                                                          "_", c("all", "wout_O_0_0", "S1"))))
-    
-    # TODO 5.
-    # standardized mean diff as2pro, as2as per each data set, with and wout replacements
-    # each element in  the list is a matrix. with all covariates std diff per each part, 6 parts in total
-    std_mean_diff_lst = lapply(1:length(replace_vec), function(j){
-      lapply(lst_matching_estimators_end_excluded_included[[j]], "[[", "std_diff_2_cols")})
-    std_mean_diff_lst = unlist(std_mean_diff_lst, recursive = FALSE)
-    
     # TODO 7. means_by_subset
     means_by_subset_lst = lapply(1:length(replace_vec), function(j){
       lapply(lst_matching_estimators_end_excluded_included[[j]], "[[", "means_by_subset")})
@@ -445,9 +400,8 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
                                   data.frame(SACE, SACE_conditional,
                                              DING_est, DING_model_assisted_est_ps
                                              ,matching_estimators
-                                             , diff_distance,
-                                             most_naive_est, most_naive_est_se, sur_naive_est, sur_naive_est_se,
-                                             pis, t(pis_est), vec_OBS_table
+                                             ,most_naive_est, most_naive_est_se, sur_naive_est, sur_naive_est_se
+                                             ,pis, t(pis_est), vec_OBS_table
                                   ))
     
     # TODO regression estimators
@@ -463,34 +417,12 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
     OLS_YESint_mat_reg_estimators = rbind(OLS_YESint_mat_reg_estimators,
                                           data.frame(SACE, SACE_conditional, OLS_YESint_matching_reg_estimators) )
     
+    # CI of matching plain estimators and regression matching estimators
     CI_mat = rbind( CI_mat, data.frame(SACE, SACE_conditional
                                        ,CI_naives_before_matching, CI_matching_estimators
                                        ,WLS_NOint_matching_reg_estimators_CI, WLS_YESint_matching_reg_estimators_CI
                                        ,OLS_NOint_matching_reg_estimators_CI, OLS_YESint_matching_reg_estimators_CI) )
     
-    # TODO 2. put all results together in the current row of mat_excluded_included_matching
-    mat_excluded_included_matching = 
-      rbind(mat_excluded_included_matching, excluded_included_matching)
-    
-    # TODO 3. list of repeated_as_and_pro
-    list_repeated_as_and_pro[[i]] = list.rbind(repeated_as_and_pro_lst)
-    rownames(list_repeated_as_and_pro[[i]])=
-      paste0("rep", rep(substr(replace_vec,1,1), each=3), "_", c("all", "wout_O_0_0", "S1"))
-    
-    # TODO 6. tables_matched_units
-    list_matched_units[[i]] = rbindlist(matched_units_lst
-                                        #, fill=TRUE
-                                        #,use.names=FALSE
-    )
-    rownames(list_matched_units[[i]])=
-      paste0("rep", rep(substr(replace_vec,1,1), each=3), "_", c("all", "wout_O_0_0", "S1"))
-    
-    # TODO 4. matrix of diff_abs_distance (number paer each part, so 6 in total)
-    # this info is also in mat_param_estimators
-    mat_diff_distance_aspr_asas = rbind(mat_diff_distance_aspr_asas, diff_distance)
-    
-    # TODO 5. list of std_diffs per all X's; size of list as the samples
-    list_std_mean_diff[[i]] = std_mean_diff_lst
     
     # TODO 7. list_means_by_subset
     list_means_by_subset[[i]] = means_by_subset_mat
@@ -506,6 +438,7 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
   }
   # out of for loop for all the samples (all in all: param_n_sim samples)
   
+  # only summary of EM coefficients
   if(only_EM_bool){
     return(list(list_coeff_ah=list_coeff_ah, list_coeff_pro=list_coeff_pro))
   }
@@ -557,10 +490,6 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
     sapply(list_coeff_pro, "[[", l)
   })
   coeffs = data.table( rbind( list.rbind(coeffs_ah), list.rbind(coeffs_pro) ) )
-  
-  #TODO FIX THIS HERE
-  print("mean and sd")
-  coeffs = data.table(coeffs)
   #TODO genefilter package: coeffs[, `:=` (SD = rowSds(as.matrix(coeffs)), mean = rowMeans(coeffs))]
   coeffs = data.frame(coeffs, SD = apply(coeffs, 1, sd), mean = apply(coeffs, 1, mean))
   coeffs$parameter = c(gamma_ah, gamma_ns)
@@ -570,35 +499,8 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
   rownames(coeffs_df) = colnames(mat_gamma)
   #rownames(coeffs_df) = c("coeff_ah_0", "coeff_ah_1","coeff_pro_0", "coeff_pro_1")
   
-  # TODO 2. mean and sd for mat_excluded_included_matching
-  mat_excluded_included_matching = rbind(mat_excluded_included_matching, 
-                                         mean = apply(mat_excluded_included_matching, 2, mean),
-                                         sd = apply(mat_excluded_included_matching, 2, sd))
-  # change order of mat_excluded_included_matching
-  mat_excluded_included_matching = data.frame(mat_excluded_included_matching)
-  ind1 = c(1,6,11)
-  mat_excluded_included_matching = subset(mat_excluded_included_matching,
-                                          select = c(ind1 , ind1+1, ind1+2, ind1+3, ind1+4))
-  
-  
-  # TODO 3. list of repeated_as_and_pro
-  mean_list_repeated_as_and_pro = 
-    calculate_mean_repeated_as_and_pro(list_repeated_as_and_pro, TRUE)
-  
-  # TODO 6 THE SAME AS FOR list_repeated_as_and_pro to list_matched_units
-  mean_list_matched_units = 
-    calculate_mean_repeated_as_and_pro(list_matched_units, FALSE)
-  
-  
-  # TODO 4. matrix of diff_abs_distance (number paer each part, so 6 in total)
-  # I can calculate mean, but I think there is no need
-  
-  # TODO 5. list of std_diffs per all X's; size of list as the samples
-  mean_list_std_mean_diff = calculate_mean_of_dfs_in_lists_of_lists(list_std_mean_diff)
-  
-  # TODO 7. list_means_by_subset
+  # list_means_by_subset
   mean_list_means_by_subset = calculate_mean_repeated_as_and_pro(list_means_by_subset, FALSE)
-  
   
   return(list(mat_param_estimators = mat_param_estimators, 
               WLS_NOint_mat_reg_estimators = list_reg_LS$WLS_NOint_mat_reg_estimators,
@@ -607,11 +509,6 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
               OLS_YESint_mat_reg_estimators = list_reg_LS$OLS_YESint_mat_reg_estimators,
               CI_mat = CI_mat,
               coeffs_df = coeffs_df, 
-              mat_excluded_included_matching = mat_excluded_included_matching, 
-              mean_list_repeated_as_and_pro = mean_list_repeated_as_and_pro,
-              mat_diff_distance_aspr_asas = mat_diff_distance_aspr_asas,
-              mean_list_std_mean_diff = mean_list_std_mean_diff,
-              mean_list_matched_units = mean_list_matched_units,
               mean_list_means_by_subset = mean_list_means_by_subset,
               list_EM_not_conv = list_EM_not_conv,
               list_BCclpr = list_BCclpr
@@ -619,3 +516,22 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
 }
 
 
+calculate_mean_repeated_as_and_pro = function(list_of_lists, mean_repeated_as_and_pro_boll=TRUE){
+  temp = lapply(1:length(list_of_lists), function(i){
+    list_of_lists[[i]] = as.matrix(list_of_lists[[i]])
+    apply(list_of_lists[[i]], 2, as.numeric)
+  })
+  mean_repeated_as_and_pro = data.frame(apply(simplify2array(temp), 1:2, mean))
+  rownames(mean_repeated_as_and_pro) = rownames(list_of_lists[[1]])
+  if(mean_repeated_as_and_pro_boll == TRUE){
+    as_rep = subset(mean_repeated_as_and_pro,
+                    select = grep("as_", colnames(mean_repeated_as_and_pro)))
+    pro_rep = subset(mean_repeated_as_and_pro,
+                     select = grep("pro_", colnames(mean_repeated_as_and_pro)))
+    #mean_as = as.matrix(as_rep) %*% c(1:ncol(as_rep)) / ifelse(as_rep>0, 1, 0) %*% c(1:ncol(as_rep))
+    mean_as = as.matrix(as_rep) %*% c(1:ncol(as_rep)) / apply(as_rep, 1, sum)
+    mean_pro = as.matrix(pro_rep) %*% c(1:ncol(pro_rep)) / apply(pro_rep, 1, sum)
+    mean_repeated_as_and_pro = data.frame(mean_repeated_as_and_pro, mean_as = mean_as, mean_pro = mean_pro)
+  }
+  return(mean_repeated_as_and_pro)
+}
