@@ -1,14 +1,15 @@
 #################################################################################################################
-gamma_ns = rep(0, dim_x)
-gamma_ah = as.numeric(mat_gamma[1, c(1:dim_x)])
-gamma_pro =  as.numeric(mat_gamma[1, (dim_x+1): (2*dim_x)])
-#################################################################################################################
-
-#################################################################################################################
-two_log_EM_initial_ah = simulate_data_run_EM_and_match(only_EM_bool=TRUE, return_EM_PS=FALSE, index_set_of_params=1,
+# gamma_ns = rep(0, dim_x)
+# gamma_ah = as.numeric(mat_gamma[1, c(1:dim_x)])
+# gamma_pro =  as.numeric(mat_gamma[1, (dim_x+1): (2*dim_x)])
+# #################################################################################################################
+# 
+# #################################################################################################################
+# two_log_EM_initial_ah
+one_log_EM = simulate_data_run_EM_and_match(only_EM_bool=TRUE, return_EM_PS=FALSE, index_set_of_params=1,
                  gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns, xi=xi, two_log_models=TRUE,
                  misspec_PS=misspec_PS, funcform_mis_out=FALSE,
-                 funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log, 
+                 funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log,
                  param_n=param_n, param_n_sim=param_n_sim,
                  iterations=iterations, epsilon_EM=epsilon_EM, caliper=caliper,
                  match_on=match_on, mu_x_fixed=mu_x_fixed, x_as=mat_x_as[k,])
@@ -235,8 +236,8 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
     # Ding estimator ####
     
     #S(0)=1: Logistic regression S(0)=1 on X, using S|A=0
-    fit_S0_in_A0 = glm(as.formula(paste0("S ~ ",paste(X_sub_cols[-1], collapse="+"))), data=filter(data_for_EM, A==0), family="binomial")
-    beta_S0 = fit_S0_in_A0$coefficients
+    #fit_S0_in_A0 = glm(as.formula(paste0("S ~ ",paste(X_sub_cols[-1], collapse="+"))), data=filter(data_for_EM, A==0), family="binomial")
+    #beta_S0 = fit_S0_in_A0$coefficients
     #P_S0 = predict(fit_S0_in_A0, newdata=data_for_EM, type = "response") 
     # P_S0[i] # expit(predict(fit_S0_in_A0, newdata=data_for_EM)[i]) # expit(t(beta_S0)%*%X[i, ]) # fit_S0_in_A0$fitted.values
     
@@ -251,7 +252,7 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
     est_ding_lst = xi_2log_PSPS_M_weighting(Z=data_for_EM$A, D=data_for_EM$S,
                     X=as.matrix(subset(data_for_EM, select = 
                     grep(paste(X_sub_cols[-1], collapse="|"), colnames(data_for_EM)))), Y=data_for_EM$Y, 
-                    eta=xi, beta.S0=NULL, beta.ah=beta_S0, beta.c=NULL, # beta.S0=beta_S0 # beta.S0=NULL 
+                    eta=xi, beta.S0=NULL, beta.ah=NULL, beta.c=NULL, # beta.S0=beta_S0 # beta.S0=NULL 
                     iter.max=iterations, error0=epsilon_EM)
     coeff_ah = est_ding_lst$beta.ah ; coeff_pro = est_ding_lst$beta.c
     list_coeff_ah[[i]] = coeff_ah; list_coeff_pro[[i]] = coeff_pro
@@ -302,10 +303,10 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
     
     # run for all options (3 options - full dataset, wout A=0,S=0, only S=1)
     data_list = list(data_with_PS, data_with_PS[OBS != "O(0,0)"], data_with_PS[S==1]) 
-    lst_matching_estimators_end_excluded_included = list()
+    lst_matching_estimators = list()
     replace_vec = c(FALSE, TRUE)
     for(j in c(1:length(replace_vec))){
-      lst_matching_estimators_end_excluded_included[[j]] =
+      lst_matching_estimators[[j]] =
         lapply(1:length(data_list), function(l){
           my_matching_func_multiple(match_on = match_on, X_sub_cols, data_list[[l]],
                                     weighting = FALSE, M=1, replace = replace_vec[j], estimand = "ATC", mahal_match = 2,
@@ -317,7 +318,7 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
     
     # matching_estimators 
     matching_estimators = lapply(1:length(replace_vec), function(j){
-      data.frame(t(unlist(list.rbind(lapply(lst_matching_estimators_end_excluded_included[[j]], head, 8))))) 
+      data.frame(t(unlist(list.rbind(lapply(lst_matching_estimators[[j]], head, 8))))) 
     })
     
     # MULTIPLE MATCHING WITH BC
@@ -328,7 +329,7 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
                                            rep(c("_est","_SE"), times=length(matching_estimators)/2)) 
     
     CI_matching_estimators = lapply(1:length(replace_vec), function(j){
-      as.vector(t(t(unlist(list.rbind(lapply(lst_matching_estimators_end_excluded_included[[j]],
+      as.vector(t(t(unlist(list.rbind(lapply(lst_matching_estimators[[j]],
                                              "[[", "CI_crude_HL_BC"))))))
     })
     CI_matching_estimators = data.frame((unlist(CI_matching_estimators))) %>% t
@@ -348,7 +349,7 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
     arrange_lin_reg_estimators = function(rep_bool_false_true, estimator_str,
                                           CI_or_TABLE_EST_SE="estimator_and_se", name=""){
       LS_lin_reg_estimators = lapply(rep_bool_false_true:rep_bool_false_true, function(j){
-        lapply(lst_matching_estimators_end_excluded_included[[j]], "[[",
+        lapply(lst_matching_estimators[[j]], "[[",
                estimator_str)})
       LS_lin_reg_estimators = lapply(LS_lin_reg_estimators[[1]], "[[", CI_or_TABLE_EST_SE)
       if(CI_or_TABLE_EST_SE=="estimator_and_se"){
@@ -386,7 +387,7 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
     
     # means_by_subset
     means_by_subset_lst = lapply(1:length(replace_vec), function(j){
-      lapply(lst_matching_estimators_end_excluded_included[[j]], "[[", "means_by_subset")})
+      lapply(lst_matching_estimators[[j]], "[[", "means_by_subset")})
     means_by_subset_mat = list.rbind(unlist(means_by_subset_lst, recursive = FALSE))
     rownames(means_by_subset_mat) = paste0(rep(c("reF_", "reT_"), each=18), 
                                            rep(c("all", "wout_0_0", "S1"), each=6), "_", rownames(means_by_subset_mat))
@@ -394,7 +395,7 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
     
     # check ties in BC caliper
     BCclpr_untrt_surv_matched_untrt_matched_trt = lapply(1:length(replace_vec), function(j){
-      list.rbind(lapply(lst_matching_estimators_end_excluded_included[[j]],
+      list.rbind(lapply(lst_matching_estimators[[j]],
                         "[[", "BCclpr_untrt_surv_matched_untrt_matched_trt"))
     })
     

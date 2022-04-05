@@ -1,13 +1,13 @@
 #m_data = data_with_PS
 #m_data = data_with_PS[OBS != "O(0,0)"]
-#m_data = data_with_PS[S==1]
+m_data = data_with_PS[S==1]
 
 #m_data = data_list[[3]]
 # m_data = data_with_PS[1:3000,]
 #m_data = data_with_PS[S==1,]
  
 # caliper is in sd
-#replace = F; estimand = "ATC"; change_id = TRUE; mahal_match = 2; M=1; caliper = 0.25
+replace = T; estimand = "ATC"; change_id = TRUE; mahal_match = 2; M=1; caliper = 0.25
 
 
 my_matching_func_multiple = function(match_on = NULL, X_sub_cols, m_data, weighting = FALSE,

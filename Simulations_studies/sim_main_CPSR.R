@@ -5,16 +5,17 @@ library(ggplot2); library(rockchalk); library(stats); library(rlist); library(mg
 library(optmatch); library(DOS); library(Matching); library(sandwich); library(rmutil); library(clubSandwich); library(tableone)
 library(sandwich); library(lmtest); library(rmutil); library(splitstackshape); library(PerformanceAnalytics)
 
+C:\Users\tamir\Documents\A matching framework for truncation by death problems\Ding_Lu_EM\Sequencial_logistic_regressions
 ########################################################################
 # source for Simulations_studies
 setwd("~/A matching framework for truncation by death problems")
 source("Simulations_studies/sim_DGM_and_simulations/simulation_run_CPSR.R")
+#source("Ding_Lu/PS_M_weighting.R")
+source("Ding_Lu_EM/Sequencial_logistic_regressions/EM_2log_CPSR.R")
 source("Simulations_studies/sim_matching_procedure/matching_PS_multiple.R")
 source("Simulations_studies/sim_post_matching_analysis/sim_regression_estimators.R")
 source("Simulations_studies/sim_tables_and_figures/table_design_multiple_func.R")
 source("Simulations_studies/sim_tables_and_figures/coverage_naive_est.R")
-#source("Ding_Lu/PS_M_weighting.R")
-source("Ding_Lu/Sequencial_logistic_regressions/EM_2log_CPSR")
 #############################################################################################
 
 #############################################################################################
@@ -36,7 +37,7 @@ misspec_PS = 0 # 0: no misspec of PS model # 2: PS functional form misspecificat
 # CPSR parameter 
 xi = 0
 # for now, xi for DGM and xi for estimation are the same
-# xi_est (or call THIS eta, as in DL EM)
+# xi_est = (or call THIS eta, as in DL EM)
 
 # EM convergence parameters
 iterations = 200; epsilon_EM = 10^-6
