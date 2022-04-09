@@ -5,7 +5,7 @@ library(ggplot2); library(rockchalk); library(stats); library(rlist); library(mg
 library(optmatch); library(DOS); library(Matching); library(sandwich); library(rmutil); library(clubSandwich); library(tableone)
 library(sandwich); library(lmtest); library(rmutil); library(splitstackshape); library(PerformanceAnalytics)
 
-C:\Users\tamir\Documents\A matching framework for truncation by death problems\Ding_Lu_EM\Sequencial_logistic_regressions
+
 ########################################################################
 # source for Simulations_studies
 setwd("~/A matching framework for truncation by death problems")
