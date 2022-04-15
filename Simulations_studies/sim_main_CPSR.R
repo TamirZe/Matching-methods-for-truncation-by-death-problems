@@ -1,17 +1,17 @@
-library(rlist); library(locfit); library(nnet); library(xtable); library(rlang);library(glue)
+library(rlist); library(locfit); library(xtable); library(rlang);library(glue)
 # library(multilevelMatching); library(PerformanceAnalytics); library(lmtest); library(caret);
 library(matrixStats); library(data.table); library(dplyr); library(plyr); library(reshape); library(MASS); library(Hmisc); 
 library(ggplot2); library(rockchalk); library(stats); library(rlist); library(mgsub); library(reshape2); library(gridExtra)
 library(optmatch); library(DOS); library(Matching); library(sandwich); library(rmutil); library(clubSandwich); library(tableone)
 library(sandwich); library(lmtest); library(rmutil); library(splitstackshape); library(PerformanceAnalytics)
-
-
+library(nnet) # DL EM 
+library(rockchalk) # mvrnorm
 ########################################################################
 # source for Simulations_studies
 setwd("~/A matching framework for truncation by death problems")
 source("Simulations_studies/sim_DGM_and_simulations/simulation_run_CPSR.R")
 #source("Ding_Lu/PS_M_weighting.R")
-source("Ding_Lu_EM/Sequencial_logistic_regressions/EM_2log_CPSR.R")
+source("Ding_Lu_EM/Sequencial_logistic_regressions/EM_2log_CPSR.R") 
 source("Simulations_studies/sim_matching_procedure/matching_PS_multiple.R")
 source("Simulations_studies/sim_post_matching_analysis/sim_regression_estimators.R")
 source("Simulations_studies/sim_tables_and_figures/table_design_multiple_func.R")
@@ -35,7 +35,7 @@ mean_x_misspec = rep(0.5, dim_x_misspec)
 misspec_PS = 0 # 0: no misspec of PS model # 2: PS functional form misspecification
 
 # CPSR parameter 
-xi = 0
+xi = 0.5
 # for now, xi for DGM and xi for estimation are the same
 # xi_est = (or call THIS eta, as in DL EM)
 

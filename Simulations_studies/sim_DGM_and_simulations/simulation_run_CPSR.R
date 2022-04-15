@@ -1,20 +1,20 @@
 #################################################################################################################
-# gamma_ns = rep(0, dim_x)
-# gamma_ah = as.numeric(mat_gamma[1, c(1:dim_x)])
-# gamma_pro =  as.numeric(mat_gamma[1, (dim_x+1): (2*dim_x)])
+gamma_ns = rep(0, dim_x)
+gamma_ah = as.numeric(mat_gamma[1, c(1:dim_x)])
+gamma_pro =  as.numeric(mat_gamma[1, (dim_x+1): (2*dim_x)])
 # #################################################################################################################
 # 
 # #################################################################################################################
 # one_log_true_ah # two_log_EM_initial_ah # one_log_EM # two_log_EM 
-one_log_true_ah = simulate_data_run_EM_and_match(only_EM_bool=TRUE, return_EM_PS=FALSE, index_set_of_params=1,
+two_log_EM = simulate_data_run_EM_and_match(only_EM_bool=TRUE, return_EM_PS=FALSE, index_set_of_params=1,
                  gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns, xi=xi, two_log_models=TRUE,
                  misspec_PS=misspec_PS, funcform_mis_out=FALSE,
                  funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log,
-                 param_n=param_n, param_n_sim=param_n_sim,
+                 param_n=10000, param_n_sim=300,
                  iterations=iterations, epsilon_EM=epsilon_EM, caliper=caliper,
                  match_on=match_on, mu_x_fixed=mu_x_fixed, x_as=mat_x_as[k,])
 
-apply(list.rbind(one_log_EM$beta_S0), 2, mean)
+apply(list.rbind(one_log_EM$list_beta_S0), 2, mean)
 coeff_ah = list.rbind(one_log_EM$list_coeff_ah)
 apply(coeff_ah, 2, mean)
 coeff_pro = list.rbind(one_log_EM$list_coeff_pro)
@@ -163,7 +163,7 @@ simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, 
   pis_est = c(pi_har_est = pi_har_est, pi_as_est = pi_as_est, pi_ns_est = pi_ns_est, pi_pro_est = pi_pro_est)
   
   return(list(dt=dt, x_obs=x_obs, x_PS=x_PS, x_outcome=x,
-              OBS_table=OBS_table, pis=pis, pis_est=pis_est, probs_mean=probs_mean))
+              OBS_table=OBS_table, pis=pis, pis_est=pis_est))
 }
 
 
@@ -237,8 +237,9 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
     # Ding estimator ####
     
     #S(0)=1: Logistic regression S(0)=1 on X, using S|A=0
-    fit_S0_in_A0 = glm(as.formula(paste0("S ~ ",paste(X_sub_cols[-1], collapse="+"))), data=filter(data_for_EM, A==0), family="binomial")
-    beta_S0 = fit_S0_in_A0$coefficients
+    #fit_S0_in_A0 = glm(as.formula(paste0("S ~ ",paste(X_sub_cols[-1], collapse="+"))), data=filter(data_for_EM, A==0), family="binomial")
+    #beta_S0 = fit_S0_in_A0$coefficients
+    
     #P_S0 = predict(fit_S0_in_A0, newdata=data_for_EM, type = "response") 
     # P_S0[i] # expit(predict(fit_S0_in_A0, newdata=data_for_EM)[i]) # expit(t(beta_S0)%*%X[i, ]) # fit_S0_in_A0$fitted.values
     
@@ -253,14 +254,15 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
     est_ding_lst = xi_2log_PSPS_M_weighting(Z=data_for_EM$A, D=data_for_EM$S,
                     X=as.matrix(subset(data_for_EM, select = 
                     grep(paste(X_sub_cols[-1], collapse="|"), colnames(data_for_EM)))), Y=data_for_EM$Y, 
-                    eta=xi, beta.S0=gamma_ah, beta.ah=NULL, beta.c=NULL, # beta.S0=beta_S0 # beta.S0=NULL 
+                    eta=xi, beta.S0=NULL, beta.ah=NULL, beta.c=NULL, # beta.S0=beta_S0 # beta.S0=NULL 
                     iter.max=iterations, error0=epsilon_EM)
     coeff_ah = est_ding_lst$beta.ah ; coeff_pro = est_ding_lst$beta.c
     list_beta_S0[[i]] = beta_S0; list_coeff_ah[[i]] = coeff_ah; list_coeff_pro[[i]] = coeff_pro
     EM_coeffs = rbind(est_ding_lst$beta.ah, est_ding_lst$beta.c)
     end_timeDing <- Sys.time()
     print(paste0("Ding EM lasts ", difftime(end_timeDing, start_timeDing)))
-    data_with_PS = data.table(data_for_EM, est_ding_lst$ps.score)
+    PS_est = est_ding_lst$ps.score
+    data_with_PS = data.table(data_for_EM, PS_est)
     
     # if PS_est contains NAS, it probably implies that the EM process has not converged, so skip this iteration and go to the next
     if( sum(is.na(PS_est)) > 0 ){
@@ -278,7 +280,7 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
     # calculate O11_prior_ratio, O11_posterior_ratio and W_1_as
     O11_prior_ratio = pis_est["pi_as_est"] / (pis_est["pi_as_est"] + pis_est["pi_pro_est"])
     data_with_PS[, `:=` ( O11_posterior_ratio = EMest_p_as / (EMest_p_as + EMest_p_pro), O11_prior_ratio = O11_prior_ratio )]
-    data_with_PS$W_1_as = data_with_PS2$O11_posterior_ratio / O11_prior_ratio
+    data_with_PS$W_1_as = data_with_PS$O11_posterior_ratio / O11_prior_ratio
     # DL plain estimator and model assisted estimator
     DING_est = est_ding_lst$AACE
     DING_model_assisted_est_ps = est_ding_lst$AACE.reg
@@ -542,6 +544,7 @@ calculate_mean_repeated_as_and_pro = function(list_of_lists, mean_repeated_as_an
   
 
 ########################################################################################################################
+# WLS vs duplications
 f = as.formula(paste0("Y ~ ", paste(c("A", covariates), collapse = " + ")))
 ddd = dt %>% subset(select = c(grep(paste(X_sub_cols[-1], collapse="|"), colnames(data_for_EM)),A,Y))
 fit_wls = lm(formula = f, data = ddd, weights = rep(2, nrow(ddd)))
@@ -552,4 +555,18 @@ summary(fit_ols)
 dd = rbind(ddd,ddd)
 fit_dup = lm(formula = f , data = dd)
 summary(fit_dup)
+########################################################################################################################
+
+########################################################################################################################
+# LOGISTIC REGRESSION
+beta = c(-0.7, 0.7, 1)
+x_obs <- matrix( c( rep(1,5000), mvrnorm(5000, mu=c(1,1), Sigma = diag(c(1,1), 2))), nrow = 5000 )
+colnames(x_obs) = paste0("X", c(1:3))
+ddd = data.frame(x_obs[,-1], Y = rbinom(5000, 1, exp(x_obs%*%beta) / ( 1 + exp(x_obs%*%beta) )))
+fit = glm(formula = Y~., data = ddd, family = binomial(link = "logit"))
+sum_log = summary(fit)
+p_hat = fit$fitted.values
+res_hat = ddd$Y - p_hat
+res_hat^2 - p_hat * (1 - p_hat)
+mean(res_hat^2) - mean(p_hat * (1 - p_hat))
 ########################################################################################################################

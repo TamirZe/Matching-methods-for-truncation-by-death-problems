@@ -214,8 +214,8 @@ xi_2log_PSPS_M_weighting = function(Z, D, X, Y,
   p1 = sum(Z*D)/sum(Z); p0 = sum((1-Z)*D)/sum(1-Z)
   pr.d = (eta / (1+eta)) * p0
   pr.a = (1 / (1+eta)) * p0
-  pr.n = 1 - (pr.c + pr.d + pr.a)
   pr.c = p1 - ( ( 1 / (1+eta) ) * p0 )
+  pr.n = 1 - (pr.c + pr.d + pr.a)
 
   ##indices with mixture distributions
   index11 = (1:N)[Z==1&D==1]
