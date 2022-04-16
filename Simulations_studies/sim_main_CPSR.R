@@ -1,11 +1,11 @@
-library(rlist); library(locfit); library(xtable); library(rlang);library(glue)
+library(xtable); library(rlang);library(glue)
 # library(multilevelMatching); library(PerformanceAnalytics); library(lmtest); library(caret);
 library(matrixStats); library(data.table); library(dplyr); library(plyr); library(reshape); library(MASS); library(Hmisc); 
-library(ggplot2); library(rockchalk); library(stats); library(rlist); library(mgsub); library(reshape2); library(gridExtra)
+library(ggplot2); library(stats); library(rlist); library(mgsub); library(reshape2); library(gridExtra)
 library(optmatch); library(DOS); library(Matching); library(sandwich); library(rmutil); library(clubSandwich); library(tableone)
 library(sandwich); library(lmtest); library(rmutil); library(splitstackshape); library(PerformanceAnalytics)
-library(nnet) # DL EM 
-library(rockchalk) # mvrnorm
+library(data.table); library(dplyr); library(plyr); library(rlist); library(nnet); library(rockchalk);  library(locfit)
+
 ########################################################################
 # source for Simulations_studies
 setwd("~/A matching framework for truncation by death problems")
