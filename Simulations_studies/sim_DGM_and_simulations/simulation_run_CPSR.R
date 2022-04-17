@@ -2,20 +2,19 @@
 gamma_ns = rep(0, dim_x)
 gamma_ah = as.numeric(mat_gamma[1, c(1:dim_x)])
 gamma_pro =  as.numeric(mat_gamma[1, (dim_x+1): (2*dim_x)])
-# #################################################################################################################
+##################################################################################################################
 
 ##################################################################################################################
-# one_log_true_ah # two_log_EM_initial_ah # one_log_EM # two_log_EM 
+one_log_true_ah # two_log_EM_initial_ah # one_log_EM # two_log_EM
 two_log_EM = simulate_data_run_EM_and_match(only_EM_bool=TRUE, return_EM_PS=FALSE, index_set_of_params=1,
                  gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns, xi=xi,
-                 two_log_models=TRUE, two_log_est=TRUE, 
+                 two_log_models=TRUE, two_log_est=TRUE,
                  misspec_PS=misspec_PS, funcform_mis_out=FALSE,
                  funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log,
                  param_n=100, param_n_sim=2,
                  iterations=iterations, epsilon_EM=epsilon_EM, caliper=caliper,
                  match_on=match_on, mu_x_fixed=mu_x_fixed, x_as=mat_x_as[k,])
 #save(two_log_EM, file = "two_log_EM.RData")
-
 apply(list.rbind(two_log_EM$list_beta_S0), 2, mean)
 coeff_ah = list.rbind(two_log_EM$list_coeff_ah)
 apply(coeff_ah, 2, mean)
