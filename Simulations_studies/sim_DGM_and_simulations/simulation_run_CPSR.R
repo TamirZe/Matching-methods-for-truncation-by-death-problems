@@ -144,7 +144,7 @@ simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, 
 }
 
 
-simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE, index_set_of_params, gamma_ah, gamma_pro, gamma_ns, xi,
+simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE, index_set_of_params, gamma_ah, gamma_pro, gamma_ns, xi, xi_est, 
                                           two_log_models=TRUE, two_log_est=FALSE,
                                           misspec_PS, funcform_mis_out=FALSE, funcform_factor_sqr=0, funcform_factor_log=0, 
                                           param_n, param_n_sim, iterations, epsilon_EM = 0.001,
@@ -229,11 +229,10 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
     
     # EM
     start_timeDing <- Sys.time()
-    # est_ding_lst
     est_ding_lst = xi_2log_PSPS_M_weighting(Z=data_for_EM$A, D=data_for_EM$S,
                     X=as.matrix(subset(data_for_EM, select = 
                     grep(paste(X_sub_cols[-1], collapse="|"), colnames(data_for_EM)))), Y=data_for_EM$Y, 
-                    eta=xi, beta.S0=beta_S0, beta.ah=NULL, beta.c=NULL, # beta.S0=beta_S0 # beta.S0=NULL 
+                    eta=xi_est, beta.S0=beta_S0, beta.ah=NULL, beta.c=NULL, # beta.S0=beta_S0 # beta.S0=NULL 
                     iter.max=iterations, error0=epsilon_EM)
     coeff_ah = est_ding_lst$beta.ah ; coeff_pro = est_ding_lst$beta.c
     list_beta_S0[[i]] = beta_S0; list_coeff_ah[[i]] = coeff_ah; list_coeff_pro[[i]] = coeff_pro

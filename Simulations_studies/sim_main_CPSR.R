@@ -36,8 +36,7 @@ misspec_PS = 0 # 0: no misspec of PS model # 2: PS functional form misspecificat
 
 # CPSR parameter 
 xi = 0.5
-# for now, xi for DGM and xi for estimation are the same
-# xi_est = (or call THIS eta, as in DL EM)
+xi_est = 0.5 # (eta in DL EM)
 
 # EM convergence parameters
 iterations = 200; epsilon_EM = 10^-6
@@ -167,7 +166,7 @@ for ( k in c(1 : nrow(mat_gamma)) ){
   start_time <- Sys.time()
   
   EM_and_matching = simulate_data_run_EM_and_match(return_EM_PS=FALSE, index_set_of_params=k,
-                                                   gamma_ah=gamma_ah, gamma_ns=gamma_ns, gamma_pro=gamma_pro, xi=xi,
+                                                   gamma_ah=gamma_ah, gamma_ns=gamma_ns, gamma_pro=gamma_pro, xi=xi, xi_est=xi_est,
                                                    misspec_PS=misspec_PS, funcform_mis_out=FALSE, funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log, 
                                                    param_n=param_n, param_n_sim=param_n_sim,
                                                    iterations=iterations, epsilon_EM=epsilon_EM, caliper=caliper,
