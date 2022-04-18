@@ -1,3 +1,4 @@
+library(data.table); library(plyr); library(dplyr); library(rlist); library(nnet); library(MASS); library(rockchalk); library(locfit)
 setwd("~/A matching framework for truncation by death problems")
 source("Simulations_studies/sim_DGM_and_simulations/simulation_run_CPSR.R")
 source("Ding_Lu_EM/Sequencial_logistic_regressions/EM_2log_CPSR.R") 
@@ -66,11 +67,10 @@ two_log_EM = simulate_data_run_EM_and_match(only_EM_bool=TRUE, return_EM_PS=FALS
                                             param_n=100, param_n_sim=2,
                                             iterations=iterations, epsilon_EM=epsilon_EM, caliper=0.25,
                                             match_on=match_on, mu_x_fixed=mu_x_fixed, x_as=NULL)
-save(two_log_EM, file = "two_log_EM.RData")
 
-apply(list.rbind(two_log_EM$list_beta_S0), 2, mean)
-coeff_ah = list.rbind(two_log_EM$list_coeff_ah)
+apply(list.rbind(log_EM$list_beta_S0), 2, mean)
+coeff_ah = list.rbind(log_EM$list_coeff_ah)
 apply(coeff_ah, 2, mean)
-coeff_pro = list.rbind(two_log_EM$list_coeff_pro)
+coeff_pro = list.rbind(log_EM$list_coeff_pro)
 apply(coeff_pro, 2, mean)
 #################################################################################################################
