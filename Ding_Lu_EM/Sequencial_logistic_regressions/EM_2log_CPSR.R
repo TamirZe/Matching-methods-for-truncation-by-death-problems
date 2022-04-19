@@ -204,7 +204,7 @@ xi_2log_PSPS_M_weighting = function(Z, D, X, Y,
   
   ##estimate the propensity scores using Multinomial Logistic Regression
   ##PS_pred returns 4 columns: c, d, a, n
-  ps.score.fit = xi_2log_PredTreatEffect(Z=Z, D=D, X=X, xi_es=xi_est, 
+  ps.score.fit = xi_2log_PredTreatEffect(Z=Z, D=D, X=X, xi_est=xi_est, 
                              beta.S0=beta.S0, beta.ah = beta.ah, beta.c=beta.c, 
                              iter.max=iter.max, error0=error0, prob.pred=TRUE)
   # c(prob.c, prob.d, prob.a, prob.n)
@@ -215,15 +215,16 @@ xi_2log_PSPS_M_weighting = function(Z, D, X, Y,
   pr.d = (xi_est / (1+xi_est)) * p0
   pr.a = (1 / (1+xi_est)) * p0
   pr.c = p1 - ( ( 1 / (1+xi_est) ) * p0 )
-  pr.n = 1 - (pr.c + pr.d + pr.a)
+  pr.n = 1 - (pr.d + pr.a + pr.c)
 
   ##indices with mixture distributions
   index11 = (1:N)[Z==1&D==1]
   index01 = (1:N)[Z==0&D==1]
   
   ##weights
-  w1a = ps.score[index11, 3]/(ps.score[index11, 1] + ps.score[index11, 3])/pr.a*(pr.c + pr.a)
-  w0a = ps.score[index01, 3]/(ps.score[index01, 2] + ps.score[index01, 3])/pr.a*(pr.d + pr.a)
+  #c(prob.d, prob.a, prob.n, prob.c)
+  w1a = ps.score[index11, 2]/(ps.score[index11, 4] + ps.score[index11, 2])/pr.a*(pr.c + pr.a)
+  w0a = ps.score[index01, 2]/(ps.score[index01, 1] + ps.score[index01, 2])/pr.a*(pr.d + pr.a)
   
   ##model assisted regression estimator 
   r1a = lm(Y[index11] ~ 0 + X[index11, ], weights = w1a)$coef

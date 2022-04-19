@@ -170,6 +170,7 @@ xi_PSPS_M_weighting_SA = function(Z, D, X, Y, eta = 0,
   index01 = (1:N)[Z==0&D==1]
   
   ##weights
+  #c(prob.c, prob.d, prob.a, prob.n)/sum
   w1a = ps.score[index11, 3]/(ps.score[index11, 1] + ps.score[index11, 3])/pr.a*(pr.c + pr.a)
   w0a = ps.score[index01, 3]/(ps.score[index01, 2] + ps.score[index01, 3])/pr.a*(pr.d + pr.a)
   

@@ -63,53 +63,9 @@ rownames(var_GPI) = c("var_treatment", "var_control")
 rho_GPI_PO = 0.4 
 ##########################################################
 
-#############################################################################################
-# extract strata proportion and mean covariates ####
-extract_pis_from_scenarios = function(nn=250000, xi=0, misspec_PS=0){
-  big_lst = list(); mat_x_as <- mat_pis <- mat_x_by_g_A <- NULL
-  for( k in c(1 : nrow(mat_gamma)) ){
-    gamma_ah = as.numeric(mat_gamma[k, c(1:dim_x)])
-    gamma_pro =  as.numeric(mat_gamma[k, (dim_x+1): (2*dim_x)])
-    gamma_ns = gamma_ns
-    lst_mean_x_and_pi = simulate_data_function(gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns, xi=xi, two_log_models=TRUE,
-                                               param_n=nn, misspec_PS=misspec_PS, funcform_mis_out=FALSE, 
-                                               funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log, only_mean_x_bool=TRUE)
-    big_lst[[k]] = lst_mean_x_and_pi
-    mat_x_as = rbind(mat_x_as, lst_mean_x_and_pi$x_as)
-    mat_pis = rbind(mat_pis, lst_mean_x_and_pi$pi)
-    mat_x_by_g_A = rbind(mat_x_by_g_A, data.frame(Scenar = k, lst_mean_x_and_pi$mean_by_A_g))
-  }
-  #mat_pis = data.frame(pi_as=mat_pis[,1], pi_pro=mat_pis[,3], pi_ns=mat_pis[,2])
-  round(mat_pis,3)
-  return(list(mat_pis=mat_pis, mat_x_by_g_A=mat_x_by_g_A, big_lst=big_lst, mat_x_as=mat_x_as))
-}
-mat_gamma[,c(1,2,dim_x+1,dim_x+2)]
-extract_pis_lst = extract_pis_from_scenarios(nn=1000000, xi=xi, misspec_PS=2); mat_pis_per_gamma = extract_pis_lst$mat_pis
-mat_pis_per_gamma
+# extract_pis_from_scenarios
 
-
-big_lst = list(); big_mat_x_by_g_A=NULL
-for(i in 1:100){
-  print(i)
-  big_lst[[i]] = extract_pis_from_scenarios(nn=2000, xi=xi, misspec_PS=0)
-  big_mat_x_by_g_A = rbind(big_mat_x_by_g_A, big_lst[[i]]$mat_x_by_g_A)
-}
-big_mat_x_by_g_A = subset(big_mat_x_by_g_A, select = c(Scenar,A,g, grep("X", colnames(big_mat_x_by_g_A))))
-big_mat_x_by_g_A = data.table(big_mat_x_by_g_A)[, lapply(.SD, mean), by=c("Scenar", "A", "g")] %>% arrange(Scenar, g, A)
-#############################################################################################
-
-#############################################################################################
-# extract mean covariates of as ####
-mat_x_as = NULL
-for( k in c(1 : nrow(mat_gamma)) ){
-  gamma_as = as.numeric(mat_gamma[k, c(1:dim_x)]); gamma_ns =  as.numeric(mat_gamma[k, (dim_x+1): (2*dim_x)])
-  lst_mean_x_and_pi = simulate_data_function(gamma_as=gamma_as, gamma_ns=gamma_ns, gamma_pro=gamma_pro, xi=xi,
-                                             param_n=250000, misspec_PS=0, funcform_mis_out=FALSE, funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log, only_mean_x_bool=TRUE)
-  mat_x_as = rbind(mat_x_as, lst_mean_x_and_pi$x_as)
-}
-#############################################################################################
-
-param_n = 2000; param_n_sim = 3 # param_n = 2000; param_n_sim = 1000
+param_n = 2000; param_n_sim = 75 # param_n = 2000; param_n_sim = 1000
 caliper = 0.25; match_on = "O11_posterior_ratio" 
 mu_x_fixed = FALSE; mat_x_as; x_as = mat_x_as[1,]
 
@@ -179,10 +135,8 @@ change_rownames_to_LETTERS_by_param_set = function(df, mat_params=mat_gamma,
 # summary of SACE estimators ####
 mat_all_estimators = list.rbind(lapply(list_all_mat_SACE_estimators, tail, length(param_measures)))
 #num_of_param_measures_per_param_set = nrow(mat_all_estimators) / nrow(mat_gamma) # = length(param_measures)
-mat_all_estimators = data.frame(subset(mat_all_estimators,
-                                       select = grep("gamma", colnames(mat_all_estimators))),
-                                subset(mat_all_estimators,
-                                       select = -grep("gamma", colnames(mat_all_estimators))))
+mat_all_estimators = data.frame(subset(mat_all_estimators, select = grep("gamma", colnames(mat_all_estimators))),
+                                subset(mat_all_estimators, select = -grep("gamma", colnames(mat_all_estimators))))
 mat_all_estimators = change_rownames_to_LETTERS_by_param_set(mat_all_estimators)
 pi_from_mat_all_estimators = subset(mat_all_estimators, select = grep("pi_", colnames(mat_all_estimators))) %>% round(3)
 
@@ -197,12 +151,15 @@ OLS_YESint_mat_regression_estimators = list.rbind(lapply(list_all_OLS_YESint_reg
 OLS_YESint_mat_regression_estimators = change_rownames_to_LETTERS_by_param_set(OLS_YESint_mat_regression_estimators)
 
 
-# summary of EM estimators for the gamms's- the PS coefficient- logistic reg of stratum on X
+# summary of EM estimators for the gamms's- the PS coefficient- logistic reg of stratum on X ####
+########################################################################
 summary_EM_coeffs = list.rbind(lapply(list_all_EM_coeffs, function(x) x[c((param_n_sim + 1):(param_n_sim + 5))]))
 rownames(summary_EM_coeffs) = paste0(rep(LETTERS[1:nrow(mat_gamma)],each = ncol(mat_gamma)), "_",
                                      rep(rownames(summary_EM_coeffs)[1:ncol(mat_gamma)],times = nrow(mat_gamma)))
+########################################################################
 
-# covariates means by A and S, before and after matching (+ mean of as)
+# covariates means by A and S, before and after matching (+ mean of as) ####
+########################################################################
 mat_all_means_by_subset = NULL
 first_3_rows = c("mean_as", "mean_A0_S1", "mean_A1_S1_as")
 for(i in c(1:length(list_all_means_by_subset))){
@@ -236,4 +193,5 @@ naives_before_matching_coverage = lst_final_tables_ALL_est_ALL_dataset_PLUS_naiv
 final_tables = TABLES_add_naive_and_ding(data_set_names_vec, lst_final_tables_ALL_est_ALL_dataset, naives_before_matching_coverage)
 final_tables_general = adjustments_for_final_tables(final_tables)
 final_tables_crude = adjustments_for_final_tables_crude_est(final_tables)
+final_tables_general$'_S1'
 ########################################################################

@@ -51,7 +51,7 @@ mat_gamma = matrix(c(
 # pi_ah    pi_ns   pi_pro (correct spec)
 # 0.5014400 0.14918000 0.3493800
 # 0.7497289 0.06269778 0.1875733
-# pi_as    pi_ns   pi_pro (misspec)
+# pi_ah    pi_ns   pi_pro (misspec)
 # 0.499991 0.164127 0.335882
 # 0.729025 0.140039 0.130936
 mat_gamma = matrix(c(
@@ -63,7 +63,7 @@ mat_gamma = matrix(c(
 # pi_ah     pi_ns    pi_pro (correct spec)
 # 0.5000600 0.3981044 0.1018356
 # 0.7499378 0.1465778 0.1034844
-# pi_as    pi_ns   pi_pro (misspec)
+# pi_ah    pi_ns   pi_pro (misspec)
 # 0.500360 0.380921 0.118719
 # 0.733472 0.090406 0.176122
 mat_gamma = matrix(c(
