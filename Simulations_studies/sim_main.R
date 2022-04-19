@@ -10,6 +10,8 @@ library(sandwich); library(lmtest); library(rmutil); library(splitstackshape); l
 setwd("~/A matching framework for truncation by death problems")
 source("Simulations_studies/sim_DGM_and_simulations/simulation_run_CPSR.R")
 source("Simulations_studies/sim_matching_procedure/matching_PS_multiple.R")
+source("Simulations_studies/sim_matching_procedure/matching_multiple_summaries.R")
+#source("Simulations_studies/sim_matching_procedure/matching_multiple.R")
 source("Simulations_studies/sim_post_matching_analysis/sim_regression_estimators.R")
 source("Simulations_studies/sim_tables_and_figures/table_design_multiple_func.R")
 source("Simulations_studies/sim_tables_and_figures/coverage_naive_est.R")

@@ -145,7 +145,7 @@ simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, 
 
 
 simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE, index_set_of_params, gamma_ah, gamma_pro, gamma_ns, xi, xi_est, 
-                                          two_log_models=TRUE, two_log_est=FALSE,
+                                          two_log_models=TRUE, two_log_est_EM=FALSE,
                                           misspec_PS, funcform_mis_out=FALSE, funcform_factor_sqr=0, funcform_factor_log=0, 
                                           param_n, param_n_sim, iterations, epsilon_EM = 0.001,
                                           caliper, match_on = NULL, mu_x_fixed=FALSE, x_as, only_naive_bool=FALSE){
@@ -214,7 +214,7 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
     
     # Ding estimator ####
     
-    if(two_log_est == FALSE){
+    if(two_log_est_EM == FALSE){
       #S(0)=1: Logistic regression S(0)=1 on X, using S|A=0
       fit_S0_in_A0 = glm(as.formula(paste0("S ~ ",paste(X_sub_cols[-1], collapse="+"))), data=filter(data_for_EM, A==0), family="binomial")
       beta_S0 = fit_S0_in_A0$coefficients

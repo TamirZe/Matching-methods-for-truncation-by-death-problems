@@ -12,7 +12,7 @@ setwd("~/A matching framework for truncation by death problems")
 source("Simulations_studies/sim_DGM_and_simulations/simulation_run_CPSR.R")
 #source("Ding_Lu/PS_M_weighting.R")
 source("Ding_Lu_EM/Sequencial_logistic_regressions/EM_2log_CPSR.R") 
-source("Simulations_studies/sim_matching_procedure/matching_PS_multiple.R")
+source("Simulations_studies/sim_matching_procedure/matching_multiple.R")
 source("Simulations_studies/sim_post_matching_analysis/sim_regression_estimators.R")
 source("Simulations_studies/sim_tables_and_figures/table_design_multiple_func.R")
 source("Simulations_studies/sim_tables_and_figures/coverage_naive_est.R")
@@ -29,15 +29,14 @@ mean_x = rep(0.5, cont_x); var_x = rep(1, cont_x)
 
 # misspec parameters (for PS model and Y model:
 # misspec_PS: 0 <- NO, 1:only PS model, 2: PS model (possibly also Y)
+misspec_PS = 0 # 0: no misspec of PS model # 2: PS functional form misspecification
 funcform_mis_out = FALSE
 funcform_factor_sqr=-3; funcform_factor_log=3
 mean_x_misspec = rep(0.5, dim_x_misspec)
-misspec_PS = 0 # 0: no misspec of PS model # 2: PS functional form misspecification
 
 # CPSR parameter 
-xi = 0.5
-xi_est = 0.5 # (eta in DL EM)
-
+xi = 0
+xi_est = xi
 # EM convergence parameters
 iterations = 200; epsilon_EM = 10^-6
 #############################################################################################
@@ -61,7 +60,7 @@ rownames(betas_GPI) = c("beta_treatment", "beta_control")
 # correlation structure between PO'
 var_GPI = as.matrix(rbind(1, 1))
 rownames(var_GPI) = c("var_treatment", "var_control")
-rho_GPI_PO = 0.4 #0.4 #1
+rho_GPI_PO = 0.4 
 ##########################################################
 
 # mat_gamma ####
@@ -97,9 +96,9 @@ mat_gamma = matrix(c(
   c(0.024, rep(0.41, dim_x-1)), c(0.26, rep(0.32, dim_x-1))
   ,c(-0.45, rep(0.61, dim_x-1)), c(0.4, rep(-0.02, dim_x-1))) ,nrow = 2, byrow = T)
 
-# assign 0's to gamma_pro and add coefficients names ####
-gamma_pro = rep(0, dim_x)
-colnames(mat_gamma) = paste0( "gamma", paste(rep(c(0:(dim_x-1)), times = 2)), rep(c("as", "ns"), each = dim_x) )
+# assign 0's to gamma_ns and add coefficients names ####
+gamma_ns = rep(0, dim_x)
+colnames(mat_gamma) = paste0( "gamma", paste(rep(c(0:(dim_x-1)), times = 2)), rep(c("ah", "pro"), each = dim_x) )
 #############################################################################################
 
 #############################################################################################
@@ -107,10 +106,10 @@ colnames(mat_gamma) = paste0( "gamma", paste(rep(c(0:(dim_x-1)), times = 2)), re
 extract_pis_from_scenarios = function(nn=250000){
   big_lst = list(); mat_x_as <- mat_pis <- mat_x_by_g_A <- NULL
   for( k in c(1 : nrow(mat_gamma)) ){
-    gamma_as = as.numeric(mat_gamma[k, c(1:dim_x)])
-    gamma_ns =  as.numeric(mat_gamma[k, (dim_x+1): (2*dim_x)])
-    lst_mean_x_and_pi = simulate_data_function(gamma_as=gamma_as, gamma_ns=gamma_ns, gamma_pro=gamma_pro, xi,
-                                               param_n=nn, misspec_PS=2, funcform_mis_out=FALSE, 
+    gamma_ah = as.numeric(mat_gamma[k, c(1:dim_x)])
+    gamma_pro =  as.numeric(mat_gamma[k, (dim_x+1): (2*dim_x)])
+    lst_mean_x_and_pi = simulate_data_function(gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns, xi=xi, two_log_models=TRUE,
+                                               param_n=nn, misspec_PS=0, funcform_mis_out=FALSE, 
                                                funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log, only_mean_x_bool=TRUE)
     big_lst[[k]] = lst_mean_x_and_pi
     mat_x_as = rbind(mat_x_as, lst_mean_x_and_pi$x_as)
@@ -119,9 +118,10 @@ extract_pis_from_scenarios = function(nn=250000){
   }
   mat_pis = data.frame(pi_as=mat_pis[,1], pi_pro=mat_pis[,3], pi_ns=mat_pis[,2])
   round(mat_pis,3)
-  return(list(mat_x_by_g_A=mat_x_by_g_A, big_lst=big_lst, mat_x_as=mat_x_as))
+  return(list(mat_pis=mat_pis, mat_x_by_g_A=mat_x_by_g_A, big_lst=big_lst, mat_x_as=mat_x_as))
 }
-mat_gamma[,c(1,2,7,8)]
+mat_gamma[,c(1,2,dim_x+1,dim_x+2)]
+extract_pis_lst = extract_pis_from_scenarios(nn=250000); mat_pis_per_gamma = extract_pis_lst$mat_pis
 
 big_lst = list(); big_mat_x_by_g_A=NULL
 for(i in 1:100){
@@ -144,7 +144,7 @@ for( k in c(1 : nrow(mat_gamma)) ){
 }
 #############################################################################################
 
-param_n = 2000; param_n_sim = 1000 # param_n = 2000; param_n_sim = 1000
+param_n = 2000; param_n_sim = 3 # param_n = 2000; param_n_sim = 1000
 caliper = 0.25; match_on = "O11_posterior_ratio" 
 mu_x_fixed = FALSE; mat_x_as; x_as = mat_x_as[1,]
 
@@ -152,25 +152,22 @@ mu_x_fixed = FALSE; mat_x_as; x_as = mat_x_as[1,]
 param_measures = c("mean","med","sd","MSE"); num_of_param_measures_per_param_set = length(param_measures)
 list_all_mat_SACE_estimators <- list_all_WLS_NOint_regression_estimators <- list_all_WLS_YESint_regression_estimators <-
   list_all_OLS_NOint_regression_estimators <- list_all_OLS_YESint_regression_estimators <- list_all_CI <- 
-  list_all_EM_coeffs <- list_all_excluded_included_matching <-
-  list_all_repeated_as_and_pro <- list_all_diff_distance_aspr_asas <- list_all_matched_units <-
-  list_all_std_mean_diff <- list_all_means_by_subset  <- list_all_EM_not_conv <- list_all_BCclpr <- list()
+  list_all_EM_coeffs <- list_all_means_by_subset  <- list_all_EM_not_conv <- list_all_BCclpr <- list()
 
 # run over different values of gamma's: 1:nrow(mat_gamma)
 # param_n_sim * time per run * nrow(mat_gamma)
 for ( k in c(1 : nrow(mat_gamma)) ){
   print(paste0("in the outer for loop ", k))
-  gamma_as=as.numeric(mat_gamma[k, c(1:dim_x)])
-  gamma_ns=as.numeric(mat_gamma[k, (dim_x+1): (2*dim_x)])
-  gamma_pro=gamma_pro
+  gamma_ah=as.numeric(mat_gamma[k, c(1:dim_x)])
+  gamma_pro=as.numeric(mat_gamma[k, (dim_x+1): (2*dim_x)])
+  gamma_ns=gamma_ns
   start_time <- Sys.time()
   
-  EM_and_matching = simulate_data_run_EM_and_match(return_EM_PS=FALSE, index_set_of_params=k,
-                                                   gamma_ah=gamma_ah, gamma_ns=gamma_ns, gamma_pro=gamma_pro, xi=xi, xi_est=xi_est,
-                                                   misspec_PS=misspec_PS, funcform_mis_out=FALSE, funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log, 
-                                                   param_n=param_n, param_n_sim=param_n_sim,
-                                                   iterations=iterations, epsilon_EM=epsilon_EM, caliper=caliper,
-                                                   match_on=match_on, mu_x_fixed=mu_x_fixed, x_as=mat_x_as[k,])
+  EM_and_matching = simulate_data_run_EM_and_match(only_EM_bool=FALSE, return_EM_PS=FALSE, index_set_of_params=k,
+           gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns, xi=xi, xi_est=xi_est, two_log_models=TRUE, two_log_est_EM=FALSE,
+           misspec_PS=misspec_PS, funcform_mis_out=FALSE, funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log, 
+           param_n=param_n, param_n_sim=param_n_sim, iterations=iterations, epsilon_EM=epsilon_EM, caliper=caliper,
+           match_on=match_on, mu_x_fixed=mu_x_fixed, x_as=mat_x_as[k,])
   
   mat_SACE_estimators = EM_and_matching[[1]]
   df_parameters = matrix(rep(as.numeric(mat_gamma[k,])
@@ -186,16 +183,6 @@ for ( k in c(1 : nrow(mat_gamma)) ){
   list_all_OLS_YESint_regression_estimators[[k]] = EM_and_matching[["OLS_YESint_mat_reg_estimators"]]
   list_all_CI[[k]] = EM_and_matching[["CI_mat"]]
   list_all_EM_coeffs[[k]] = EM_and_matching[["coeffs_df"]]
-  list_all_excluded_included_matching[[k]] = EM_and_matching[["mat_excluded_included_matching"]]
-  list_all_repeated_as_and_pro[[k]] = EM_and_matching[["mean_list_repeated_as_and_pro"]]
-  rownames(list_all_repeated_as_and_pro[[k]]) = paste0("s", k, rownames(list_all_repeated_as_and_pro[[k]]))
-  list_all_matched_units[[k]] = EM_and_matching[["mean_list_matched_units"]]
-  rownames(list_all_matched_units[[k]]) = paste0("s", k, rownames(list_all_matched_units[[k]]))
-  
-  list_all_diff_distance_aspr_asas[[k]] = EM_and_matching[["mat_diff_distance_aspr_asas"]]
-  rownames(list_all_diff_distance_aspr_asas[[k]]) = paste0("s", k, rownames(list_all_diff_distance_aspr_asas[[k]]))
-  list_all_std_mean_diff[[k]] = EM_and_matching[["mean_list_std_mean_diff"]]
-  rownames(list_all_std_mean_diff[[k]]) = paste0("s", k, rownames(list_all_std_mean_diff[[k]]))
   list_all_means_by_subset[[k]] = EM_and_matching[["mean_list_means_by_subset"]]
   rownames(list_all_means_by_subset[[k]]) = paste0("s", k, rownames(list_all_means_by_subset[[k]]))
   list_all_EM_not_conv[[k]] = EM_and_matching[["list_EM_not_conv"]]
@@ -276,7 +263,7 @@ list_all_CI_temp = list_all_CI # list_all_CI from main
 data_set_names_vec = c("_all", "_wout_O_0_0", "_S1")
 
 lst_final_tables_ALL_est_ALL_dataset = TABLES_before_coverage_and_wout_naive_and_DING(data_set_names_vec,
-                                                                                      estimators_names=c("PS Crude", "mahal Crude", "Crude", "HL", "BC", "BC caliper", "BC inter", "BC caliper inter"))
+                estimators_names=c("PS Crude", "mahal Crude", "Crude", "HL", "BC", "BC caliper", "BC inter", "BC caliper inter"))
 lst_final_tables_ALL_est_ALL_dataset_PLUS_naives = 
   TABLES_add_coverage(data_set_names_vec, lst_final_tables_ALL_est_ALL_dataset, list_all_CI)
 lst_final_tables_ALL_est_ALL_dataset = lst_final_tables_ALL_est_ALL_dataset_PLUS_naives$lst_final_tables_ALL_est_ALL_dataset
