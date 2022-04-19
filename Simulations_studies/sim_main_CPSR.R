@@ -17,7 +17,7 @@ source("Simulations_studies/sim_post_matching_analysis/sim_regression_estimators
 source("Simulations_studies/sim_tables_and_figures/table_design_multiple_func.R")
 source("Simulations_studies/sim_tables_and_figures/coverage_naive_est.R")
 #############################################################################################
-
+#set.seed()
 #############################################################################################
 # treatment probability
 prob_A = 0.5
@@ -63,70 +63,35 @@ rownames(var_GPI) = c("var_treatment", "var_control")
 rho_GPI_PO = 0.4 
 ##########################################################
 
-# mat_gamma ####
-#############################################################################################
-# values for gamma's 3X ####
-# Large pi pro 3X
-mat_gamma = matrix(c(
-  c(-0.1, rep(0.27, dim_x-1)), c(-0.52, rep(-0.6, dim_x-1))
-  ,c(0.6, rep(1.325, dim_x-1)), c(-0.25, rep(0.25, dim_x-1))) ,nrow = 2, byrow = T) 
-# small pi pro 3X 
-mat_gamma = matrix(c(
-  c(-0.07, rep(1.24, dim_x-1)), c(1.25, rep(0.24, dim_x-1)) 
-  ,c(0.84, rep(1.2, dim_x-1)), c(0.32, rep(-0.2, dim_x-1))) ,nrow = 2, byrow = T)
-
-# values for gamma's 5x ####
-# large pi pro 5X 
-mat_gamma = matrix(c(
-  c(-0.05, rep(0.16, dim_x-1)), c(-0.4, rep(-0.25, dim_x-1)) 
-  ,c(-0.5, rep(1.5, dim_x-1)), c(-0.25, rep(0.25, dim_x-1))) ,nrow = 2, byrow = T)
-# small pi pro 5X 
-mat_gamma = matrix(c(
-  c(0.45, rep(0.75, dim_x-1)), c(0.62, rep(0.6, dim_x-1))
-  ,c(-0.12, rep(1.25, dim_x-1)), c(0.45, rep(-0.2, dim_x-1))) ,nrow = 2, byrow = T)
-
-# values for gamma's 10X #### 
-# large pi pro 10X:
-mat_gamma = matrix(c(
-  c(-0.954, rep(0.25, dim_x-1)), c(-0.31, rep(-0.16, dim_x-1))
-  ,c(-1.01, rep(0.8, dim_x-1)), c(-1.3, rep(0.45, dim_x-1))) ,nrow = 2, byrow = T)
-
-# small pi pro 10X 
-mat_gamma = matrix(c(
-  c(0.024, rep(0.41, dim_x-1)), c(0.26, rep(0.32, dim_x-1))
-  ,c(-0.45, rep(0.61, dim_x-1)), c(0.4, rep(-0.02, dim_x-1))) ,nrow = 2, byrow = T)
-
-# assign 0's to gamma_ns and add coefficients names ####
-gamma_ns = rep(0, dim_x)
-colnames(mat_gamma) = paste0( "gamma", paste(rep(c(0:(dim_x-1)), times = 2)), rep(c("ah", "pro"), each = dim_x) )
-#############################################################################################
-
 #############################################################################################
 # extract strata proportion and mean covariates ####
-extract_pis_from_scenarios = function(nn=250000){
+extract_pis_from_scenarios = function(nn=250000, xi=0, misspec_PS=0){
   big_lst = list(); mat_x_as <- mat_pis <- mat_x_by_g_A <- NULL
   for( k in c(1 : nrow(mat_gamma)) ){
     gamma_ah = as.numeric(mat_gamma[k, c(1:dim_x)])
     gamma_pro =  as.numeric(mat_gamma[k, (dim_x+1): (2*dim_x)])
+    gamma_ns = gamma_ns
     lst_mean_x_and_pi = simulate_data_function(gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns, xi=xi, two_log_models=TRUE,
-                                               param_n=nn, misspec_PS=0, funcform_mis_out=FALSE, 
+                                               param_n=nn, misspec_PS=misspec_PS, funcform_mis_out=FALSE, 
                                                funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log, only_mean_x_bool=TRUE)
     big_lst[[k]] = lst_mean_x_and_pi
     mat_x_as = rbind(mat_x_as, lst_mean_x_and_pi$x_as)
     mat_pis = rbind(mat_pis, lst_mean_x_and_pi$pi)
     mat_x_by_g_A = rbind(mat_x_by_g_A, data.frame(Scenar = k, lst_mean_x_and_pi$mean_by_A_g))
   }
-  mat_pis = data.frame(pi_as=mat_pis[,1], pi_pro=mat_pis[,3], pi_ns=mat_pis[,2])
+  #mat_pis = data.frame(pi_as=mat_pis[,1], pi_pro=mat_pis[,3], pi_ns=mat_pis[,2])
   round(mat_pis,3)
   return(list(mat_pis=mat_pis, mat_x_by_g_A=mat_x_by_g_A, big_lst=big_lst, mat_x_as=mat_x_as))
 }
 mat_gamma[,c(1,2,dim_x+1,dim_x+2)]
-extract_pis_lst = extract_pis_from_scenarios(nn=250000); mat_pis_per_gamma = extract_pis_lst$mat_pis
+extract_pis_lst = extract_pis_from_scenarios(nn=1000000, xi=xi, misspec_PS=2); mat_pis_per_gamma = extract_pis_lst$mat_pis
+mat_pis_per_gamma
+
 
 big_lst = list(); big_mat_x_by_g_A=NULL
 for(i in 1:100){
   print(i)
-  big_lst[[i]] = extract_pis_from_scenarios(nn=2000)
+  big_lst[[i]] = extract_pis_from_scenarios(nn=2000, xi=xi, misspec_PS=0)
   big_mat_x_by_g_A = rbind(big_mat_x_by_g_A, big_lst[[i]]$mat_x_by_g_A)
 }
 big_mat_x_by_g_A = subset(big_mat_x_by_g_A, select = c(Scenar,A,g, grep("X", colnames(big_mat_x_by_g_A))))

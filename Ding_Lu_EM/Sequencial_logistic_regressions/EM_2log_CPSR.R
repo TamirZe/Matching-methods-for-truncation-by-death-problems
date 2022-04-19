@@ -149,15 +149,15 @@ xi_2log_PredTreatEffect = function(Z, D, X, xi_est = 0,
     
     if(is.null(beta.S0)){ # Employ two logitic regressions, extract M step beta.ah 
     #set.seed(100)
-    #Two logistic regressions using, for S(0), and S(1) given S(0)=0
+    #Two logistic regressions, one for S(0), and one for S(1) given S(0)=0
     fit_S0 = glm(AugData_S0[, 1] ~ AugData_S0[, (3:(V+1))], weights = AugData_S0[, (V+2)], family="binomial")
     beta.ah = coef(fit_S0)
     }else{ # if we employ only one logitic regression during the EM, assign beta.S0 as beta.ah
       beta.ah  = beta.S0
     }
-    
-    fit_S1_given_A0 = glm(AugData_S1[, 1] ~ AugData_S1[, (3:(V+1))], weights = AugData_S1[, (V+2)], family="binomial")
-    beta.c = coef(fit_S1_given_A0)
+    #S(1) given S(0)=0
+    fit_S1_given_S0_is_0 = glm(AugData_S1[, 1] ~ AugData_S1[, (3:(V+1))], weights = AugData_S1[, (V+2)], family="binomial")
+    beta.c = coef(fit_S1_given_S0_is_0)
     
     iter = iter + 1
     error = ifelse(is.null(beta.S0) ,sum((beta.ah - beta.ah_old)^2) + sum((beta.c - beta.c_old)^2), sum((beta.c - beta.c_old)^2))

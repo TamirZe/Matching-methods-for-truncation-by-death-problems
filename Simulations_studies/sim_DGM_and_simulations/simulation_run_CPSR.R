@@ -26,8 +26,8 @@ simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, 
     x_PS = as.matrix( data.frame( x_obs[,-c((ncol(x_obs) - 1) ,ncol(x_obs))], x_misspec ) )
     
     gamma_ah_adj = c(gamma_ah[-c((ncol(x_obs) - 1) ,ncol(x_obs))], funcform_factor_sqr*gamma_ah[2], funcform_factor_log*gamma_ah[2])
-    gamma_ns_adj = c(gamma_ns[-c((ncol(x_obs) - 1) ,ncol(x_obs))], funcform_factor_sqr*gamma_ns[2], funcform_factor_log*gamma_ns[2])
-    gamma_pro_adj = rep(0, length(gamma_ah_adj))
+    gamma_pro_adj = c(gamma_pro[-c((ncol(x_obs) - 1) ,ncol(x_obs))], funcform_factor_sqr*gamma_pro[2], funcform_factor_log*gamma_pro[2])
+    gamma_ns_adj = rep(0, length(gamma_ah_adj)) 
     betas_GPI_adj = betas_GPI
     colnames(betas_GPI_adj) = rep("", ncol(betas_GPI_adj))
   }
@@ -296,7 +296,7 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
         })
     }
     
-    
+
     # matching_estimators 
     matching_estimators = lapply(1:length(replace_vec), function(j){
       data.frame(t(unlist(list.rbind(lapply(lst_matching_estimators[[j]], head, 8))))) 
