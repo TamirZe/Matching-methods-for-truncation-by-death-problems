@@ -65,9 +65,9 @@ rho_GPI_PO = 0.4
 
 # extract_pis_from_scenarios
 
-param_n = 2000; param_n_sim = 75 # param_n = 2000; param_n_sim = 1000
+param_n = 2000; param_n_sim = 2 # param_n = 2000; param_n_sim = 1000
 caliper = 0.25; match_on = "O11_posterior_ratio" 
-mu_x_fixed = FALSE; mat_x_as; x_as = mat_x_as[1,]
+mu_x_fixed = FALSE # mat_x_as; x_as = mat_x_as[1,]
 
 
 param_measures = c("mean","med","sd","MSE"); num_of_param_measures_per_param_set = length(param_measures)
@@ -75,7 +75,8 @@ list_all_mat_SACE_estimators <- list_all_WLS_NOint_regression_estimators <- list
   list_all_OLS_NOint_regression_estimators <- list_all_OLS_YESint_regression_estimators <- list_all_CI <- 
   list_all_EM_coeffs <- list_all_means_by_subset  <- list_all_EM_not_conv <- list_all_BCclpr <- list()
 
-# run over different values of gamma's: 1:nrow(mat_gamma)
+########################################################################
+# run over different values of gamma's: 1:nrow(mat_gamma) ####
 # param_n_sim * time per run * nrow(mat_gamma)
 for ( k in c(1 : nrow(mat_gamma)) ){
   print(paste0("in the outer for loop ", k))
@@ -83,14 +84,13 @@ for ( k in c(1 : nrow(mat_gamma)) ){
   gamma_pro=as.numeric(mat_gamma[k, (dim_x+1): (2*dim_x)])
   gamma_ns=gamma_ns
   start_time <- Sys.time()
-  
   EM_and_matching = simulate_data_run_EM_and_match(only_EM_bool=FALSE, return_EM_PS=FALSE, index_set_of_params=k,
            gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns, xi=xi, xi_est=xi_est, two_log_models=TRUE, two_log_est_EM=FALSE,
            misspec_PS=misspec_PS, funcform_mis_out=FALSE, funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log, 
            param_n=param_n, param_n_sim=param_n_sim, iterations=iterations, epsilon_EM=epsilon_EM, caliper=caliper,
-           match_on=match_on, mu_x_fixed=mu_x_fixed, x_as=mat_x_as[k,])
+           match_on=match_on, mu_x_fixed=mu_x_fixed, x_as=NULL)
   
-  mat_SACE_estimators = EM_and_matching[[1]]
+  mat_SACE_estimators = EM_and_matching[["mat_param_estimators"]]
   df_parameters = matrix(rep(as.numeric(mat_gamma[k,])
                              , each = nrow(mat_SACE_estimators))
                          , nrow = nrow(mat_SACE_estimators))
@@ -117,8 +117,8 @@ for ( k in c(1 : nrow(mat_gamma)) ){
 
 ########################################################################
 # check ties in BC with caliper ####
-sum(abs(list.rbind(list_all_BCclpr[[1]])$trt_added_by_ties))
-sum(abs(list.rbind(list_all_BCclpr[[2]])$trt_added_by_ties))
+ties_setA = sum(abs(list.rbind(list_all_BCclpr[[1]])$trt_added_by_ties))
+ties_setB = sum(abs(list.rbind(list_all_BCclpr[[2]])$trt_added_by_ties))
 ########################################################################
 
 ########################################################################
@@ -195,3 +195,6 @@ final_tables_general = adjustments_for_final_tables(final_tables)
 final_tables_crude = adjustments_for_final_tables_crude_est(final_tables)
 final_tables_general$'_S1'
 ########################################################################
+
+
+

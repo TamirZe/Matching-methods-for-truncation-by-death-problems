@@ -7,13 +7,13 @@ colnames(mat_gamma) = paste0( "gamma", paste(rep(c(0:(dim_x-1)), times = 2)), re
 #############################################################################################
 # xi = 0.05 ####
 # large pi pro 
-'''mat_gamma = matrix(c(
-  c(-0.04, rep(0.05, dim_x-1)), c(0.6, rep(0.35, dim_x-1)) 
-  ,c(0.4, rep(0.4, dim_x-1)), c(0.65, rep(0.52, dim_x-1))) ,nrow = 2, byrow = T) # @@@
+#mat_gamma = matrix(c(
+#  c(-0.04, rep(0.05, dim_x-1)), c(0.6, rep(0.35, dim_x-1)) 
+#  ,c(0.4, rep(0.4, dim_x-1)), c(0.65, rep(0.52, dim_x-1))) ,nrow = 2, byrow = T) # @@@
 
-mat_gamma = matrix(c(
-  c(0.1, rep(0.1, dim_x-1)), c(-0.26, rep(-0.63, dim_x-1))
-  ,c(-0.1, rep(0.75, dim_x-1)), c(-0.17, rep(-0.42, dim_x-1))) ,nrow = 2, byrow = T)'''
+#mat_gamma = matrix(c(
+#  c(0.1, rep(0.1, dim_x-1)), c(-0.26, rep(-0.63, dim_x-1))
+#  ,c(-0.1, rep(0.75, dim_x-1)), c(-0.17, rep(-0.42, dim_x-1))) ,nrow = 2, byrow = T)
 #############################################################################################
 
 # 3X, 5X, 10X with xi = 0

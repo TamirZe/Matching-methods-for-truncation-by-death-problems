@@ -475,7 +475,7 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
   coeffs = data.table( rbind( list.rbind(coeffs_ah), list.rbind(coeffs_pro) ) )
   #TODO genefilter package: coeffs[, `:=` (SD = rowSds(as.matrix(coeffs)), mean = rowMeans(coeffs))]
   coeffs = data.frame(coeffs, SD = apply(coeffs, 1, sd), mean = apply(coeffs, 1, mean))
-  coeffs$parameter = c(gamma_ah, gamma_ns)
+  coeffs$parameter = c(gamma_ah, gamma_pro)
   coeffs$diff = coeffs$mean - coeffs$parameter 
   coeffs$perc = coeffs$diff / abs(coeffs$parameter)
   coeffs_df = data.frame(coeffs)
