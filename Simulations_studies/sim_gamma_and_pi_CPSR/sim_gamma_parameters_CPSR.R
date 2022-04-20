@@ -1,20 +1,3 @@
-#############################################################################################
-# assign 0's to gamma_ns and add coefficients names ####
-gamma_ns = rep(0, dim_x)
-colnames(mat_gamma) = paste0( "gamma", paste(rep(c(0:(dim_x-1)), times = 2)), rep(c("ah", "pro"), each = dim_x) )
-
-
-#############################################################################################
-# xi = 0.05 ####
-# large pi pro 
-#mat_gamma = matrix(c(
-#  c(-0.04, rep(0.05, dim_x-1)), c(0.6, rep(0.35, dim_x-1)) 
-#  ,c(0.4, rep(0.4, dim_x-1)), c(0.65, rep(0.52, dim_x-1))) ,nrow = 2, byrow = T) # @@@
-
-#mat_gamma = matrix(c(
-#  c(0.1, rep(0.1, dim_x-1)), c(-0.26, rep(-0.63, dim_x-1))
-#  ,c(-0.1, rep(0.75, dim_x-1)), c(-0.17, rep(-0.42, dim_x-1))) ,nrow = 2, byrow = T)
-#############################################################################################
 
 # 3X, 5X, 10X with xi = 0
 #############################################################################################
@@ -22,14 +5,14 @@ colnames(mat_gamma) = paste0( "gamma", paste(rep(c(0:(dim_x-1)), times = 2)), re
 
 # Large pi pro 3X
 # pi_ah      pi_ns    pi_pro (correct spec)
-# 0.5026511 0.14995556 0.3473933
-# 0.7493067 0.06472667 0.1859667
+# 0.499793 0.150727 0.349480
+# 0.749675 0.050117 0.200208
 # pi_ah     pi_ns     pi_pro (misspec))
-# 0.5053489 0.1790044 0.31564667
-# 0.7243422 0.1808044 0.09485333
+# 0.500264 0.182185 0.317551
+# 0.729119 0.046102 0.224779
 mat_gamma = matrix(c(
-  c(-0.14, rep(0.1, dim_x-1)), c(0.39, rep(0.4, dim_x-1))
-  ,c(0.46, rep(0.56, dim_x-1)), c(1.17, rep(1.18, dim_x-1))) ,nrow = 2, byrow = T) 
+  c(-0.15, rep(0.1, dim_x-1)), c(0.39, rep(0.4, dim_x-1))
+  ,c(0.46, rep(0.56, dim_x-1)), c(1.4, rep(-0.05, dim_x-1))) ,nrow = 2, byrow = T) 
 
 
 # small pi pro 3X 
@@ -49,14 +32,14 @@ mat_gamma = matrix(c(
 
 # large pi pro 5X ####
 # pi_ah    pi_ns   pi_pro (correct spec)
-# 0.5014400 0.14918000 0.3493800
-# 0.7497289 0.06269778 0.1875733
+# 0.500945 0.148779 0.350276
+# 0.748926 0.052215 0.198859
 # pi_ah    pi_ns   pi_pro (misspec)
-# 0.499991 0.164127 0.335882
-# 0.729025 0.140039 0.130936
+# 0.501339 0.161050 0.337611
+# 0.735853 0.136414 0.127733
 mat_gamma = matrix(c(
-  c(-0.07, rep(0.03, dim_x-1)), c(0.4, rep(0.2, dim_x-1)) 
-  ,c(0.38, rep(0.34, dim_x-1)), c(0.65, rep(0.52, dim_x-1))) ,nrow = 2, byrow = T) 
+  c(-0.07, rep(0.03, dim_x-1)), c(0.41, rep(0.2, dim_x-1)) 
+  ,c(0.39, rep(0.33, dim_x-1)), c(0.85, rep(0.85, dim_x-1))) ,nrow = 2, byrow = T) 
 
 
 # small pi pro 5X ####
@@ -76,14 +59,16 @@ mat_gamma = matrix(c(
 
 # large pi pro 10X:
 # pi_ah    pi_ns   pi_pro (correct spec)
-# 0.499789 0.151521 0.348690
-# 0.750105 0.063208 0.186687
+# 0.500193 0.150899 0.348908
+# 0.750094 0.050104 0.199802
 # pi_as    pi_ns   pi_pro (misspec)
-# 0.502663 0.162461 0.334876
-# 0.740314 0.126584 0.133102
+# 0.501875 0.163763 0.334362
+# 0.736763 0.116628 0.146609
 mat_gamma = matrix(c(
   c(-0.3, rep(0.06, dim_x-1)), c(0.17, rep(0.15, dim_x-1))
-  ,c(-0.5, rep(0.38, dim_x-1)), c(0.1, rep(0.5, dim_x-1))) ,nrow = 2, byrow = T)
+  ,c(-0.5, rep(0.38, dim_x-1)), c(0.5, rep(0.5, dim_x-1))) ,nrow = 2, byrow = T)
+
+
 
 # small pi pro 10X 
 # pi_ah    pi_ns   pi_pro (correct spec)

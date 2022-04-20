@@ -14,17 +14,16 @@ source("Simulations_studies/sim_DGM_and_simulations/simulation_run_CPSR.R")
 source("Ding_Lu_EM/Sequencial_logistic_regressions/EM_2log_CPSR.R") 
 source("Simulations_studies/sim_matching_procedure/matching_multiple.R")
 source("Simulations_studies/sim_post_matching_analysis/sim_regression_estimators.R")
-source("Simulations_studies/sim_tables_and_figures/table_design_multiple_func.R")
-source("Simulations_studies/sim_tables_and_figures/coverage_naive_est.R")
+
 #############################################################################################
-set.seed(100)
+set.seed(101)
 #############################################################################################
 # treatment probability
 prob_A = 0.5
 
 # parameters for simulating X
 #@@@@@@@@@@@@ dim_x includes intercept @@@@@@@@@@@@@@@
-dim_x = 11; cont_x = 10; categ_x = 0; vec_p_categ = rep(0.5, categ_x); dim_x_misspec = 2
+dim_x = 4; cont_x = 3; categ_x = 0
 mean_x = rep(0.5, cont_x); var_x = rep(1, cont_x)
 
 # misspec parameters (for PS model and Y model:
@@ -32,7 +31,6 @@ mean_x = rep(0.5, cont_x); var_x = rep(1, cont_x)
 misspec_PS = 0 # 0: no misspec of PS model # 2: PS functional form misspecification
 funcform_mis_out = FALSE
 funcform_factor_sqr=-3; funcform_factor_log=3
-mean_x_misspec = rep(0.5, dim_x_misspec)
 
 # CPSR parameter 
 xi = 0
@@ -41,7 +39,7 @@ xi_est = xi
 iterations = 200; epsilon_EM = 10^-6
 #############################################################################################
 
-###############################################################################################
+##########################################################
 # beta ####
 # with interactions between A and X:
 betas_GPI = as.matrix(rbind(c(22,5,2,1), c(20,3,3,0))) # cont_x=3
@@ -64,13 +62,16 @@ rho_GPI_PO = 0.4
 ###############################################################################################
 
 ###############################################################################################
+# Large pi pro 3X ####
+mat_gamma = matrix(c(
+  c(-0.15, rep(0.1, dim_x-1)), c(0.39, rep(0.4, dim_x-1))
+  ,c(0.46, rep(0.56, dim_x-1)), c(1.4, rep(-0.05, dim_x-1))) ,nrow = 2, byrow = T) 
 # assign 0's to gamma_ns and add coefficients names ####
 gamma_ns = rep(0, dim_x)
 colnames(mat_gamma) = paste0( "gamma", paste(rep(c(0:(dim_x-1)), times = 2)), rep(c("ah", "pro"), each = dim_x) )
-# extract_pis_from_scenarios
-##########################################################
+###############################################################################################
 
-param_n = 2000; param_n_sim = 3 # param_n = 2000; param_n_sim = 1000
+param_n = 2000; param_n_sim = 1000 # param_n = 2000; param_n_sim = 1000
 caliper = 0.25; match_on = "O11_posterior_ratio" 
 mu_x_fixed = FALSE # mat_x_as; x_as = mat_x_as[1,]
 
@@ -79,7 +80,6 @@ param_measures = c("mean","med","sd","MSE"); num_of_param_measures_per_param_set
 list_all_mat_SACE_estimators <- list_all_WLS_NOint_regression_estimators <- list_all_WLS_YESint_regression_estimators <-
   list_all_OLS_NOint_regression_estimators <- list_all_OLS_YESint_regression_estimators <- list_all_CI <- 
   list_all_EM_coeffs <- list_all_means_by_subset  <- list_all_EM_not_conv <- list_all_BCclpr <- list()
-
 
 ########################################################################
 # run over different values of gamma's: 1:nrow(mat_gamma) ####
@@ -91,10 +91,10 @@ for ( k in c(1 : nrow(mat_gamma)) ){
   gamma_ns=gamma_ns
   start_time <- Sys.time()
   EM_and_matching = simulate_data_run_EM_and_match(only_EM_bool=FALSE, return_EM_PS=FALSE, index_set_of_params=k,
-           gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns, xi=xi, xi_est=xi_est, two_log_models=TRUE, two_log_est_EM=FALSE,
-           misspec_PS=misspec_PS, funcform_mis_out=FALSE, funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log, 
-           param_n=param_n, param_n_sim=param_n_sim, iterations=iterations, epsilon_EM=epsilon_EM, caliper=caliper,
-           match_on=match_on, mu_x_fixed=mu_x_fixed, x_as=NULL)
+                                                   gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns, xi=xi, xi_est=xi_est, two_log_models=TRUE, two_log_est_EM=FALSE,
+                                                   misspec_PS=misspec_PS, funcform_mis_out=FALSE, funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log, 
+                                                   param_n=param_n, param_n_sim=param_n_sim, iterations=iterations, epsilon_EM=epsilon_EM, caliper=caliper,
+                                                   match_on=match_on, mu_x_fixed=mu_x_fixed, x_as=NULL)
   
   mat_SACE_estimators = EM_and_matching[["mat_param_estimators"]]
   df_parameters = matrix(rep(as.numeric(mat_gamma[k,])
@@ -191,7 +191,7 @@ list_all_CI_temp = list_all_CI # list_all_CI from main
 data_set_names_vec = c("_all", "_wout_O_0_0", "_S1")
 
 lst_final_tables_ALL_est_ALL_dataset = TABLES_before_coverage_and_wout_naive_and_DING(data_set_names_vec,
-                estimators_names=c("PS Crude", "mahal Crude", "Crude", "HL", "BC", "BC caliper", "BC inter", "BC caliper inter"))
+                                                                                      estimators_names=c("PS Crude", "mahal Crude", "Crude", "HL", "BC", "BC caliper", "BC inter", "BC caliper inter"))
 lst_final_tables_ALL_est_ALL_dataset_PLUS_naives = 
   TABLES_add_coverage(data_set_names_vec, lst_final_tables_ALL_est_ALL_dataset, list_all_CI)
 lst_final_tables_ALL_est_ALL_dataset = lst_final_tables_ALL_est_ALL_dataset_PLUS_naives$lst_final_tables_ALL_est_ALL_dataset
@@ -202,5 +202,9 @@ final_tables_crude = adjustments_for_final_tables_crude_est(final_tables)
 final_tables_general$'_S1'
 ########################################################################
 
+########################################################################
+# save ####
+main_path = paste0('/a/home/cc/stud_math/tamirzehavi/EM_CPSR/sim_results/res_job_',job_id,'.Rdata')
+save(results_list,file = res_filename)
 
-
+########################################################################
