@@ -57,10 +57,10 @@ rho_GPI_PO = 0.4
 ###############################################################################################
 
 ###############################################################################################
-# Large pi pro 3X ####
+# Low pi pro 3X ####
 mat_gamma = matrix(c(
-  c(-0.15, rep(0.1, dim_x-1)), c(0.39, rep(0.4, dim_x-1))
-  ,c(0.46, rep(0.56, dim_x-1)), c(1.4, rep(-0.05, dim_x-1))) ,nrow = 2, byrow = T) 
+  c(-0.1, rep(0.07, dim_x-1)), c(-0.9, rep(-0.45, dim_x-1)) 
+  ,c(0.51, rep(0.51, dim_x-1)), c(-0.19, rep(-0.47, dim_x-1))) ,nrow = 2, byrow = T)
 # assign 0's to gamma_ns and add coefficients names ####
 gamma_ns = rep(0, dim_x)
 colnames(mat_gamma) = paste0( "gamma", paste(rep(c(0:(dim_x-1)), times = 2)), rep(c("ah", "pro"), each = dim_x) )
@@ -82,7 +82,7 @@ if(job_id >=0 & job_id <=3){
   xi = xi_values[job_id+1]
   xi_est = xi
   print(paste0('xi_',xi))
-
+  
   param_measures = c("mean","med","sd","MSE"); num_of_param_measures_per_param_set = length(param_measures)
   list_all_mat_SACE_estimators <- list_all_WLS_NOint_regression_estimators <- list_all_WLS_YESint_regression_estimators <-
     list_all_OLS_NOint_regression_estimators <- list_all_OLS_YESint_regression_estimators <- list_all_CI <- 
@@ -210,7 +210,7 @@ if(job_id >=0 & job_id <=3){
   
   ########################################################################
   # save ####
-  Large_pi_pro = TRUE
+  Large_pi_pro = FALSE
   path_data = paste0(main_path, "Data/") 
   path = paste0(path_data, "True_outcome_with_interactions/Correct_spec_outcome/",
                 ifelse(misspec_PS==0, "Correct_spec_PS/", "Mis_spec_PS/"), paste0(cont_x, "X/"),
@@ -222,7 +222,7 @@ if(job_id >=0 & job_id <=3){
   save(mat_all_means_by_subset, file = paste0(path, 'mat_all_means_by_subset_',job_id,'.Rdata'))
   save(pis, file = paste0(path, 'pis_',job_id,'.Rdata'))
   ########################################################################
-
+  
 }else{
   stop(' Error job id not in 0-3')
 }

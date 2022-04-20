@@ -69,15 +69,8 @@ mat_gamma = matrix(c(
   ,c(-0.5, rep(0.38, dim_x-1)), c(0.5, rep(0.5, dim_x-1))) ,nrow = 2, byrow = T)
 
 
-
 # small pi pro 10X 
-# pi_ah    pi_ns   pi_pro (correct spec)
-# 0.500039 0.151314 0.348647
-# 0.748843 0.064758 0.186399
-# pi_ah    pi_ns   pi_pro (misspec)
-# 0.498910 0.154755 0.346335
-# 0.744114 0.111415 0.144471
-mat_gamma = matrix(c(
-  c(0, rep(0, dim_x-1)), c(0.13, rep(0.15, dim_x-1))
-  ,c(-0.4, rep(0.35, dim_x-1)), c(0.4, rep(0.28, dim_x-1))) ,nrow = 2, byrow = T)
+'''mat_gamma = matrix(c(
+   c(0.024, rep(0.41, dim_x-1)), c(0.26, rep(0.32, dim_x-1))
+  ,c(-0.45, rep(0.61, dim_x-1)), c(0.4, rep(-0.02, dim_x-1))) ,nrow = 2, byrow = T)'''
 #############################################################################################

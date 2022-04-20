@@ -29,7 +29,7 @@ prob_A = 0.5
 
 # parameters for simulating X
 #@@@@@@@@@@@@ dim_x includes intercept @@@@@@@@@@@@@@@
-dim_x = 4; cont_x = 3; categ_x = 0
+dim_x = 6; cont_x = 5; categ_x = 0
 mean_x = rep(0.5, cont_x); var_x = rep(1, cont_x)
 
 # misspec parameters (for PS model and Y model:
@@ -45,7 +45,7 @@ iterations = 200; epsilon_EM = 10^-6
 ###############################################################################################
 # beta ####
 # with interactions between A and X:
-betas_GPI = as.matrix(rbind(c(22,5,2,1), c(20,3,3,0))) # cont_x=3
+betas_GPI = as.matrix(rbind(c(22,5,2,1,3,5), c(20,3,3,0,1,3))) # cont_x=5
 rownames(betas_GPI) = c("beta_treatment", "beta_control")
 ###############################################################################################
 
@@ -57,10 +57,10 @@ rho_GPI_PO = 0.4
 ###############################################################################################
 
 ###############################################################################################
-# Large pi pro 3X ####
+# Low pi pro 5X ####
 mat_gamma = matrix(c(
-  c(-0.15, rep(0.1, dim_x-1)), c(0.39, rep(0.4, dim_x-1))
-  ,c(0.46, rep(0.56, dim_x-1)), c(1.4, rep(-0.05, dim_x-1))) ,nrow = 2, byrow = T) 
+  c(0, rep(0, dim_x-1)), c(-0.26, rep(-0.63, dim_x-1))
+  ,c(-0.26, rep(0.75, dim_x-1)), c(-0.17, rep(-0.42, dim_x-1))) ,nrow = 2, byrow = T)
 # assign 0's to gamma_ns and add coefficients names ####
 gamma_ns = rep(0, dim_x)
 colnames(mat_gamma) = paste0( "gamma", paste(rep(c(0:(dim_x-1)), times = 2)), rep(c("ah", "pro"), each = dim_x) )
@@ -82,7 +82,7 @@ if(job_id >=0 & job_id <=3){
   xi = xi_values[job_id+1]
   xi_est = xi
   print(paste0('xi_',xi))
-
+  
   param_measures = c("mean","med","sd","MSE"); num_of_param_measures_per_param_set = length(param_measures)
   list_all_mat_SACE_estimators <- list_all_WLS_NOint_regression_estimators <- list_all_WLS_YESint_regression_estimators <-
     list_all_OLS_NOint_regression_estimators <- list_all_OLS_YESint_regression_estimators <- list_all_CI <- 
@@ -210,7 +210,7 @@ if(job_id >=0 & job_id <=3){
   
   ########################################################################
   # save ####
-  Large_pi_pro = TRUE
+  Large_pi_pro = FALSE
   path_data = paste0(main_path, "Data/") 
   path = paste0(path_data, "True_outcome_with_interactions/Correct_spec_outcome/",
                 ifelse(misspec_PS==0, "Correct_spec_PS/", "Mis_spec_PS/"), paste0(cont_x, "X/"),
@@ -222,7 +222,7 @@ if(job_id >=0 & job_id <=3){
   save(mat_all_means_by_subset, file = paste0(path, 'mat_all_means_by_subset_',job_id,'.Rdata'))
   save(pis, file = paste0(path, 'pis_',job_id,'.Rdata'))
   ########################################################################
-
+  
 }else{
   stop(' Error job id not in 0-3')
 }
