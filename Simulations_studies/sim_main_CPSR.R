@@ -1,10 +1,11 @@
-library(xtable); library(rlang);library(glue)
-# library(multilevelMatching); library(PerformanceAnalytics); library(lmtest); library(caret);
-library(matrixStats); library(data.table); library(dplyr); library(plyr); library(reshape); library(MASS); library(Hmisc); 
-library(ggplot2); library(stats); library(rlist); library(mgsub); library(reshape2); library(gridExtra)
-library(optmatch); library(DOS); library(Matching); library(sandwich); library(rmutil); library(clubSandwich); library(tableone)
-library(sandwich); library(lmtest); library(rmutil); library(splitstackshape); library(PerformanceAnalytics)
-library(data.table); library(dplyr); library(plyr); library(rlist); library(nnet); library(rockchalk);  library(locfit)
+#library(xtable); library(rlang);library(glue); library(matrixStats); library(reshape); library(gridExtra); library(rockchalk); library(MASS);  library(locfit)
+#library(optmatch); library(DOS); library(PerformanceAnalytics); library(Hmisc); library(tableone); library(splitstackshape); library(clubSandwich); library(mgsub)
+#library(rmutil); library(reshape2); library(stats)
+
+library(data.table); library(plyr); library(dplyr); library(rlang); library(rlist)
+library(nnet); library(locfit)
+library(Matching); library(sandwich); library(clubSandwich); library(lmtest)
+library(mgsub)
 
 ########################################################################
 # source for Simulations_studies
@@ -17,7 +18,7 @@ source("Simulations_studies/sim_post_matching_analysis/sim_regression_estimators
 source("Simulations_studies/sim_tables_and_figures/table_design_multiple_func.R")
 source("Simulations_studies/sim_tables_and_figures/coverage_naive_est.R")
 #############################################################################################
-set.seed(100)
+set.seed(101)
 #############################################################################################
 # treatment probability
 prob_A = 0.5

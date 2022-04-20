@@ -1,10 +1,8 @@
-library(xtable); library(rlang);library(glue)
-# library(multilevelMatching); library(PerformanceAnalytics); library(lmtest); library(caret);
-library(matrixStats); library(data.table); library(dplyr); library(plyr); library(reshape); library(MASS); library(Hmisc); 
-library(ggplot2); library(stats); library(rlist); library(mgsub); library(reshape2); library(gridExtra)
-library(optmatch); library(DOS); library(Matching); library(sandwich); library(rmutil); library(clubSandwich); library(tableone)
-library(sandwich); library(lmtest); library(rmutil); library(splitstackshape); library(PerformanceAnalytics)
-library(data.table); library(dplyr); library(plyr); library(rlist); library(nnet); library(rockchalk);  library(locfit)
+library(data.table); library(plyr); library(dplyr); library(rlang); library(rlist)
+library(nnet); library(locfit)
+library(Matching); library(sandwich); library(clubSandwich); library(lmtest)
+library(mgsub)
+
 
 ########################################################################
 # source for Simulations_studies
@@ -14,7 +12,8 @@ source("Simulations_studies/sim_DGM_and_simulations/simulation_run_CPSR.R")
 source("Ding_Lu_EM/Sequencial_logistic_regressions/EM_2log_CPSR.R") 
 source("Simulations_studies/sim_matching_procedure/matching_multiple.R")
 source("Simulations_studies/sim_post_matching_analysis/sim_regression_estimators.R")
-
+source("Simulations_studies/sim_tables_and_figures/table_design_multiple_func.R")
+source("Simulations_studies/sim_tables_and_figures/coverage_naive_est.R")
 #############################################################################################
 set.seed(101)
 #############################################################################################
@@ -39,18 +38,10 @@ xi_est = xi
 iterations = 200; epsilon_EM = 10^-6
 #############################################################################################
 
-##########################################################
+###############################################################################################
 # beta ####
 # with interactions between A and X:
 betas_GPI = as.matrix(rbind(c(22,5,2,1), c(20,3,3,0))) # cont_x=3
-betas_GPI = as.matrix(rbind(c(22,5,2,1,3,5), c(20,3,3,0,1,3))) # cont_x=5
-betas_GPI = as.matrix(rbind(c(22,rep(c(5,2,1,3,5),2)), c(20,rep(c(3,3,0,1,3),2)))) # cont_x=10 
-
-# without interactions between A and X: "simple effect" is 2
-betas_GPI = as.matrix(rbind(c(22,3,4,5), c(20,3,4,5))) # cont_x=3
-betas_GPI = as.matrix(rbind(c(22,3,4,5,1,3), c(20,3,4,5,1,3))) # cont_x=5
-betas_GPI = as.matrix(rbind(c(22,rep(c(5,2,1,3,5),2)), c(20,rep(c(5,2,1,3,5),2)))) # cont_x=10
-
 rownames(betas_GPI) = c("beta_treatment", "beta_control")
 ###############################################################################################
 
@@ -62,16 +53,16 @@ rho_GPI_PO = 0.4
 ###############################################################################################
 
 ###############################################################################################
-# small pi pro 3X  ####
+# Large pi pro 3X ####
 mat_gamma = matrix(c(
-  c(-0.1, rep(0.07, dim_x-1)), c(-0.9, rep(-0.45, dim_x-1)) 
-  ,c(0.51, rep(0.51, dim_x-1)), c(-0.19, rep(-0.47, dim_x-1))) ,nrow = 2, byrow = T)
+  c(-0.15, rep(0.1, dim_x-1)), c(0.39, rep(0.4, dim_x-1))
+  ,c(0.46, rep(0.56, dim_x-1)), c(1.4, rep(-0.05, dim_x-1))) ,nrow = 2, byrow = T) 
 # assign 0's to gamma_ns and add coefficients names ####
 gamma_ns = rep(0, dim_x)
 colnames(mat_gamma) = paste0( "gamma", paste(rep(c(0:(dim_x-1)), times = 2)), rep(c("ah", "pro"), each = dim_x) )
 ###############################################################################################
 
-param_n = 2000; param_n_sim = 1000 # param_n = 2000; param_n_sim = 1000
+param_n = 2000; param_n_sim = 2 # param_n = 2000; param_n_sim = 1000
 caliper = 0.25; match_on = "O11_posterior_ratio" 
 mu_x_fixed = FALSE # mat_x_as; x_as = mat_x_as[1,]
 
@@ -182,7 +173,6 @@ means_by_subset_sum = mat_all_means_by_subset[grep("S1|mean_as",
 means_by_subset_sum = means_by_subset_sum[-grep("_approx", rownames(means_by_subset_sum)),]
 #pi_from_mat_all_estimators VS 
 pis = mat_all_estimators[grep("_mean",rownames(mat_all_estimators)),grep("pi",colnames(mat_all_estimators))] %>% round(3)
-pis = data.frame(pi_as=pis$pi_as, pi_pro=pis$pi_pro, pi_ns=pis$pi_ns)
 ########################################################################
 
 ########################################################################
@@ -204,6 +194,15 @@ final_tables_crude = adjustments_for_final_tables_crude_est(final_tables)
 
 ########################################################################
 # save ####
+Large_pi_pro = TRUE
+main_path = paste0('/a/home/cc/stud_math/tamirzehavi/MatchingSACE/Simulation_studies/Data/')
+path = paste0(main_path, 'True_outcome_with_interactions/Correct_spec_outcome/',
+          ifelse(misspec_PS==0, "Correct_spec_PS/", "Mis_spec_PS/"), paste0(cont_x, "X/"),
+          ifelse(Large_pi_pro, "Large_pi_pro/", "Low_pi_pro/"), "xi = ", job_id, "/")
 
-
+save(final_tables_general, file = paste0(path, 'final_tables_general_',job_id,'.Rdata'))
+save(final_tables_crude, file = paste0(path, 'final_tables_crude_',job_id,'.Rdata'))
+save(list_all_CI_temp, file = paste0(path, 'list_all_CI_temp_',job_id,'.Rdata'))
+save(mat_all_means_by_subset, file = paste0(path, 'mat_all_means_by_subset_',job_id,'.Rdata'))
+save(pis, file = paste0(path, 'pis_',job_id,'.Rdata'))
 ########################################################################

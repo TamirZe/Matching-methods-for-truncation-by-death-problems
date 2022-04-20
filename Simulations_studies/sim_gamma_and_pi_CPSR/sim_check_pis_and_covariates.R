@@ -19,7 +19,7 @@ extract_pis_from_scenarios = function(nn=250000, xi=0, misspec_PS=0){
   return(list(mat_pis=mat_pis, mat_x_by_g_A=mat_x_by_g_A, big_lst=big_lst, mat_x_as=mat_x_as))
 }
 mat_gamma[,c(1,2,dim_x+1,dim_x+2)]
-extract_pis_lst = extract_pis_from_scenarios(nn=1000000, xi=xi, misspec_PS=2); mat_pis_per_gamma = extract_pis_lst$mat_pis
+extract_pis_lst = extract_pis_from_scenarios(nn=1000000, xi=xi, misspec_PS=0); mat_pis_per_gamma = extract_pis_lst$mat_pis
 mat_pis_per_gamma
 
 

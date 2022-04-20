@@ -1,9 +1,11 @@
-library(rlist); library(locfit); library(nnet); library(xtable); library(rlang);library(glue)
-# library(multilevelMatching); library(PerformanceAnalytics); library(lmtest); library(caret);
-library(matrixStats); library(data.table); library(dplyr); library(plyr); library(reshape); library(MASS); library(Hmisc); 
-library(ggplot2); library(rockchalk); library(stats); library(rlist); library(mgsub); library(reshape2); library(gridExtra)
-library(optmatch); library(DOS); library(Matching); library(sandwich); library(rmutil); library(clubSandwich); library(tableone)
-library(sandwich); library(lmtest); library(rmutil); library(splitstackshape); library(PerformanceAnalytics)
+#library(xtable); library(rlang);library(glue); library(matrixStats); library(reshape); library(gridExtra); library(rockchalk); library(MASS);  library(locfit)
+#library(optmatch); library(DOS); library(PerformanceAnalytics); library(Hmisc); library(tableone); library(splitstackshape); library(clubSandwich); library(mgsub)
+#library(rmutil); library(reshape2); library(stats)
+
+library(data.table); library(plyr); library(dplyr); library(rlang); library(rlist)
+library(nnet); library(locfit)
+library(Matching); library(sandwich); library(clubSandwich); library(lmtest)
+library(mgsub)
 
 ########################################################################
 # source for Simulations_studies
