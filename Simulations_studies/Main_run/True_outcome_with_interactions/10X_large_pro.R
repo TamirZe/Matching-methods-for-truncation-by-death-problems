@@ -66,8 +66,8 @@ gamma_ns = rep(0, dim_x)
 colnames(mat_gamma) = paste0( "gamma", paste(rep(c(0:(dim_x-1)), times = 2)), rep(c("ah", "pro"), each = dim_x) )
 
 # mat_gamma[,c(1,2,dim_x+1,dim_x+2)]
-extract_pis_lst = extract_pis_from_scenarios(nn=1000000, xi=xi, misspec_PS=0); mat_pis_per_gamma = extract_pis_lst$mat_pis
-mat_pis_per_gamma
+#extract_pis_lst = extract_pis_from_scenarios(nn=1000000, xi=xi, misspec_PS=0); mat_pis_per_gamma = extract_pis_lst$mat_pis
+#mat_pis_per_gamma
 ###############################################################################################
 
 param_n = 2000; param_n_sim = 1000 # param_n = 2000; param_n_sim = 1000
@@ -132,6 +132,7 @@ if(job_id >=0 & job_id <=3){
   # check ties in BC with caliper ####
   ties_setA = sum(abs(list.rbind(list_all_BCclpr[[1]])$trt_added_by_ties))
   ties_setB = sum(abs(list.rbind(list_all_BCclpr[[2]])$trt_added_by_ties))
+  ties = c(ties_setA=ties_setA, ties_setB=ties_setB)
   ########################################################################
   
   ########################################################################
@@ -221,6 +222,7 @@ if(job_id >=0 & job_id <=3){
   save(list_all_CI_temp, file = paste0(path, 'list_all_CI_temp_',job_id,'.Rdata'))
   save(mat_all_means_by_subset, file = paste0(path, 'mat_all_means_by_subset_',job_id,'.Rdata'))
   save(pis, file = paste0(path, 'pis_',job_id,'.Rdata'))
+  save(ties, file = paste0(path, 'ties_',job_id,'.Rdata'))
   ########################################################################
   
 }else{

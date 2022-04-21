@@ -130,6 +130,7 @@ for ( k in c(1 : nrow(mat_gamma)) ){
 # check ties in BC with caliper ####
 ties_setA = sum(abs(list.rbind(list_all_BCclpr[[1]])$trt_added_by_ties))
 ties_setB = sum(abs(list.rbind(list_all_BCclpr[[2]])$trt_added_by_ties))
+ties = c(ties_setA=ties_setA, ties_setB=ties_setB)
 ########################################################################
 
 ########################################################################
