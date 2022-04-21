@@ -209,4 +209,9 @@ final_tables_general$'_S1'
 ########################################################################
 
 
-
+save(final_tables_general, file = "final_tables_general.Rdata")
+save(final_tables_crude, file = "final_tables_crude.Rdata")
+save(list_all_CI_temp, file = "list_all_CI_temp.Rdata")
+save(mat_all_means_by_subset, file = "mat_all_means_by_subset.Rdata")
+save(pis, file = "pis.Rdata")
+save(ties, file = "ties.Rdata")
