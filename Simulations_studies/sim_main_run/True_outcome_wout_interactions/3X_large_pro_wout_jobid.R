@@ -48,8 +48,8 @@ iterations = 200; epsilon_EM = 10^-6
 
 ###############################################################################################
 # beta ####
-# with interactions between A and X:
-betas_GPI = as.matrix(rbind(c(22,5,2,1), c(20,3,3,0))) # cont_x=3
+# wout interactions between A and X:
+betas_GPI = as.matrix(rbind(c(22,3,4,5), c(20,3,4,5))) # cont_x=3
 rownames(betas_GPI) = c("beta_treatment", "beta_control")
 ###############################################################################################
 

@@ -15,10 +15,10 @@ mean_x = rep(0.5, cont_x); var_x = rep(1, cont_x)
 #############################################################################################
 # misspec parameters (for PS model and Y model:
 # misspec_PS: 0 <- NO, 1:only PS model, 2: PS model (possibly also Y)
-funcform_mis_out = FALSE
+misspec_PS = 0 # 0: no misspec of PS model # 2: PS functional form misspecification
 funcform_factor_sqr=-3; funcform_factor_log=3
 mean_x_misspec = rep(0.5, dim_x_misspec)
-misspec_PS = 0 # 0: no misspec of PS model # 2: PS functional form misspecification
+misspec_outcome = 0
 #############################################################################################
 
 #############################################################################################
@@ -62,7 +62,7 @@ mu_x_fixed = FALSE; mat_x_as; x_as = mat_x_as[1,]
 two_log_EM = simulate_data_run_EM_and_match(only_EM_bool=TRUE, return_EM_PS=FALSE, index_set_of_params=1,
                                             gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns, xi=xi,
                                             two_log_models=TRUE, two_log_est=TRUE, 
-                                            misspec_PS=misspec_PS, funcform_mis_out=FALSE,
+                                            misspec_PS=misspec_PS, misspec_outcome=0,
                                             funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log,
                                             param_n=100, param_n_sim=2,
                                             iterations=iterations, epsilon_EM=epsilon_EM, caliper=0.25,

@@ -35,8 +35,8 @@ mean_x = rep(0.5, cont_x); var_x = rep(1, cont_x)
 # misspec parameters (for PS model and Y model:
 # misspec_PS: 0 <- NO, 1:only PS model, 2: PS model (possibly also Y)
 misspec_PS = 0 # 0: no misspec of PS model # 2: PS functional form misspecification
-funcform_mis_out = FALSE
 funcform_factor_sqr=-3; funcform_factor_log=3
+misspec_outcome = 0
 
 # EM convergence parameters
 iterations = 200; epsilon_EM = 10^-6
@@ -98,10 +98,10 @@ if(job_id >=0 & job_id <=3){
     gamma_ns=gamma_ns
     start_time <- Sys.time()
     EM_and_matching = simulate_data_run_EM_and_match(only_EM_bool=FALSE, return_EM_PS=FALSE, index_set_of_params=k,
-                                                     gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns, xi=xi, xi_est=xi_est, two_log_models=TRUE, two_log_est_EM=FALSE,
-                                                     misspec_PS=misspec_PS, funcform_mis_out=FALSE, funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log, 
-                                                     param_n=param_n, param_n_sim=param_n_sim, iterations=iterations, epsilon_EM=epsilon_EM, caliper=caliper,
-                                                     match_on=match_on, mu_x_fixed=mu_x_fixed, x_as=NULL)
+               gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns, xi=xi, xi_est=xi_est, two_log_models=TRUE, two_log_est_EM=FALSE,
+               misspec_PS=misspec_PS, misspec_outcome=misspec_outcome, funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log, 
+               param_n=param_n, param_n_sim=param_n_sim, iterations=iterations, epsilon_EM=epsilon_EM, caliper=caliper,
+               match_on=match_on, mu_x_fixed=mu_x_fixed, x_as=NULL)
     
     mat_SACE_estimators = EM_and_matching[["mat_param_estimators"]]
     df_parameters = matrix(rep(as.numeric(mat_gamma[k,])
@@ -213,7 +213,8 @@ if(job_id >=0 & job_id <=3){
   # save ####
   Large_pi_pro = TRUE
   path_data = paste0(main_path, "Data/") 
-  path = paste0(path_data, "True_outcome_with_interactions/Correct_spec_outcome/",
+  path = paste0(path_data, "True_outcome_with_interactions/",
+                ifelse(misspec_outcome==0, "Correct_spec_outcome/", "Mis_spec_outcome/"),
                 ifelse(misspec_PS==0, "Correct_spec_PS/", "Mis_spec_PS/"), paste0(cont_x, "X/"),
                 ifelse(Large_pi_pro, "Large_pi_pro/", "Low_pi_pro/"), "xi = ", xi, "/")
   

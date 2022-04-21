@@ -29,14 +29,14 @@ prob_A = 0.5
 
 # parameters for simulating X
 #@@@@@@@@@@@@ dim_x includes intercept @@@@@@@@@@@@@@@
-dim_x = 4; cont_x = 3; categ_x = 0
+dim_x = 6; cont_x = 5; categ_x = 0
 mean_x = rep(0.5, cont_x); var_x = rep(1, cont_x)
 
 # misspec parameters (for PS model and Y model:
 # misspec_PS: 0 <- NO, 1:only PS model, 2: PS model (possibly also Y)
 misspec_PS = 0 # 0: no misspec of PS model # 2: PS functional form misspecification
 funcform_factor_sqr=-3; funcform_factor_log=3
-misspec_outcome = 0
+misspec_outcome = FALSE
 
 # EM convergence parameters
 iterations = 200; epsilon_EM = 10^-6
@@ -44,8 +44,8 @@ iterations = 200; epsilon_EM = 10^-6
 
 ###############################################################################################
 # beta ####
-# with interactions between A and X:
-betas_GPI = as.matrix(rbind(c(22,5,2,1), c(20,3,3,0))) # cont_x=3
+# wout interactions between A and X:
+betas_GPI = as.matrix(rbind(c(22,3,4,5,1,3), c(20,3,4,5,1,3))) # cont_x=5
 rownames(betas_GPI) = c("beta_treatment", "beta_control")
 ###############################################################################################
 
@@ -57,10 +57,10 @@ rho_GPI_PO = 0.4
 ###############################################################################################
 
 ###############################################################################################
-# Low pi pro 3X ####
+# Low pi pro 5X ####
 mat_gamma = matrix(c(
-  c(-0.1, rep(0.07, dim_x-1)), c(-0.9, rep(-0.45, dim_x-1)) 
-  ,c(0.51, rep(0.51, dim_x-1)), c(-0.19, rep(-0.47, dim_x-1))) ,nrow = 2, byrow = T)
+  c(0, rep(0, dim_x-1)), c(-0.26, rep(-0.63, dim_x-1))
+  ,c(-0.26, rep(0.75, dim_x-1)), c(-0.17, rep(-0.42, dim_x-1))) ,nrow = 2, byrow = T)
 # assign 0's to gamma_ns and add coefficients names ####
 gamma_ns = rep(0, dim_x)
 colnames(mat_gamma) = paste0( "gamma", paste(rep(c(0:(dim_x-1)), times = 2)), rep(c("ah", "pro"), each = dim_x) )

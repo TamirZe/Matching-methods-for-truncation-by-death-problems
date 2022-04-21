@@ -44,8 +44,8 @@ iterations = 200; epsilon_EM = 10^-6
 
 ###############################################################################################
 # beta ####
-# with interactions between A and X:
-betas_GPI = as.matrix(rbind(c(22,5,2,1), c(20,3,3,0))) # cont_x=3
+# wout interactions between A and X:
+betas_GPI = as.matrix(rbind(c(22,3,4,5), c(20,3,4,5))) # cont_x=3
 rownames(betas_GPI) = c("beta_treatment", "beta_control")
 ###############################################################################################
 
@@ -57,10 +57,10 @@ rho_GPI_PO = 0.4
 ###############################################################################################
 
 ###############################################################################################
-# Low pi pro 3X ####
+# Large pi pro 3X ####
 mat_gamma = matrix(c(
-  c(-0.1, rep(0.07, dim_x-1)), c(-0.9, rep(-0.45, dim_x-1)) 
-  ,c(0.51, rep(0.51, dim_x-1)), c(-0.19, rep(-0.47, dim_x-1))) ,nrow = 2, byrow = T)
+  c(-0.15, rep(0.1, dim_x-1)), c(0.39, rep(0.4, dim_x-1))
+  ,c(0.46, rep(0.56, dim_x-1)), c(1.4, rep(-0.05, dim_x-1))) ,nrow = 2, byrow = T) 
 # assign 0's to gamma_ns and add coefficients names ####
 gamma_ns = rep(0, dim_x)
 colnames(mat_gamma) = paste0( "gamma", paste(rep(c(0:(dim_x-1)), times = 2)), rep(c("ah", "pro"), each = dim_x) )
@@ -82,7 +82,7 @@ if(job_id >=0 & job_id <=3){
   xi = xi_values[job_id+1]
   xi_est = xi
   print(paste0('xi_',xi))
-  
+
   param_measures = c("mean","med","sd","MSE"); num_of_param_measures_per_param_set = length(param_measures)
   list_all_mat_SACE_estimators <- list_all_WLS_NOint_regression_estimators <- list_all_WLS_YESint_regression_estimators <-
     list_all_OLS_NOint_regression_estimators <- list_all_OLS_YESint_regression_estimators <- list_all_CI <- 
@@ -98,10 +98,10 @@ if(job_id >=0 & job_id <=3){
     gamma_ns=gamma_ns
     start_time <- Sys.time()
     EM_and_matching = simulate_data_run_EM_and_match(only_EM_bool=FALSE, return_EM_PS=FALSE, index_set_of_params=k,
-                                                     gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns, xi=xi, xi_est=xi_est, two_log_models=TRUE, two_log_est_EM=FALSE,
-                                                     misspec_PS=misspec_PS, misspec_outcome=misspec_outcome, funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log, 
-                                                     param_n=param_n, param_n_sim=param_n_sim, iterations=iterations, epsilon_EM=epsilon_EM, caliper=caliper,
-                                                     match_on=match_on, mu_x_fixed=mu_x_fixed, x_as=NULL)
+               gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns, xi=xi, xi_est=xi_est, two_log_models=TRUE, two_log_est_EM=FALSE,
+               misspec_PS=misspec_PS, misspec_outcome=misspec_outcome, funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log, 
+               param_n=param_n, param_n_sim=param_n_sim, iterations=iterations, epsilon_EM=epsilon_EM, caliper=caliper,
+               match_on=match_on, mu_x_fixed=mu_x_fixed, x_as=NULL)
     
     mat_SACE_estimators = EM_and_matching[["mat_param_estimators"]]
     df_parameters = matrix(rep(as.numeric(mat_gamma[k,])
@@ -211,7 +211,7 @@ if(job_id >=0 & job_id <=3){
   
   ########################################################################
   # save ####
-  Large_pi_pro = FALSE
+  Large_pi_pro = TRUE
   path_data = paste0(main_path, "Data/") 
   path = paste0(path_data, "True_outcome_with_interactions/",
                 ifelse(misspec_outcome==0, "Correct_spec_outcome/", "Mis_spec_outcome/"),
@@ -225,7 +225,7 @@ if(job_id >=0 & job_id <=3){
   save(pis, file = paste0(path, 'pis_',job_id,'.Rdata'))
   save(ties, file = paste0(path, 'ties_',job_id,'.Rdata'))
   ########################################################################
-  
+
 }else{
   stop(' Error job id not in 0-3')
 }
