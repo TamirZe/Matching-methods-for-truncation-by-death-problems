@@ -50,39 +50,14 @@ add_bias_tables = function(lst, estimators_vec=NULL, N_obs, num_of_x,
 ##################################################################################################
 
 ##################################################################################################
-# path to tables ####
-# no misspec
-# 3X
-small_pro_path3 = "C:/Users/tamir/Documents/R projects/AA Thesis Causal inference/Simulations principal score estimation/R data/ding EM code tilde NEW/caliper 0.25/model with interaction/no misspec/small pro/3X/"
-large_pro_path3 = "C:/Users/tamir/Documents/R projects/AA Thesis Causal inference/Simulations principal score estimation/R data/ding EM code tilde NEW/caliper 0.25/model with interaction/no misspec/large pro/3X/"
-# 5X
-small_pro_path5 = "C:/Users/tamir/Documents/R projects/AA Thesis Causal inference/Simulations principal score estimation/R data/ding EM code tilde NEW/caliper 0.25/model with interaction/no misspec/small pro/5X/"
-large_pro_path5 = "C:/Users/tamir/Documents/R projects/AA Thesis Causal inference/Simulations principal score estimation/R data/ding EM code tilde NEW/caliper 0.25/model with interaction/no misspec/large pro/5X/"
-# 10X
-small_pro_path10 = "C:/Users/tamir/Documents/R projects/AA Thesis Causal inference/Simulations principal score estimation/R data/ding EM code tilde NEW/caliper 0.25/model with interaction/no misspec/small pro/10X/"
-large_pro_path10 = "C:/Users/tamir/Documents/R projects/AA Thesis Causal inference/Simulations principal score estimation/R data/ding EM code tilde NEW/caliper 0.25/model with interaction/no misspec/large pro/10X/"
-
-# Func Form misspec
-# 3X
-small_pro_path3 = "C:/Users/tamir/Documents/R projects/AA Thesis Causal inference/Simulations principal score estimation/R data/ding EM code tilde NEW/caliper 0.25/model with interaction/Func Form/mis2 ff small pro -3 3/3X/"
-large_pro_path3 = "C:/Users/tamir/Documents/R projects/AA Thesis Causal inference/Simulations principal score estimation/R data/ding EM code tilde NEW/caliper 0.25/model with interaction/Func Form/mis2 ff large pro -3 3/3X/"
-# 5X
-small_pro_path5 = "C:/Users/tamir/Documents/R projects/AA Thesis Causal inference/Simulations principal score estimation/R data/ding EM code tilde NEW/caliper 0.25/model with interaction/Func Form/mis2 ff small pro -3 3/5X/"
-large_pro_path5 = "C:/Users/tamir/Documents/R projects/AA Thesis Causal inference/Simulations principal score estimation/R data/ding EM code tilde NEW/caliper 0.25/model with interaction/Func Form/mis2 ff large pro -3 3/5X/"
-# 10X
-small_pro_path10 = "C:/Users/tamir/Documents/R projects/AA Thesis Causal inference/Simulations principal score estimation/R data/ding EM code tilde NEW/caliper 0.25/model with interaction/Func Form/mis2 ff small pro -3 3/10X/"
-large_pro_path10 = "C:/Users/tamir/Documents/R projects/AA Thesis Causal inference/Simulations principal score estimation/R data/ding EM code tilde NEW/caliper 0.25/model with interaction/Func Form/mis2 ff large pro -3 3/10X/"
-##################################################################################################
-
-##################################################################################################
 # GENERAL matching estimators ####
 # read data: matching on mahalanobis with PS caliper - several estimators (final_tables_general)
-tables_small_pro3 = get(load(paste0(small_pro_path3, "final_tables_general.RData"))) #tables_small_pro = get(tables_small_pro)
-tables_large_pro3 = get(load(paste0(large_pro_path3, "final_tables_general.RData"))) #tables_large_pro = get(tables_large_pro)
-tables_small_pro5 = get(load(paste0(small_pro_path5, "final_tables_general.RData"))) #tables_small_pro = get(tables_small_pro)
-tables_large_pro5 = get(load(paste0(large_pro_path5, "final_tables_general.RData"))) #tables_large_pro = get(tables_large_pro)
-tables_small_pro10 = get(load(paste0(small_pro_path10, "final_tables_general.RData"))) #tables_small_pro = get(tables_small_pro)
-tables_large_pro10 = get(load(paste0(large_pro_path10, "final_tables_general.RData"))) #tables_large_pro = get(tables_large_pro)
+tables_small_pro3 = get(load(paste0(small_pro_path3, "final_tables_general_", ind,".RData"))) #tables_small_pro = get(tables_small_pro)
+tables_large_pro3 = get(load(paste0(large_pro_path3, "final_tables_general_", ind,".RData"))) #tables_large_pro = get(tables_large_pro)
+tables_small_pro5 = get(load(paste0(small_pro_path5, "final_tables_general_", ind,".RData"))) #tables_small_pro = get(tables_small_pro)
+tables_large_pro5 = get(load(paste0(large_pro_path5, "final_tables_general_", ind,".RData"))) #tables_large_pro = get(tables_large_pro)
+tables_small_pro10 = get(load(paste0(small_pro_path10, "final_tables_general_", ind,".RData"))) #tables_small_pro = get(tables_small_pro)
+tables_large_pro10 = get(load(paste0(large_pro_path10, "final_tables_general_", ind,".RData"))) #tables_large_pro = get(tables_large_pro)
 
 legend_levels = c("Crude Wout", "OLS inter", "Crude With", "WLS inter", "BC With", "DingLu MA")  # WLS or WLS inter
 estimators_vec = c("Crude Wout", "OLS inter Wout", "Crude With", "WLS inter With", "BC caliper With","DingLu MA")
@@ -122,7 +97,7 @@ small_large_pro$label = paste0("SACE: ", apply(temp, 1, function(x) paste(x, col
 
 # estimator by color, emp sd by size
 plot_general <- ggplot(small_large_pro, aes(x=k, y=Bias)) +
-  geom_point(aes(col = EstCombi, size = 7, shape = EstCombi)) + 
+  geom_point(aes(col = EstCombi, size = 7)) + # shape = EstCombi
   xlim("3", "5", "10") +
   labs(colour = "Estimator"
        #, size = "Emp SD"

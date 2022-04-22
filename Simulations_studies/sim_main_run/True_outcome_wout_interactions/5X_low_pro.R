@@ -36,7 +36,7 @@ mean_x = rep(0.5, cont_x); var_x = rep(1, cont_x)
 # misspec_PS: 0 <- NO, 1:only PS model, 2: PS model (possibly also Y)
 misspec_PS = 0 # 0: no misspec of PS model # 2: PS functional form misspecification
 funcform_factor_sqr=-3; funcform_factor_log=3
-misspec_outcome = FALSE
+misspec_outcome = 0
 
 # EM convergence parameters
 iterations = 200; epsilon_EM = 10^-6
@@ -74,6 +74,8 @@ param_n = 2000; param_n_sim = 1000 # param_n = 2000; param_n_sim = 1000
 caliper = 0.25; match_on = "O11_posterior_ratio" 
 mu_x_fixed = FALSE # mat_x_as; x_as = mat_x_as[1,]
 
+parameters_lst = list(prob_A=prob_A, dim_x=dim_x, misspec_PS=misspec_PS, misspec_outcome=misspec_outcome,
+                      param_n=param_n, param_n_sim=param_n_sim, caliper=caliper, match_on=match_on, mat_gamma=mat_gamma, betas_GPI=betas_GPI)
 
 if(job_id >=0 & job_id <=3){
   set.seed(101)
@@ -213,7 +215,7 @@ if(job_id >=0 & job_id <=3){
   # save ####
   Large_pi_pro = FALSE
   path_data = paste0(main_path, "Data/") 
-  path = paste0(path_data, "True_outcome_with_interactions/",
+  path = paste0(path_data, "True_outcome_wout_interactions/",
                 ifelse(misspec_outcome==0, "Correct_spec_outcome/", "Mis_spec_outcome/"),
                 ifelse(misspec_PS==0, "Correct_spec_PS/", "Mis_spec_PS/"), paste0(cont_x, "X/"),
                 ifelse(Large_pi_pro, "Large_pi_pro/", "Low_pi_pro/"), "xi = ", xi, "/")
@@ -224,6 +226,7 @@ if(job_id >=0 & job_id <=3){
   save(mat_all_means_by_subset, file = paste0(path, 'mat_all_means_by_subset_',job_id,'.Rdata'))
   save(pis, file = paste0(path, 'pis_',job_id,'.Rdata'))
   save(ties, file = paste0(path, 'ties_',job_id,'.Rdata'))
+  save(parameters_lst, file = paste0(path, 'parameters_lst_',job_id,'.Rdata'))
   ########################################################################
   
 }else{

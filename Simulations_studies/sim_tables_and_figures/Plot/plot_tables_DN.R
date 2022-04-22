@@ -6,7 +6,6 @@ small_large_pro$shape = mgsub(small_large_pro$Estimator, c("OLS|WLS|BC", " inter
 small_large_pro$shape[small_large_pro$shape!="Model-based"] = "other"
 small_large_pro$SE_bias = (small_large_pro$Est.SE - small_large_pro$Emp.SD) / small_large_pro$Emp.SD
 
-save(small_large_pro_ffmis, file = "small_large_pro_ffmis.RData")
 # TODO plot # ggpubr::show_point_shapes()
 # Bias  ####
 small_large_pro %>% filter(EstCombi %in% c("Crude With", "WLS inter",

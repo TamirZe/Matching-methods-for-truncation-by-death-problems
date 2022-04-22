@@ -37,7 +37,7 @@ mean_x = rep(0.5, cont_x); var_x = rep(1, cont_x)
 # misspec_PS: 0 <- NO, 1:only PS model, 2: PS model (possibly also Y)
 misspec_PS = 0 # 0: no misspec of PS model # 2: PS functional form misspecification
 funcform_factor_sqr=-3; funcform_factor_log=3
-misspec_outcome = FALSE
+misspec_outcome = 0
 
 # CPSR parameter 
 xi = 0
@@ -74,6 +74,8 @@ param_n = 2000; param_n_sim = 2 # param_n = 2000; param_n_sim = 1000
 caliper = 0.25; match_on = "O11_posterior_ratio" 
 mu_x_fixed = FALSE # mat_x_as; x_as = mat_x_as[1,]
 
+parameters_lst = list(prob_A=prob_A, dim_x=dim_x, misspec_PS=misspec_PS, misspec_outcome=misspec_outcome,
+                      param_n=param_n, param_n_sim=param_n_sim, caliper=caliper, match_on=match_on, mat_gamma=mat_gamma, betas_GPI=betas_GPI)
 
 param_measures = c("mean","med","sd","MSE"); num_of_param_measures_per_param_set = length(param_measures)
 list_all_mat_SACE_estimators <- list_all_WLS_NOint_regression_estimators <- list_all_WLS_YESint_regression_estimators <-
@@ -216,4 +218,5 @@ save(list_all_CI_temp, file = paste0(path, 'list_all_CI_temp_',job_id,'.Rdata'))
 save(mat_all_means_by_subset, file = paste0(path, 'mat_all_means_by_subset_',job_id,'.Rdata'))
 save(pis, file = paste0(path, 'pis_',job_id,'.Rdata'))
 save(ties, file = paste0(path, 'ties_',job_id,'.Rdata'))
+save(parameters_lst, file = paste0(path, 'parameters_lst_',job_id,'.Rdata'))
 ########################################################################
