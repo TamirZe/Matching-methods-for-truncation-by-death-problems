@@ -85,6 +85,7 @@ colnames(CI_naives_before_matching) = c("naive_without_matching", "survivors_nai
 
 ######################################################################## 
 # EM algorithm ####
+# xi_2log_PSPS_M_weighting
 est_ding_lst = PSPS_M_weighting(Z=data$A, D=data$S,
         X=as.matrix(subset(data, select = covariates_PS)), Y=data$Y, trc = TRUE, ep1 = 1, ep0 = 1, 
         beta.a = NULL, beta.n = NULL, iter.max = iterations, error0 = epsilon_EM) 

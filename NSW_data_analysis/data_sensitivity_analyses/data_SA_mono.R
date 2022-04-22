@@ -19,6 +19,7 @@ for (j in 1:length(xi_sensi_mono_names)) {
   # EM
   # calculate PS for the current xi
   tmp$g = ifelse( tmp$A==0 & tmp$S==1, "as", ifelse( tmp$A==1 & tmp$S==0, "ns", ifelse(tmp$A==1 & tmp$S==1, "pro", "pro") )  )
+  # xi_2log_PSPS_M_weighting
   est_ding_lst_SA_mono = xi_PSPS_M_weighting_SA(Z=tmp$A, D=tmp$S, X=as.matrix(subset(tmp, select = covariates_PS)),  
                         Y=tmp$Y, eta=xi, beta.c = NULL, beta.n = NULL)
   DING_model_assisted_sensi = est_ding_lst_SA_mono$AACE.reg
