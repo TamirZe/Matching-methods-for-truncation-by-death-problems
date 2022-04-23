@@ -49,15 +49,16 @@ add_bias_tables = function(lst, estimators_vec=NULL, N_obs, num_of_x,
 }
 ##################################################################################################
 
+# ind from plot_path, the index of xi in c(0,0.05,0.1,0.2) 
 ##################################################################################################
 # GENERAL matching estimators ####
-# read data: matching on mahalanobis with PS caliper - several estimators (final_tables_general) ####
-tables_small_pro3 = get(load(paste0(small_pro_path3, "final_tables_general_", ind,".RData"))) #tables_small_pro = get(tables_small_pro)
-tables_large_pro3 = get(load(paste0(large_pro_path3, "final_tables_general_", ind,".RData"))) #tables_large_pro = get(tables_large_pro)
-tables_small_pro5 = get(load(paste0(small_pro_path5, "final_tables_general_", ind,".RData"))) #tables_small_pro = get(tables_small_pro)
-tables_large_pro5 = get(load(paste0(large_pro_path5, "final_tables_general_", ind,".RData"))) #tables_large_pro = get(tables_large_pro)
-tables_small_pro10 = get(load(paste0(small_pro_path10, "final_tables_general_", ind,".RData"))) #tables_small_pro = get(tables_small_pro)
-tables_large_pro10 = get(load(paste0(large_pro_path10, "final_tables_general_", ind,".RData"))) #tables_large_pro = get(tables_large_pro)
+# read data: matching on mahalanobis with PS caliper - several estimators (final_tables_general)
+tables_small_pro3 = get(load(paste0(small_pro_path3, "final_tables_general_", ind,".RData"))) 
+tables_large_pro3 = get(load(paste0(large_pro_path3, "final_tables_general_", ind,".RData"))) 
+tables_small_pro5 = get(load(paste0(small_pro_path5, "final_tables_general_", ind,".RData"))) 
+tables_large_pro5 = get(load(paste0(large_pro_path5, "final_tables_general_", ind,".RData")))
+tables_small_pro10 = get(load(paste0(small_pro_path10, "final_tables_general_", ind,".RData"))) 
+tables_large_pro10 = get(load(paste0(large_pro_path10, "final_tables_general_", ind,".RData"))) 
 
 legend_levels = c("Crude Wout", "OLS inter", "Crude With", "WLS inter", "BC With", "DingLu MA")  # WLS or WLS inter
 estimators_vec = c("Crude Wout", "OLS inter Wout", "Crude With", "WLS inter With", "BC caliper With","DingLu MA")
@@ -91,7 +92,9 @@ small_large_pro = data.table(arrange(small_large_pro, protected, Pi_as, k))
 small_large_pro[, label := paste0(unique(SACE), collapse=","), by = c("protected", "Pi_as")]
 temp = apply(data.frame(list.rbind(strsplit(small_large_pro$label, ","))), 2 , as.numeric) %>% round(2)
 small_large_pro$label = paste0("SACE: ", apply(temp, 1, function(x) paste(x, collapse=", ")))
+##################################################################################################
 
+##################################################################################################
 # plot ####
 # http://www.cookbook-r.com/Graphs/Facets_(ggplot2)/ # https://www.datanovia.com/en/blog/ggplot-legend-title-position-and-labels # http://r-statistics.co/Complete-Ggplot2-Tutorial-Part2-Customizing-Theme-With-R-Code.html
 
