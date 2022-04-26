@@ -13,22 +13,21 @@ mean_x = rep(0.5, cont_x); var_x = rep(1, cont_x)
 #############################################################################################
 
 #############################################################################################
-# misspec parameters (for PS model and Y model:
+# misspec parameters (for PS model and Y model):
 # misspec_PS: 0 <- NO, 1:only PS model, 2: PS model (possibly also Y)
-misspec_PS = 0 # 0: no misspec of PS model # 2: PS functional form misspecification
-funcform_factor_sqr=-3; funcform_factor_log=3
+misspec_PS = 2 # 0: no misspec of PS model # 2: PS functional form misspecification
+funcform_factor_sqr=-3; funcform_factor_log=3 # funcform_factor_sqr=-3; funcform_factor_log=3
 mean_x_misspec = rep(0.5, dim_x_misspec)
 misspec_outcome = 0
 #############################################################################################
 
 #############################################################################################
 # CPSR parameter 
-xi = 0.5
-# for now, xi for DGM and xi for estimation are the same
-# xi_est = (or call THIS eta, as in DL EM)
+xi = 0.25
+xi_est = 0.25
 
 # EM convergence parameters
-iterations = 200; epsilon_EM = 10^-6
+iterations = 300; epsilon_EM = 10^-5
 #############################################################################################
 
 ###############################################################################################
@@ -44,12 +43,16 @@ rho_GPI_PO = 0.4 #0.4 #1
 ##########################################################
 
 #################################################################################################################
+# Large pi pro 5X ####
 mat_gamma = matrix(c(
-  c(-0.05, rep(0.16, dim_x-1)), c(-0.4, rep(-0.25, dim_x-1)) 
-  ,c(-0.5, rep(1.5, dim_x-1)), c(-0.25, rep(0.25, dim_x-1))) ,nrow = 2, byrow = T)
-gamma_ns = rep(0, dim_x)
-gamma_ah = as.numeric(mat_gamma[1, c(1:dim_x)])
-gamma_pro =  as.numeric(mat_gamma[1, (dim_x+1): (2*dim_x)])
+  c(-0.07, rep(0.03, dim_x-1)), c(0.41, rep(0.2, dim_x-1)) 
+  ,c(0.39, rep(0.33, dim_x-1)), c(0.85, rep(0.85, dim_x-1))) ,nrow = 2, byrow = T) 
+# assign 0's to gamma_ns and add coefficients names ####
+gamma_ns = rep(0, dim_x); gamma_ah = as.numeric(mat_gamma[1, c(1:dim_x)]); gamma_pro =  as.numeric(mat_gamma[1, (dim_x+1): (2*dim_x)])
+
+# mat_gamma[,c(1,2,dim_x+1,dim_x+2)]
+extract_pis_lst = extract_pis_from_scenarios(nn=300000, xi=xi, misspec_PS=2, two_log_models=T); mat_pis_per_gamma = extract_pis_lst$mat_pis
+mat_pis_per_gamma
 ##################################################################################################################
 
 ##################################################################################################################
@@ -59,12 +62,12 @@ mu_x_fixed = FALSE; mat_x_as; x_as = mat_x_as[1,]
 
 ##################################################################################################################
 # one_log_true_ah # two_log_EM_initial_ah # one_log_EM # two_log_EM 
-two_log_EM = simulate_data_run_EM_and_match(only_EM_bool=TRUE, return_EM_PS=FALSE, index_set_of_params=1,
-                                            gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns, xi=xi,
-                                            two_log_models=TRUE, two_log_est=TRUE, 
+log_EM = simulate_data_run_EM_and_match(only_EM_bool=TRUE, return_EM_PS=FALSE, index_set_of_params=1,
+                                            gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns, xi=xi, xi_est=xi_est,
+                                            two_log_models=TRUE, two_log_est=FALSE, 
                                             misspec_PS=misspec_PS, misspec_outcome=0,
                                             funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log,
-                                            param_n=100, param_n_sim=2,
+                                            param_n=2000, param_n_sim=150,
                                             iterations=iterations, epsilon_EM=epsilon_EM, caliper=0.25,
                                             match_on=match_on, mu_x_fixed=mu_x_fixed, x_as=NULL)
 
@@ -73,4 +76,24 @@ coeff_ah = list.rbind(log_EM$list_coeff_ah)
 apply(coeff_ah, 2, mean)
 coeff_pro = list.rbind(log_EM$list_coeff_pro)
 apply(coeff_pro, 2, mean)
+#################################################################################################################
+
+
+mat_gamma = matrix(c(
+  c(-2, rep(-1.8, dim_x-1)), c(0.41, rep(0.5, dim_x-1)) 
+  ,c(.39, rep(1.33, dim_x-1)), c(.5, rep(1.85, dim_x-1))) ,nrow = 2, byrow = T) 
+# assign 0's to gamma_ns and add coefficients names ####
+gamma_ns = rep(0, dim_x); gamma_ah = as.numeric(mat_gamma[1, c(1:dim_x)]); gamma_pro =  as.numeric(mat_gamma[1, (dim_x+1): (2*dim_x)])
+##################################################################################################################
+# sum_EM1 # sum_EM
+sum_EM = simulate_data_run_EM_and_match(only_EM_bool=FALSE, return_EM_PS=TRUE, index_set_of_params=1,
+                                        gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns, xi=xi, xi_est=xi_est,
+                                        two_log_models=TRUE, two_log_est=FALSE, 
+                                        misspec_PS=misspec_PS, misspec_outcome=0,
+                                        funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log,
+                                        param_n=10000, param_n_sim=1,
+                                        iterations=iterations, epsilon_EM=epsilon_EM, caliper=0.25,
+                                        match_on=match_on, mu_x_fixed=mu_x_fixed, x_as=NULL)
+
+
 #################################################################################################################

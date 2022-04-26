@@ -41,7 +41,7 @@ correct_out_mis_PS_path = paste0("C:/Users/tamir/Documents/A matching framework 
 
 correct_spec_outcome_path = paste0("C:/Users/tamir/Documents/A matching framework for truncation by death problems/Data_cluster/",
        ifelse(true_outcome_interactions, "True_outcome_with_interactions/", "True_outcome_wout_interactions/"), "Correct_spec_outcome/",
-       ifelse(correct_spec_PS, "Correct_spec_PS/", "Mis_spec_PS/"))
+       ifelse(correct_spec_PS, "Correct_spec_PS/", "Mis_spec_PS_new/"))
 
 # 3X
 small_pro_path3 = paste0(correct_spec_outcome_path, "3X/Large_pi_pro/", "xi = ", xi, "/")

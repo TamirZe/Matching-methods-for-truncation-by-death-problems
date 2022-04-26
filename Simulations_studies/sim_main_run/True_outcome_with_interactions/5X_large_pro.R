@@ -34,12 +34,12 @@ mean_x = rep(0.5, cont_x); var_x = rep(1, cont_x)
 
 # misspec parameters (for PS model and Y model:
 # misspec_PS: 0 <- NO, 1:only PS model, 2: PS model (possibly also Y)
-misspec_PS = 0 # 0: no misspec of PS model # 2: PS functional form misspecification
+misspec_PS = 2 # 0: no misspec of PS model # 2: PS functional form misspecification
 funcform_factor_sqr=-3; funcform_factor_log=3
 misspec_outcome = 0
 
 # EM convergence parameters
-iterations = 200; epsilon_EM = 10^-6
+iterations = 200; epsilon_EM = 10^-6 # 10^-6
 #############################################################################################
 
 ###############################################################################################
@@ -66,11 +66,11 @@ gamma_ns = rep(0, dim_x)
 colnames(mat_gamma) = paste0( "gamma", paste(rep(c(0:(dim_x-1)), times = 2)), rep(c("ah", "pro"), each = dim_x) )
 
 # mat_gamma[,c(1,2,dim_x+1,dim_x+2)]
-# extract_pis_lst = extract_pis_from_scenarios(nn=1000000, xi=xi, misspec_PS=0); mat_pis_per_gamma = extract_pis_lst$mat_pis
-# mat_pis_per_gamma
+extract_pis_lst = extract_pis_from_scenarios(nn=300000, xi=xi, misspec_PS=2, two_log_models=T); mat_pis_per_gamma = extract_pis_lst$mat_pis
+mat_pis_per_gamma
 ###############################################################################################
 
-param_n = 2000; param_n_sim = 1000 # param_n = 2000; param_n_sim = 1000
+param_n = 2000; param_n_sim = 75 # param_n = 2000; param_n_sim = 1000
 caliper = 0.25; match_on = "O11_posterior_ratio" 
 mu_x_fixed = FALSE # mat_x_as; x_as = mat_x_as[1,]
 
@@ -100,10 +100,10 @@ if(job_id >=0 & job_id <=3){
     gamma_ns=gamma_ns
     start_time <- Sys.time()
     EM_and_matching = simulate_data_run_EM_and_match(only_EM_bool=FALSE, return_EM_PS=FALSE, index_set_of_params=k,
-                                                     gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns, xi=xi, xi_est=xi_est, two_log_models=TRUE, two_log_est_EM=FALSE,
-                                                     misspec_PS=misspec_PS, misspec_outcome=misspec_outcome, funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log, 
-                                                     param_n=param_n, param_n_sim=param_n_sim, iterations=iterations, epsilon_EM=epsilon_EM, caliper=caliper,
-                                                     match_on=match_on, mu_x_fixed=mu_x_fixed, x_as=NULL)
+           gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns, xi=xi, xi_est=xi_est, two_log_models=TRUE, two_log_est_EM=FALSE,
+           misspec_PS=misspec_PS, misspec_outcome=misspec_outcome, funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log, 
+           param_n=param_n, param_n_sim=param_n_sim, iterations=iterations, epsilon_EM=epsilon_EM, caliper=caliper,
+           match_on=match_on, mu_x_fixed=mu_x_fixed, x_as=NULL)
     
     mat_SACE_estimators = EM_and_matching[["mat_param_estimators"]]
     df_parameters = matrix(rep(as.numeric(mat_gamma[k,])
@@ -208,7 +208,7 @@ if(job_id >=0 & job_id <=3){
   final_tables = TABLES_add_naive_and_ding(data_set_names_vec, lst_final_tables_ALL_est_ALL_dataset, naives_before_matching_coverage)
   final_tables_general = adjustments_for_final_tables(final_tables)
   final_tables_crude = adjustments_for_final_tables_crude_est(final_tables)
-  #final_tables_general$'_S1'
+  final_tables_general$'_S1'
   ########################################################################
   
   ########################################################################

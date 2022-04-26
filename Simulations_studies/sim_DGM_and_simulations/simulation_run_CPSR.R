@@ -1,5 +1,5 @@
 # misspec_PS: 0 <- NO mis, 2: add transformations to PS model, and remain original X's in outcome model.
-simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, xi, two_log_models=TRUE, param_n, 
+simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, xi, xi_est, two_log_models=TRUE, param_n, 
                                   misspec_PS, misspec_outcome=0,
                                   funcform_factor_sqr=0, funcform_factor_log=0, only_mean_x_bool=FALSE){
   if(!is.null(seed_num)){set.seed(seed_num)}
@@ -135,10 +135,10 @@ simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, 
   
   # estimation of strata proportions (under CPSR) 
   p1 = mean(filter(dt, A==1)$S); p0 = mean(filter(dt, A==0)$S)
-  pi_har_est = (xi/(1+xi))*p0
-  pi_as_est = (1 /(1 + xi))*p0
-  pi_ns_est = 1 - p1 - (xi/(1+xi))*p0
-  pi_pro_est = p1 - (1/(1+xi))*p0
+  pi_har_est = (xi_est/(1+xi_est))*p0
+  pi_as_est = (1/(1 + xi_est))*p0
+  pi_ns_est = 1 - p1 - (xi_est/(1+xi_est))*p0
+  pi_pro_est = p1 - (1/(1+xi_est))*p0
   pis_est = c(pi_har_est = pi_har_est, pi_as_est = pi_as_est, pi_ns_est = pi_ns_est, pi_pro_est = pi_pro_est)
   
   return(list(dt=dt, x_obs=x_obs, x_PS=x_PS, x_outcome=x,
@@ -173,7 +173,7 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
                  "index_EM_not_conv: ", index_EM_not_conv, ". real number of iterations: "  , real_iter_ind, "."))
     start_time1 <- Sys.time()
     list_data_for_EM_and_X = simulate_data_function(seed_num=NULL, gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns, 
-            xi=xi, two_log_models=two_log_models, param_n=param_n,
+            xi=xi, xi_est=xi_est, two_log_models=two_log_models, param_n=param_n,
             misspec_PS=misspec_PS, misspec_outcome=misspec_outcome, funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log)
     
     data_for_EM = list_data_for_EM_and_X$dt
@@ -260,6 +260,7 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
     O11_prior_ratio = pis_est["pi_as_est"] / (pis_est["pi_as_est"] + pis_est["pi_pro_est"])
     data_with_PS[, `:=` ( O11_posterior_ratio = EMest_p_as / (EMest_p_as + EMest_p_pro), O11_prior_ratio = O11_prior_ratio )]
     data_with_PS$W_1_as = data_with_PS$O11_posterior_ratio / O11_prior_ratio
+    data_with_PS$O11_posterior_ratio_true = data_with_PS$prob_as / (data_with_PS$prob_as + data_with_PS$prob_pro)
     # DL plain estimator and model assisted estimator
     DING_est = est_ding_lst$AACE
     DING_model_assisted_est_ps = est_ding_lst$AACE.reg
@@ -272,15 +273,21 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
     
     # EM summary
     if(return_EM_PS == TRUE){
-      PS_true_EM_compr = subset( data_with_PS, select = grep("^id$|^g$|prob.|EM",colnames(data_with_PS)) )
+      pis = data.frame(pis)
+      O11_prior_ratio_true = pis["pi_as"] / (pis["pi_as"] + pis["pi_pro"])
+      PS_true_EM_compr = subset( data_with_PS, select = grep("^id$|^g$|prob.|EM|O11_posterior_ratio|W_1_as",colnames(data_with_PS)) )
       PS_true_EM_compr = rapply(object = PS_true_EM_compr, f = round, classes = "numeric", how = "replace", digits = 3)
-      PS_true_EM_compr = data.frame(id = PS_true_EM_compr$id, g = PS_true_EM_compr$g,
+      PS_true_EM_compr = data.frame( id = PS_true_EM_compr$id, g = PS_true_EM_compr$g,
         prob_as = PS_true_EM_compr$prob_as, EMest_p_as=PS_true_EM_compr$EMest_p_as, diff = PS_true_EM_compr$prob_as - PS_true_EM_compr$EMest_p_as,
         prob_har = PS_true_EM_compr$prob_har, EMest_p_har=PS_true_EM_compr$EMest_p_har, 
         prob_ns = PS_true_EM_compr$prob_ns, EMest_p_ns=PS_true_EM_compr$EMest_p_ns,
-        prob_pro = PS_true_EM_compr$prob_pro, EMest_p_pro=PS_true_EM_compr$EMest_p_pro)
+        prob_pro = PS_true_EM_compr$prob_pro, EMest_p_pro=PS_true_EM_compr$EMest_p_pro,
+        O11_posterior_ratio_true = PS_true_EM_compr$O11_posterior_ratio_true, O11_posterior_ratio = PS_true_EM_compr$O11_posterior_ratio,
+        W_1_as_true = PS_true_EM_compr$O11_posterior_ratio_true / O11_prior_ratio, W_1_as = PS_true_EM_compr$W_1_as)
       return(list(data_with_PS=data_with_PS, PS_true_EM_compr=PS_true_EM_compr,
-                  OBS_table=OBS_table, pis=pis, pis_est=pis_est, EM_coeffs=EM_coeffs, beta_S0_given_A0=beta_S0_given_A0))
+                  O11_prior_ratio_true=O11_prior_ratio_true, O11_prior_ratio=O11_prior_ratio, OBS_table=OBS_table, 
+                  pis=pis, pis_est=pis_est, EM_coeffs=EM_coeffs, beta_S0=beta_S0, error=est_ding_lst$error,
+                  SACE=SACE, DL=DING_est, DL_MA=DING_model_assisted_est_ps))
     }
     
     # run for all options (3 options - full dataset, wout A=0,S=0, only S=1)
