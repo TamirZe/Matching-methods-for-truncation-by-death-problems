@@ -27,7 +27,7 @@ prob_A = 0.5
 
 # parameters for simulating X
 #@@@@@@@@@@@@ dim_x includes intercept @@@@@@@@@@@@@@@
-dim_x = 4; cont_x = 3; categ_x = 0; vec_p_categ = rep(0.5, categ_x); dim_x_misspec = 2
+dim_x = 11; cont_x = 10; categ_x = 0; vec_p_categ = rep(0.5, categ_x); dim_x_misspec = 2
 mean_x = rep(0.5, cont_x); var_x = rep(1, cont_x)
 
 # misspec parameters (for PS model and Y model:
@@ -72,7 +72,7 @@ gamma_ns = rep(0, dim_x)
 colnames(mat_gamma) = paste0( "gamma", paste(rep(c(0:(dim_x-1)), times = 2)), rep(c("ah", "pro"), each = dim_x) )
 
 mat_gamma[,c(1,2,dim_x+1,dim_x+2)]
-extract_pis_lst = extract_pis_from_scenarios(nn=1000000, xi=xi, misspec_PS=2); mat_pis_per_gamma = extract_pis_lst$mat_pis
+extract_pis_lst = extract_pis_from_scenarios(nn=500000, xi=xi, misspec_PS=0); mat_pis_per_gamma = extract_pis_lst$mat_pis
 mat_pis_per_gamma
 ##########################################################
 

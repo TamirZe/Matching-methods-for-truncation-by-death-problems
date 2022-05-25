@@ -244,7 +244,7 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
     data_with_PS = data.table(data_for_EM, PS_est)
     
     # if PS_est contains NAS, it probably implies that the EM process has not converged, so skip this iteration and go to the next
-    if( sum(is.na(PS_est)) > 0 ){
+    if( sum(is.na(PS_est)) > 0 ){ # or if(est_ding_lst$iter == iterations)
       index_EM_not_conv = index_EM_not_conv + 1
       list_EM_not_conv$probs[[index_EM_not_conv]] = PS_est
       #coeff_ah = est_ding_lst$beta.ah ; coeff_pro = est_ding_lst$coeff_pro
@@ -288,7 +288,8 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
                   pis=pis, pis_est=pis_est, EM_coeffs=EM_coeffs, 
                   O11_prior_ratio_true=O11_prior_ratio_true, O11_prior_ratio=O11_prior_ratio, OBS_table=OBS_table, 
                   beta_S0=beta_S0, error=est_ding_lst$error, mean_by_g=mean_by_g,
-                  SACE=SACE, DL=DING_est, DL_MA=DING_model_assisted_est_ps))
+                  SACE=SACE, DL=DING_est, DL_MA=DING_model_assisted_est_ps, 
+                  list_EM_not_conv=list_EM_not_conv, real_iter_ind=real_iter_ind))
     }
     
     # run for all options (3 options - full dataset, wout A=0,S=0, only S=1)
