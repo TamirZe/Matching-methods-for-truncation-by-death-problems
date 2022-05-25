@@ -82,6 +82,7 @@ simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, 
                     A = rbinom(param_n, 1, prob_A))
   data$S = ifelse((data$g == "as") | (data$g == "pro" & data$A == 1) | (data$g == "har" & data$A == 0), 1, 0)
   mean_by_g = data.table(data)[, lapply(.SD, mean), by="g"]
+  mean_by_g$g = mapvalues(mean_by_g$g, from = c("har", "as", "ns", "pro"), to = c(0:3))
   mean_by_A_g = data.table(data)[, lapply(.SD, mean), by=c("A", "g")] %>% arrange(g,A)
   x_har = filter(mean_by_g, g=="har") %>% subset(select = grep("X|^A$", colnames(mean_by_g))) %>% as.matrix
   x_as = filter(mean_by_g, g=="as") %>% subset(select = grep("X|^A$", colnames(mean_by_g))) %>% as.matrix
@@ -141,7 +142,7 @@ simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, 
   pi_pro_est = p1 - (1/(1+xi_est))*p0
   pis_est = c(pi_har_est = pi_har_est, pi_as_est = pi_as_est, pi_ns_est = pi_ns_est, pi_pro_est = pi_pro_est)
   
-  return(list(dt=dt, x_obs=x_obs, x_PS=x_PS, x_outcome=x,
+  return(list(dt=dt, x_obs=x_obs, x_PS=x_PS, x_outcome=x, mean_by_g=mean_by_g,
               OBS_table=OBS_table, pis=pis, pis_est=pis_est))
 }
 
@@ -157,10 +158,8 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
   # run over param_n_sim different samples, each with param_n observations
   WLS_NOint_mat_reg_estimators <- WLS_YESint_mat_reg_estimators <-
     OLS_NOint_mat_reg_estimators <- OLS_YESint_mat_reg_estimators <-
-    mat_param_estimators <- mat_excluded_included_matching <- 
-    CI_mat <- mat_diff_distance_aspr_asas <- mat_std_mean_diff <-  NULL
-  list_repeated_as_and_pro <- list_diff_distance_aspr_asas <- list_matched_units <- 
-    list_std_mean_diff <- list_means_by_subset <- list_EM_not_conv <- list_BCclpr <- list()
+    mat_param_estimators <- mat_excluded_included_matching <- CI_mat <- mat_std_mean_diff <-  NULL
+ list_std_mean_diff <- list_means_by_subset <- list_EM_not_conv <- list_BCclpr <- list_mean_by_g <- list()
   
   
   # run over param_n_sim different samples, each with param_n observations
@@ -177,6 +176,7 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
             misspec_PS=misspec_PS, misspec_outcome=misspec_outcome, funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log)
     
     data_for_EM = list_data_for_EM_and_X$dt
+    mean_by_g = list_data_for_EM_and_X$mean_by_g
     x = list_data_for_EM_and_X$x_obs; x_PS = data.frame(list_data_for_EM_and_X$x_PS)
     x_outcome = data.frame(list_data_for_EM_and_X$x_outcome)
     OBS_table = list_data_for_EM_and_X$OBS_table
@@ -259,7 +259,7 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
     # calculate O11_prior_ratio, O11_posterior_ratio and W_1_as
     O11_prior_ratio = pis_est["pi_as_est"] / (pis_est["pi_as_est"] + pis_est["pi_pro_est"])
     data_with_PS[, `:=` ( O11_posterior_ratio = EMest_p_as / (EMest_p_as + EMest_p_pro), O11_prior_ratio = O11_prior_ratio )]
-    data_with_PS$W_1_as = data_with_PS$O11_posterior_ratio / O11_prior_ratio
+    data_with_PS$W_1_as = data_with_PS$O11_posterior_ratio / O11_prior_ratio #data_with_PS$O11_posterior_ratio / O11_prior_ratio
     data_with_PS$O11_posterior_ratio_true = data_with_PS$prob_as / (data_with_PS$prob_as + data_with_PS$prob_pro)
     # DL plain estimator and model assisted estimator
     DING_est = est_ding_lst$AACE
@@ -284,9 +284,10 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
         prob_pro = PS_true_EM_compr$prob_pro, EMest_p_pro=PS_true_EM_compr$EMest_p_pro,
         O11_posterior_ratio_true = PS_true_EM_compr$O11_posterior_ratio_true, O11_posterior_ratio = PS_true_EM_compr$O11_posterior_ratio,
         W_1_as_true = PS_true_EM_compr$O11_posterior_ratio_true / O11_prior_ratio, W_1_as = PS_true_EM_compr$W_1_as)
-      return(list(data_with_PS=data_with_PS, PS_true_EM_compr=PS_true_EM_compr,
+      return(list(data_with_PS=data_with_PS, PS_true_EM_compr=PS_true_EM_compr, true_x_PS=x_PS,
+                  pis=pis, pis_est=pis_est, EM_coeffs=EM_coeffs, 
                   O11_prior_ratio_true=O11_prior_ratio_true, O11_prior_ratio=O11_prior_ratio, OBS_table=OBS_table, 
-                  pis=pis, pis_est=pis_est, EM_coeffs=EM_coeffs, beta_S0=beta_S0, error=est_ding_lst$error,
+                  beta_S0=beta_S0, error=est_ding_lst$error, mean_by_g=mean_by_g,
                   SACE=SACE, DL=DING_est, DL_MA=DING_model_assisted_est_ps))
     }
     
@@ -421,6 +422,9 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
     # list_means_by_subset
     list_means_by_subset[[i]] = means_by_subset_mat
     
+    #list_means_by_g
+    list_mean_by_g[[i]] = apply(as.matrix(arrange(mean_by_g, g)), 2, as.numeric)
+    
     # check ties in BC caliper
     list_BCclpr[[i]] = BCclpr_untrt_surv_matched_untrt_matched_trt[[2]]
     
@@ -494,6 +498,11 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
   # list_means_by_subset
   mean_list_means_by_subset = calculate_mean_repeated_as_and_pro(list_means_by_subset, FALSE)
   
+  # list_means_by_subset
+  #mean_list_by_g = calculate_mean_repeated_as_and_pro(list_mean_by_g, FALSE)
+  mean_list_by_g = apply(simplify2array(list_mean_by_g), 2, rowMeans, na.rm = TRUE)
+  #mean_list_by_g[,1] = mapvalues(as.numeric(mean_list_by_g[,1]), from = c(0:3), to = c("har", "as", "ns", "pro"))
+  
   return(list(mat_param_estimators = mat_param_estimators, 
               WLS_NOint_mat_reg_estimators = list_reg_LS$WLS_NOint_mat_reg_estimators,
               WLS_YESint_mat_reg_estimators = list_reg_LS$WLS_YESint_mat_reg_estimators,
@@ -502,6 +511,7 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
               CI_mat = CI_mat,
               coeffs_df = coeffs_df, 
               mean_list_means_by_subset = mean_list_means_by_subset,
+              mean_list_by_g=mean_list_by_g,
               list_EM_not_conv = list_EM_not_conv,
               list_BCclpr = list_BCclpr
   ))

@@ -11,13 +11,14 @@ library(mgsub)
 # source for Simulations_studies
 setwd("~/A matching framework for truncation by death problems")
 source("Simulations_studies/sim_DGM_and_simulations/simulation_run_CPSR.R")
+
 source("Simulations_studies/sim_gamma_and_pi_CPSR/sim_check_pis_and_covariates.R")
 #source("Ding_Lu/PS_M_weighting.R")
 source("Ding_Lu_EM/Sequencial_logistic_regressions/EM_2log_CPSR.R") 
 source("Simulations_studies/sim_matching_procedure/matching_multiple.R")
 source("Simulations_studies/sim_post_matching_analysis/sim_regression_estimators.R")
-source("Simulations_studies/sim_tables_and_figures/table_design_multiple_func.R")
-source("Simulations_studies/sim_tables_and_figures/coverage_naive_est.R")
+source("Simulations_studies/sim_tables_and_figures/Tables/table_design_multiple_func.R")
+source("Simulations_studies/sim_tables_and_figures/Tables/coverage_naive_est.R")
 #############################################################################################
 set.seed(101)
 #############################################################################################
@@ -26,19 +27,19 @@ prob_A = 0.5
 
 # parameters for simulating X
 #@@@@@@@@@@@@ dim_x includes intercept @@@@@@@@@@@@@@@
-dim_x = 11; cont_x = 10; categ_x = 0; vec_p_categ = rep(0.5, categ_x); dim_x_misspec = 2
+dim_x = 4; cont_x = 3; categ_x = 0; vec_p_categ = rep(0.5, categ_x); dim_x_misspec = 2
 mean_x = rep(0.5, cont_x); var_x = rep(1, cont_x)
 
 # misspec parameters (for PS model and Y model:
 # misspec_PS: 0 <- NO, 1:only PS model, 2: PS model (possibly also Y)
-misspec_PS = 0 # 0: no misspec of PS model # 2: PS functional form misspecification
-funcform_factor_sqr=-3; funcform_factor_log=3
+misspec_PS = 2 # 0: no misspec of PS model # 2: PS functional form misspecification
+funcform_factor_sqr=5; funcform_factor_log=-5 # funcform_factor_sqr=-3; funcform_factor_log=3
 mean_x_misspec = rep(0.5, dim_x_misspec)
 misspec_outcome = 0
 
 # CPSR parameter 
 xi = 0
-xi_est = xi
+xi_est = xi # xi
 # EM convergence parameters
 iterations = 200; epsilon_EM = 10^-6
 #############################################################################################
@@ -71,11 +72,11 @@ gamma_ns = rep(0, dim_x)
 colnames(mat_gamma) = paste0( "gamma", paste(rep(c(0:(dim_x-1)), times = 2)), rep(c("ah", "pro"), each = dim_x) )
 
 mat_gamma[,c(1,2,dim_x+1,dim_x+2)]
-extract_pis_lst = extract_pis_from_scenarios(nn=1000000, xi=xi, misspec_PS=0); mat_pis_per_gamma = extract_pis_lst$mat_pis
+extract_pis_lst = extract_pis_from_scenarios(nn=1000000, xi=xi, misspec_PS=2); mat_pis_per_gamma = extract_pis_lst$mat_pis
 mat_pis_per_gamma
 ##########################################################
 
-param_n = 2000; param_n_sim = 3 # param_n = 2000; param_n_sim = 1000
+param_n = 2000; param_n_sim = 50 # param_n = 2000; param_n_sim = 1000
 caliper = 0.25; match_on = "O11_posterior_ratio" 
 mu_x_fixed = FALSE # mat_x_as; x_as = mat_x_as[1,]
 
@@ -83,12 +84,13 @@ mu_x_fixed = FALSE # mat_x_as; x_as = mat_x_as[1,]
 param_measures = c("mean","med","sd","MSE"); num_of_param_measures_per_param_set = length(param_measures)
 list_all_mat_SACE_estimators <- list_all_WLS_NOint_regression_estimators <- list_all_WLS_YESint_regression_estimators <-
   list_all_OLS_NOint_regression_estimators <- list_all_OLS_YESint_regression_estimators <- list_all_CI <- 
-  list_all_EM_coeffs <- list_all_means_by_subset  <- list_all_EM_not_conv <- list_all_BCclpr <- list()
+  list_all_EM_coeffs <- list_all_means_by_subset  <- list_all_means_by_g <- list_all_EM_not_conv <- list_all_BCclpr <- list()
 
 
 ########################################################################
 # run over different values of gamma's: 1:nrow(mat_gamma) ####
 # param_n_sim * time per run * nrow(mat_gamma)
+colnames(mat_gamma) = paste0( "gamma", paste(rep(c(0:(dim_x-1)), times = 2)), rep(c("ah", "pro"), each = dim_x) )
 for ( k in c(1 : nrow(mat_gamma)) ){
   print(paste0("in the outer for loop ", k))
   gamma_ah=as.numeric(mat_gamma[k, c(1:dim_x)])
@@ -117,6 +119,7 @@ for ( k in c(1 : nrow(mat_gamma)) ){
   list_all_EM_coeffs[[k]] = EM_and_matching[["coeffs_df"]]
   list_all_means_by_subset[[k]] = EM_and_matching[["mean_list_means_by_subset"]]
   rownames(list_all_means_by_subset[[k]]) = paste0("s", k, rownames(list_all_means_by_subset[[k]]))
+  list_all_means_by_g[[k]] = EM_and_matching[["mean_list_by_g"]]
   list_all_EM_not_conv[[k]] = EM_and_matching[["list_EM_not_conv"]]
   if(! is_empty(list_all_EM_not_conv[[k]])){names(list_all_EM_not_conv[[k]]) = paste0("s", k, names(list_all_EM_not_conv[[k]]))}
   list_all_BCclpr[[k]] = EM_and_matching[["list_BCclpr"]]
@@ -176,8 +179,7 @@ mat_all_means_by_subset = NULL
 first_3_rows = c("mean_as", "mean_A0_S1", "mean_A1_S1_as")
 for(i in c(1:length(list_all_means_by_subset))){
   first_3_rows_ind = grep(paste0(first_3_rows, collapse = "|"), rownames(list_all_means_by_subset[[i]]))
-  mat_all_means_by_subset = rbind(mat_all_means_by_subset,
-                                  list_all_means_by_subset[[i]][-first_3_rows_ind[-c(1:3)], ])
+  mat_all_means_by_subset = rbind(mat_all_means_by_subset, list_all_means_by_subset[[i]][-first_3_rows_ind[-c(1:3)], ])
 }
 ########################################################################
 
@@ -189,6 +191,14 @@ means_by_subset_sum = means_by_subset_sum[-grep("_approx", rownames(means_by_sub
 #pi_from_mat_all_estimators VS 
 pis = mat_all_estimators[grep("_mean",rownames(mat_all_estimators)),grep("pi",colnames(mat_all_estimators))] %>% round(3)
 pis = data.frame(pi_as=pis$pi_as, pi_pro=pis$pi_pro, pi_ns=pis$pi_ns)
+
+# checking pis from extract_pis_from_scenarios are the same as pis, when nn = param_n
+'''mat_pis_per_gamma_1 <- mat_pis_per_gamma_2 <- matrix(0, nrow = 200 ,ncol = 3)
+for (i in 1:200) {
+  extract_pis_lst = extract_pis_from_scenarios(nn=2000, xi=xi, misspec_PS=2)
+  mat_pis_per_gamma_1[i,] = extract_pis_lst$mat_pis[1,]; mat_pis_per_gamma_2[i,] = extract_pis_lst$mat_pis[2,]  
+}
+apply(mat_pis_per_gamma_1, 2, mean); apply(mat_pis_per_gamma_2, 2, mean)'''
 ########################################################################
 
 ########################################################################
@@ -213,5 +223,6 @@ save(final_tables_general, file = "final_tables_general.Rdata")
 save(final_tables_crude, file = "final_tables_crude.Rdata")
 save(list_all_CI_temp, file = "list_all_CI_temp.Rdata")
 save(mat_all_means_by_subset, file = "mat_all_means_by_subset.Rdata")
+save(list_all_means_by_g, file = "list_all_means_by_g.Rdata")
 save(pis, file = "pis.Rdata")
 save(ties, file = "ties.Rdata")
