@@ -11,8 +11,12 @@ simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, 
   # x are the outcome (Y) covariates 
   x = x_obs
   # x_misspec for PS misspec
-  x_misspec = as.matrix(data.frame(X_sqr = x_obs[,(ncol(x_obs) - 1)]^2,
+  x_misspec = as.matrix(data.frame(X_exp = exp(x_obs[,(ncol(x_obs) - 2)]), 
+                                   X_sqr = x_obs[,(ncol(x_obs) - 1)]^2 * x_obs[,(ncol(x_obs) - 2)], 
                                    X_log = log(x_obs[,ncol(x_obs)] - (min(x_obs[,ncol(x_obs)]) - 0.1)))) %>% as.data.frame
+  
+  #x_misspec = as.matrix(data.frame(X_sqr = x_obs[,(ncol(x_obs) - 1)]^2, 
+   #                                X_log = log(x_obs[,ncol(x_obs)] - (min(x_obs[,ncol(x_obs)]) - 0.1)))) %>% as.data.frame
   
   # no PS misspecification
   if(misspec_PS == 0){
@@ -23,10 +27,14 @@ simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, 
   # misspec2: replace 2 X's with x^2 and ~log(X), to PS model and possibly to outcome model (if misspec_outcome != 0) 
   if(misspec_PS == 2){
     # PS true model covariates
-    x_PS = as.matrix( data.frame( x_obs[,-c((ncol(x_obs) - 1) ,ncol(x_obs))], x_misspec ) )
     
-    gamma_ah_adj = c(gamma_ah[-c((ncol(x_obs) - 1) ,ncol(x_obs))], funcform_factor_sqr*gamma_ah[2], funcform_factor_log*gamma_ah[2])
-    gamma_pro_adj = c(gamma_pro[-c((ncol(x_obs) - 1) ,ncol(x_obs))], funcform_factor_sqr*gamma_pro[2], funcform_factor_log*gamma_pro[2])
+    #x_PS = as.matrix( data.frame( x_obs[,-c((ncol(x_obs) - 1) ,ncol(x_obs))], x_misspec ) )
+    #gamma_ah_adj = c(gamma_ah[-c((ncol(x_obs) - 1) ,ncol(x_obs))], funcform_factor_sqr*gamma_ah[2], funcform_factor_log*gamma_ah[2])
+    #gamma_pro_adj = c(gamma_pro[-c((ncol(x_obs) - 1) ,ncol(x_obs))], funcform_factor_sqr*gamma_pro[2], funcform_factor_log*gamma_pro[2])
+    
+    x_PS = as.matrix( data.frame( x_obs[,-c((ncol(x_obs) - 2), (ncol(x_obs) - 1) ,ncol(x_obs))], x_misspec ) )
+    gamma_ah_adj = c(head(gamma_ah, -3),   funcform_factor_sqr*gamma_ah[2], funcform_factor_sqr*gamma_ah[2], funcform_factor_log*gamma_ah[2])
+    gamma_pro_adj = c(head(gamma_pro, -3), funcform_factor_sqr*gamma_pro[2], funcform_factor_sqr*gamma_pro[2], funcform_factor_log*gamma_pro[2])
     gamma_ns_adj = rep(0, length(gamma_ah_adj)) 
     betas_GPI_adj = betas_GPI
     colnames(betas_GPI_adj) = rep("", ncol(betas_GPI_adj))
@@ -41,7 +49,9 @@ simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, 
   
   if(two_log_models==TRUE){ # two logistic models for s(0) and S(1) given S(0)=1
     #1) log reg of S(0)
-    prob_S0 = exp(x_PS%*%gamma_ah_adj) / ( 1 + exp(x_PS%*%gamma_ah_adj) )
+    exp_S0 = exp(x_PS%*%gamma_ah_adj)
+    prob_S0 = exp_S0 / ( 1 + exp_S0 )
+    prob_S0[is.infinite(exp_S0)] = 1
     S0_vec = rbinom( length(prob_S0), 1, prob_S0 ) # ah - 1, pro and ns - 0
     
     #2.a) if S(0)==1, assign to as with p = 1/1+xi and to har, with p = xi/x+xi (log reg with a constant only)
@@ -49,7 +59,9 @@ simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, 
     g_vec_num[g_vec_num == 0] = -1 # pro and ns
     g_vec_num[g_vec_num == 1] = rbinom( length(g_vec_num[g_vec_num == 1]), 1, (1 / (1+xi)) ) # as - 1, har - 0
     #2.b) if S(0)==0, log reg for S(1)
-    prob_S1 = exp(x_PS%*%gamma_pro_adj) / ( 1 + exp(x_PS%*%gamma_pro_adj) ) # prob_S1=1 given S(0)=0
+    exp_S1 = exp(x_PS%*%gamma_pro_adj)
+    prob_S1 = exp_S1 / ( 1 + exp_S1 ) # prob_S1=1 given S(0)=0
+    prob_S1[is.infinite(exp_S1)] = 1
     # +2 for converting ns to 2 and pro to 3
     g_vec_num[g_vec_num == -1] = rbinom(length(prob_S1[g_vec_num == -1]), 1, prob_S1[g_vec_num == -1]) + 2 # ns - 2 and pro - 3 
     
@@ -244,7 +256,8 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
     data_with_PS = data.table(data_for_EM, PS_est)
     
     # if PS_est contains NAS, it probably implies that the EM process has not converged, so skip this iteration and go to the next
-    if( sum(is.na(PS_est)) > 0 ){ # or if(est_ding_lst$iter == iterations)
+    if( sum(is.na(PS_est)) > 0 | (est_ding_lst$iter == iterations+1 & est_ding_lst$error>=epsilon_EM)){ # or if(est_ding_lst$iter == iterations+1 & est_ding_lst$error>=epsilon_EM)
+      print("EM has not convereged")
       index_EM_not_conv = index_EM_not_conv + 1
       list_EM_not_conv$probs[[index_EM_not_conv]] = PS_est
       #coeff_ah = est_ding_lst$beta.ah ; coeff_pro = est_ding_lst$coeff_pro
@@ -257,10 +270,13 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
     }
     
     # calculate O11_prior_ratio, O11_posterior_ratio and W_1_as
-    O11_prior_ratio = pis_est["pi_as_est"] / (pis_est["pi_as_est"] + pis_est["pi_pro_est"])
-    data_with_PS[, `:=` ( O11_posterior_ratio = EMest_p_as / (EMest_p_as + EMest_p_pro), O11_prior_ratio = O11_prior_ratio )]
+    O11_prior_ratio = as.numeric(pis_est["pi_as_est"] / (pis_est["pi_as_est"] + pis_est["pi_pro_est"]))
+    O11_prior_ratio_true = as.numeric(pis[,"pi_as"] / (pis[,"pi_as"] + pis[,"pi_pro"]))
+    data_with_PS[, `:=` ( O11_posterior_ratio = EMest_p_as / (EMest_p_as + EMest_p_pro), 
+                          O11_posterior_ratio_true = data_with_PS$prob_as / (data_with_PS$prob_as + data_with_PS$prob_pro),
+                          O11_prior_ratio = O11_prior_ratio, O11_prior_ratio_true=O11_prior_ratio_true)]
     data_with_PS$W_1_as = data_with_PS$O11_posterior_ratio / O11_prior_ratio #data_with_PS$O11_posterior_ratio / O11_prior_ratio
-    data_with_PS$O11_posterior_ratio_true = data_with_PS$prob_as / (data_with_PS$prob_as + data_with_PS$prob_pro)
+    data_with_PS$W_1_as_true = data_with_PS$O11_posterior_ratio_true / O11_prior_ratio_true 
     # DL plain estimator and model assisted estimator
     DING_est = est_ding_lst$AACE
     DING_model_assisted_est_ps = est_ding_lst$AACE.reg
@@ -274,22 +290,23 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
     # EM summary
     if(return_EM_PS == TRUE){
       pis = data.frame(pis)
-      O11_prior_ratio_true = pis["pi_as"] / (pis["pi_as"] + pis["pi_pro"])
-      PS_true_EM_compr = subset( data_with_PS, select = grep("^id$|^g$|prob.|EM|O11_posterior_ratio|W_1_as",colnames(data_with_PS)) )
+      #O11_prior_ratio_true = pis["pi_as"] / (pis["pi_as"] + pis["pi_pro"])
+      PS_true_EM_compr = subset( data_with_PS, select = grep("^id$|^g$|prob.|EM|O11_posterior_ratio|O11_prior_ratio|W_1_as",colnames(data_with_PS)) )
       PS_true_EM_compr = rapply(object = PS_true_EM_compr, f = round, classes = "numeric", how = "replace", digits = 3)
       PS_true_EM_compr = data.frame( id = PS_true_EM_compr$id, g = PS_true_EM_compr$g,
         prob_as = PS_true_EM_compr$prob_as, EMest_p_as=PS_true_EM_compr$EMest_p_as, diff = PS_true_EM_compr$prob_as - PS_true_EM_compr$EMest_p_as,
         prob_har = PS_true_EM_compr$prob_har, EMest_p_har=PS_true_EM_compr$EMest_p_har, 
         prob_ns = PS_true_EM_compr$prob_ns, EMest_p_ns=PS_true_EM_compr$EMest_p_ns,
         prob_pro = PS_true_EM_compr$prob_pro, EMest_p_pro=PS_true_EM_compr$EMest_p_pro,
-        O11_posterior_ratio_true = PS_true_EM_compr$O11_posterior_ratio_true, O11_posterior_ratio = PS_true_EM_compr$O11_posterior_ratio,
-        W_1_as_true = PS_true_EM_compr$O11_posterior_ratio_true / O11_prior_ratio, W_1_as = PS_true_EM_compr$W_1_as)
+        O11_prior_ratio_true = PS_true_EM_compr$O11_prior_ratio_true, O11_prior_ratio_est = PS_true_EM_compr$O11_prior_ratio,
+        O11_posterior_ratio_true = PS_true_EM_compr$O11_posterior_ratio_true, O11_posterior_ratio_est = PS_true_EM_compr$O11_posterior_ratio,
+        W_1_as_true = PS_true_EM_compr$W_1_as_true, W_1_as_est = PS_true_EM_compr$W_1_as)
       return(list(data_with_PS=data_with_PS, PS_true_EM_compr=PS_true_EM_compr, true_x_PS=x_PS,
                   pis=pis, pis_est=pis_est, EM_coeffs=EM_coeffs, 
                   O11_prior_ratio_true=O11_prior_ratio_true, O11_prior_ratio=O11_prior_ratio, OBS_table=OBS_table, 
                   beta_S0=beta_S0, error=est_ding_lst$error, mean_by_g=mean_by_g,
                   SACE=SACE, DL=DING_est, DL_MA=DING_model_assisted_est_ps, 
-                  list_EM_not_conv=list_EM_not_conv, real_iter_ind=real_iter_ind))
+                  em_NOT_conv = est_ding_lst$iter == iterations+1 & est_ding_lst$error>=epsilon_EM, real_iter_ind=real_iter_ind))
     }
     
     # run for all options (3 options - full dataset, wout A=0,S=0, only S=1)

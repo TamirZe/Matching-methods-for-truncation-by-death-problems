@@ -5,7 +5,7 @@ extract_pis_from_scenarios = function(nn=250000, xi=0, misspec_PS=0, two_log_mod
   for( k in c(1 : nrow(mat_gamma)) ){
     gamma_ah = as.numeric(mat_gamma[k, c(1:dim_x)])
     gamma_pro =  as.numeric(mat_gamma[k, (dim_x+1): (2*dim_x)])
-    gamma_ns = gamma_ns
+    gamma_ns = rep(0, times = dim_x)
     lst_mean_x_and_pi = simulate_data_function(gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns, xi=xi, two_log_models=two_log_models,
                            param_n=nn, misspec_PS=misspec_PS, misspec_outcome=0, 
                            funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log, only_mean_x_bool=TRUE)

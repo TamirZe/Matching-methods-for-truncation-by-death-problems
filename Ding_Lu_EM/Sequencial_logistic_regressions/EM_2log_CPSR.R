@@ -171,11 +171,18 @@ xi_2log_PredTreatEffect = function(Z, D, X, xi_est = 0,
     ##three columns corresponding to complier, always taker and never taker
     PROB = matrix(0, N, 4)
     for(i in 1:N) {
+      
       prob.d = expit(t(beta.ah)%*%X[i, ]) * xi_est/(1 + xi_est) 
       prob.a = expit(t(beta.ah)%*%X[i, ]) * 1/(1  + xi_est) 
       prob.n = (1 - expit(t(beta.ah)%*%X[i, ])) * (1 - expit(t(beta.c)%*%X[i, ]))
       prob.c = (1 - expit(t(beta.ah)%*%X[i, ])) * (expit(t(beta.c)%*%X[i, ]))
+      # a = expit(rnorm(1)); b = expit(rnorm(1))
+      # prob.d = a *  xi_est/(1 + xi_est) 
+      # prob.a = a * 1/(1  + xi_est) 
+      # prob.n = (1 - a) * (1 - b)
+      # prob.c = (1 - a) * b
       PROB[i,] = c(prob.d, prob.a, prob.n, prob.c)
+
     }	
     
     ##the results
