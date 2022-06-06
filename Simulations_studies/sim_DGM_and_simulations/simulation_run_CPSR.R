@@ -1,6 +1,6 @@
 # misspec_PS: 0 <- NO mis, 2: add transformations to PS model, and remain original X's in outcome model.
 simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, xi, xi_est, two_log_models=TRUE, param_n, 
-                                  misspec_PS, misspec_outcome=0,
+                                  misspec_PS, misspec_outcome=0, transform_x=0,
                                   funcform_factor_sqr=0, funcform_factor_log=0, only_mean_x_bool=FALSE){
   if(!is.null(seed_num)){set.seed(seed_num)}
   
@@ -17,6 +17,7 @@ simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, 
   
   #x_misspec = as.matrix(data.frame(X_sqr = x_obs[,(ncol(x_obs) - 1)]^2, 
    #                                X_log = log(x_obs[,ncol(x_obs)] - (min(x_obs[,ncol(x_obs)]) - 0.1)))) %>% as.data.frame
+  
   
   # no PS misspecification
   if(misspec_PS == 0){
@@ -38,6 +39,13 @@ simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, 
     gamma_ns_adj = rep(0, length(gamma_ah_adj)) 
     betas_GPI_adj = betas_GPI
     colnames(betas_GPI_adj) = rep("", ncol(betas_GPI_adj))
+  }
+  
+  # changing the obs x (for estimation), according to the transformation in the true x_PS
+  if(transform_x == 2){
+    print(paste0("misspec_PS is ", misspec_PS)) # misspec_PS must be equal 2 when transform_x =2, for now!
+    x_obs = x_PS
+    colnames(x_obs) = paste0("X", c(1:dim_x))
   }
   
   # Y true model covariates:
@@ -139,6 +147,7 @@ simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, 
   dt$Y = (dt$A * dt$Y1 + (1 - dt$A) * dt$Y0) * dt$S
   dt = data.table(id = c(1:param_n), dt)
   dt$OBS = paste0("O(", dt$A, ",", dt$S, ")")
+  true_SACE = mean(dt[g=="as" , Y1]) - mean(dt[g=="as", Y0])
   
   #OBS table
   obs_table = table(dt$OBS)
@@ -155,13 +164,14 @@ simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, 
   pis_est = c(pi_har_est = pi_har_est, pi_as_est = pi_as_est, pi_ns_est = pi_ns_est, pi_pro_est = pi_pro_est)
   
   return(list(dt=dt, x_obs=x_obs, x_PS=x_PS, x_outcome=x, mean_by_g=mean_by_g,
-              OBS_table=OBS_table, pis=pis, pis_est=pis_est))
+              OBS_table=OBS_table, pis=pis, pis_est=pis_est, true_SACE=true_SACE))
 }
 
 
 simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE, index_set_of_params, gamma_ah, gamma_pro, gamma_ns, xi, xi_est, 
                                           two_log_models=TRUE, two_log_est_EM=FALSE,
-                                          misspec_PS, misspec_outcome=0, funcform_factor_sqr=0, funcform_factor_log=0, 
+                                          misspec_PS, misspec_outcome=0, transform_x=0, 
+                                          funcform_factor_sqr=0, funcform_factor_log=0, 
                                           param_n, param_n_sim, iterations, epsilon_EM = 0.001,
                                           caliper, match_on = NULL, mu_x_fixed=FALSE, x_as, only_naive_bool=FALSE){
   
@@ -185,7 +195,8 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
     start_time1 <- Sys.time()
     list_data_for_EM_and_X = simulate_data_function(seed_num=NULL, gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns, 
             xi=xi, xi_est=xi_est, two_log_models=two_log_models, param_n=param_n,
-            misspec_PS=misspec_PS, misspec_outcome=misspec_outcome, funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log)
+            misspec_PS=misspec_PS, misspec_outcome=misspec_outcome, transform_x=transform_x,
+            funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log)
     
     data_for_EM = list_data_for_EM_and_X$dt
     mean_by_g = list_data_for_EM_and_X$mean_by_g
@@ -254,7 +265,8 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
     print(paste0("Ding EM lasts ", difftime(end_timeDing, start_timeDing)))
     PS_est = est_ding_lst$ps.score
     data_with_PS = data.table(data_for_EM, PS_est)
-    
+    w1a = est_ding_lst$w1a; w0a = est_ding_lst$w0a
+    w1a_all = est_ding_lst$w1a_all; w0a_all = est_ding_lst$w0a_all
     # if PS_est contains NAS, it probably implies that the EM process has not converged, so skip this iteration and go to the next
     if( sum(is.na(PS_est)) > 0 | (est_ding_lst$iter == iterations+1 & est_ding_lst$error>=epsilon_EM)){ # or if(est_ding_lst$iter == iterations+1 & est_ding_lst$error>=epsilon_EM)
       print("EM has not convereged")
@@ -301,11 +313,14 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
         O11_prior_ratio_true = PS_true_EM_compr$O11_prior_ratio_true, O11_prior_ratio_est = PS_true_EM_compr$O11_prior_ratio,
         O11_posterior_ratio_true = PS_true_EM_compr$O11_posterior_ratio_true, O11_posterior_ratio_est = PS_true_EM_compr$O11_posterior_ratio,
         W_1_as_true = PS_true_EM_compr$W_1_as_true, W_1_as_est = PS_true_EM_compr$W_1_as)
+        # w1aDL_vs_w_1_as=max(abs(w1a- data_with_PS[A==1&S==1,]$W_1_as))
       return(list(data_with_PS=data_with_PS, PS_true_EM_compr=PS_true_EM_compr, true_x_PS=x_PS,
-                  pis=pis, pis_est=pis_est, EM_coeffs=EM_coeffs, 
+                  pis=pis, pis_est=pis_est, EM_coeffs=EM_coeffs, gamma = c(gamma_ah=gamma_ah,gamma_ah=gamma_ah),
                   O11_prior_ratio_true=O11_prior_ratio_true, O11_prior_ratio=O11_prior_ratio, OBS_table=OBS_table, 
                   beta_S0=beta_S0, error=est_ding_lst$error, mean_by_g=mean_by_g,
-                  SACE=SACE, DL=DING_est, DL_MA=DING_model_assisted_est_ps, 
+                  SACE=SACE, DL=DING_est, DL_MA=DING_model_assisted_est_ps, w1a=w1a, w0a=w0a, w1a_all=w1a_all, w0a_all=w0a_all,
+                  weighted.Y1 = est_ding_lst$weighted.Y.a1, weighted.Y1.adj=est_ding_lst$weighted.Y1a, weighted.ra=est_ding_lst$weighted.ra,
+                  weighted.Y1.unb=est_ding_lst$weighted.Y.a1.unb, weighted.Y1.adj.unb=est_ding_lst$weighted.Y1a.unb, weighted.ra.unb=est_ding_lst$weighted.ra.unb,
                   em_NOT_conv = est_ding_lst$iter == iterations+1 & est_ding_lst$error>=epsilon_EM, real_iter_ind=real_iter_ind))
     }
     

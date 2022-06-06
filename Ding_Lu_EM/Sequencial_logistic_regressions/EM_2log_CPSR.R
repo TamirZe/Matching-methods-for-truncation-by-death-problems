@@ -181,6 +181,7 @@ xi_2log_PredTreatEffect = function(Z, D, X, xi_est = 0,
       # prob.a = a * 1/(1  + xi_est) 
       # prob.n = (1 - a) * (1 - b)
       # prob.c = (1 - a) * b
+      # ps.scores
       PROB[i,] = c(prob.d, prob.a, prob.n, prob.c)
 
     }	
@@ -231,10 +232,17 @@ xi_2log_PSPS_M_weighting = function(Z, D, X, Y,
   ##weights
   #c(prob.d, prob.a, prob.n, prob.c)
   w1a = ps.score[index11, 2]/(ps.score[index11, 4] + ps.score[index11, 2])/pr.a*(pr.c + pr.a)
+  w1a_unb = w1a
+  w1a = runif(n = length(w1a), min = mean(w1a) - 0.2, max = mean(w1a) + 0.2)
+  #w1a = sample(w1a) # DL MA is unbiased (same mean or w1a and sample(w1a))
+  # w1a = sample(w1a) # w1a = abs(rnorm(length(w1a), sd=2)) # w1a = w1a + abs(rnorm(length(w1a), sd=1)) # DL MA is biased
   w0a = ps.score[index01, 2]/(ps.score[index01, 1] + ps.score[index01, 2])/pr.a*(pr.d + pr.a)
   
+  w1a_all = ps.score[, 2]/(ps.score[, 4] + ps.score[, 2])/pr.a*(pr.c + pr.a)
+  w0a_all = ps.score[, 2]/(ps.score[, 1] + ps.score[, 2])/pr.a*(pr.d + pr.a)
+  
   ##model assisted regression estimator 
-  r1a = lm(Y[index11] ~ 0 + X[index11, ], weights = w1a)$coef
+  r1a = lm(Y[index11] ~ 0 + X[index11, ], weights = w1a)$coef # weights = w1a # weights = w1a_unb
   r0a = lm(Y[index01] ~ 0 + X[index01, ], weights = w0a)$coef
   
   ##AACE
@@ -247,6 +255,15 @@ xi_2log_PSPS_M_weighting = function(Z, D, X, Y,
   weighted.Y0a = (Y[index01]-X[index01, ]%*%r0a)*w0a
   weighted.ra = rbind(X[index11, ]*w1a, X[index01, ]*w0a) %*% (r1a - r0a)
   
+  #WELL-ESTIMATED weighted outcomes for regression estimator
+  ##model assisted regression estimator 
+  if(exists("w1a_unb")){
+    weighted.Y.a1.unb = Y[index11]*w1a_unb 
+    r1a_unb = lm(Y[index11] ~ 0 + X[index11, ], weights = w1a_unb)$coef
+    weighted.Y1a.unb = (Y[index11]-X[index11, ]%*%r1a_unb)*w1a_unb
+    weighted.ra.unb = rbind(X[index11, ]*w1a_unb, X[index01, ]*w0a) %*% (r1a_unb - r0a)
+  }
+  
   ##CACE, NACE and AACE, regression estimates
   AACE.reg = mean(weighted.Y1a) - mean(weighted.Y0a) + mean(weighted.ra)
   #colnames(ps.score) = c("prob.d", "prob.a", "prob.n", "prob.c")
@@ -254,7 +271,11 @@ xi_2log_PSPS_M_weighting = function(Z, D, X, Y,
   ##results
   ACE = list(AACE = AACE, AACE.reg = AACE.reg, ps.score=ps.score,
              beta.ah = ps.score.fit$beta.ah, beta.c = ps.score.fit$beta.c,
-             error = ps.score.fit$error, iter = ps.score.fit$iter)
+             error = ps.score.fit$error, iter = ps.score.fit$iter,
+             w1a=w1a, w0a=w0a, w1a_all=w1a_all, w0a_all=w0a_all,
+             weighted.Y.a1=weighted.Y.a1, weighted.Y1a=weighted.Y1a, weighted.ra=weighted.ra,
+             weighted.Y.a1.unb=weighted.Y.a1.unb, weighted.Y1a.unb=weighted.Y1a.unb, weighted.ra.unb=weighted.ra.unb
+             )
   
   return(ACE)
   
