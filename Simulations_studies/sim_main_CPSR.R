@@ -76,7 +76,7 @@ extract_pis_lst = extract_pis_from_scenarios(nn=500000, xi=xi, misspec_PS=0); ma
 mat_pis_per_gamma
 ##########################################################
 
-param_n = 2000; param_n_sim = 50 # param_n = 2000; param_n_sim = 1000
+param_n = 2000; param_n_sim = 1000 # param_n = 2000; param_n_sim = 1000
 caliper = 0.25; match_on = "O11_posterior_ratio" 
 mu_x_fixed = FALSE # mat_x_as; x_as = mat_x_as[1,]
 

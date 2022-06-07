@@ -231,11 +231,13 @@ xi_2log_PSPS_M_weighting = function(Z, D, X, Y,
   
   ##weights
   #c(prob.d, prob.a, prob.n, prob.c)
-  w1a = ps.score[index11, 2]/(ps.score[index11, 4] + ps.score[index11, 2])/pr.a*(pr.c + pr.a)
+  w1a = ps.score[index11, 2]/(ps.score[index11, 4] + ps.score[index11, 2])/ ( pr.a/(pr.c + pr.a) )
   w1a_unb = w1a
-  w1a = runif(n = length(w1a), min = mean(w1a) - 0.2, max = mean(w1a) + 0.2)
+  #w1a = rep(mean(w1a), length(w1a)) DL MA is unbiased (same mean or w1a and sample(w1a))
+  #w1a = rep(pr.a/(pr.c + pr.a), length(w1a)) 
+  #w1a = runif(n = length(w1a), min = mean(w1a) - 0.2, max = mean(w1a) + 0.2)  #DL MA is unbiased (same mean or w1a and sample(w1a))
   #w1a = sample(w1a) # DL MA is unbiased (same mean or w1a and sample(w1a))
-  # w1a = sample(w1a) # w1a = abs(rnorm(length(w1a), sd=2)) # w1a = w1a + abs(rnorm(length(w1a), sd=1)) # DL MA is biased
+  ## w1a = abs(rnorm(length(w1a), sd=2)) # w1a = w1a + abs(rnorm(length(w1a), sd=1)) #w1a = rep(pr.a*(pr.c + pr.a), length(w1a)) # DL MA is biased
   w0a = ps.score[index01, 2]/(ps.score[index01, 1] + ps.score[index01, 2])/pr.a*(pr.d + pr.a)
   
   w1a_all = ps.score[, 2]/(ps.score[, 4] + ps.score[, 2])/pr.a*(pr.c + pr.a)

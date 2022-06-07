@@ -1,4 +1,8 @@
 #misspec with: funcform_factor_sqr=5; funcform_factor_log=-5
+mat_gamma = matrix(c(
+  c(-0.69, rep(0.46, dim_x-1)), c(0.5, rep(0.56, dim_x-1)) # @@@@
+  ,c(-0.32, rep(1.9, dim_x-1)), c(3.2, rep(2, dim_x-1)) # @@@@
+),nrow = 2, byrow = T)
 
 # 3X, 5X, 10X with xi = 0
 #############################################################################################

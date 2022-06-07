@@ -9,7 +9,7 @@ source("Ding_Lu_EM/Sequencial_logistic_regressions/EM_2log_CPSR.R")
 prob_A = 0.5
 # parameters for simulating X
 #@@@@@@@@@@@@ dim_x includes intercept @@@@@@@@@@@@@@@
-dim_x = 6; cont_x = 5; categ_x = 0; vec_p_categ = rep(0.5, categ_x); dim_x_misspec = 2
+dim_x = 3; cont_x = 2; categ_x = 0; vec_p_categ = rep(0.5, categ_x); dim_x_misspec = 2
 mean_x = rep(0.5, cont_x); var_x = rep(1, cont_x) # var_x = rep(1, cont_x)
 #############################################################################################
 
@@ -34,15 +34,16 @@ iterations = 200; epsilon_EM = 10^-5
 ###############################################################################################
 # beta ####
 # with interactions between A and X:
+betas_GPI = as.matrix(rbind(c(22,7,2), c(20,3,5))) # cont_x=2
 betas_GPI = as.matrix(rbind(c(22,5,2,1), c(20,3,3,0))) # cont_x=3
 betas_GPI = as.matrix(rbind(c(22,10,-2,10), c(20,3,3,0))) # cont_x=3
 betas_GPI = as.matrix(rbind(c(22,5,2,1,3,5), c(20,3,3,0,1,3))) # cont_x=5
 betas_GPI = as.matrix(rbind(c(22,rep(c(5,2,1,3,5),2)), c(20,rep(c(3,3,0,1,3),2)))) # cont_x=10 
 
 # without interactions between A and X: "simple effect" is 2
-betas_GPI = as.matrix(rbind(c(22,3,4,5), c(20,3,4,5))) # cont_x=3
-betas_GPI = as.matrix(rbind(c(22,3,4,5,1,3), c(20,3,4,5,1,3))) # cont_x=5
-betas_GPI = as.matrix(rbind(c(22,rep(c(5,2,1,3,5),2)), c(20,rep(c(5,2,1,3,5),2)))) # cont_x=10
+#betas_GPI = as.matrix(rbind(c(22,3,4,5), c(20,3,4,5))) # cont_x=3
+#betas_GPI = as.matrix(rbind(c(22,3,4,5,1,3), c(20,3,4,5,1,3))) # cont_x=5
+#betas_GPI = as.matrix(rbind(c(22,rep(c(5,2,1,3,5),2)), c(20,rep(c(5,2,1,3,5),2)))) # cont_x=10
 
 rownames(betas_GPI) = c("beta_treatment", "beta_control")
 ###############################################################################################
@@ -51,12 +52,13 @@ rownames(betas_GPI) = c("beta_treatment", "beta_control")
 # correlation structure between PO'
 var_GPI = as.matrix(rbind(1, 1))
 rownames(var_GPI) = c("var_treatment", "var_control")
-rho_GPI_PO = 0.4 #0.4 #1
+rho_GPI_PO = 0.4 #0.4 
 ##########################################################
 
 #################################################################################################################
 # mat_gamma[,c(1,2,dim_x+1,dim_x+2)]
-extract_pis_lst = extract_pis_from_scenarios(nn=300000, xi=xi, misspec_PS=0, two_log_models=T); mat_pis_per_gamma = extract_pis_lst$mat_pis
+extract_pis_lst = extract_pis_from_scenarios(nn=300000, xi=xi, misspec_PS=0, two_log_models=T, param_n=param_n)
+mat_pis_per_gamma = extract_pis_lst$mat_pis
 mat_pis_per_gamma
 ##################################################################################################################
 
@@ -113,20 +115,22 @@ for ( k in c(1 : nrow(mat_gamma)) ){
     #mean(sum_EM$PS_true_EM_compr$diff); mean(abs(sum_EM$PS_true_EM_compr$diff)); sd(sum_EM$PS_true_EM_compr$diff)
     #sum_EM$pis; sum_EM$pis_est; sum_EM$EM_coeffs
     
-    max(abs(sum_EM$w1a- sum_EM$data_with_PS[A==1&S==1,]$W_1_as))
+    # O(1,1)
+    dfrm_A1_S1 = filter(sum_EM$data_with_PS, A==1&S==1)
+    max(abs(sum_EM$w1a- dfrm_A1_S1$W_1_as))
     max(abs(sum_EM$w1a_all- sum_EM$data_with_PS$W_1_as))
-    mean(sum_EM$w1a); mean(sum_EM$data_with_PS[A==1&S==1,]$W_1_as)
-    plot(sum_EM$w1a, sum_EM$data_with_PS[A==1&S==1,]$W_1_as)
+    mean(sum_EM$w1a); mean(dfrm_A1_S1$W_1_as)
+    unique(dfrm_A1_S1$O11_prior_ratio); mean(dfrm_A1_S1$O11_posterior_ratio)
+    plot(sum_EM$w1a, dfrm_A1_S1$W_1_as)
     mean(sum_EM$w1a_all); mean(sum_EM$data_with_PS$W_1_as)
     unique(sum_EM$w0a); unique(sum_EM$w0a_all)
     
     # plots- scatter and histograms ####
     pdf(file= "~/A matching framework for truncation by death problems/Plots2.pdf" )
     
-    # O(1,1)
-    dfrm_A1_S1 = filter(sum_EM$data_with_PS, A==1&S==1)
     # weights
     par(mfrow=c(1,1))
+    # O(1,1)
     plot(dfrm_A1_S1$W_1_as_true, dfrm_A1_S1$W_1_as, cex.main=0.7, main = paste0("W_1_as, ", " O(1,1)", ". set", k, ", as: ", paste(mat_gamma[k,c(1,2)], collapse = ","), ", pro: " , paste(mat_gamma[k,c(dim_x+1,dim_x+2)], collapse = ","))); abline(a=0,b=1, lwd=3)
     res = dfrm_A1_S1$W_1_as-dfrm_A1_S1$W_1_as_true
     plot(dfrm_A1_S1$W_1_as_true, res, cex.main=0.7, main = paste0("W_1_as, res:est-true", " O(1,1)", ". set", k, ", as: ", paste(mat_gamma[k,c(1,2)], collapse = ","), ", pro: " , paste(mat_gamma[k,c(dim_x+1,dim_x+2)], collapse = ","))); abline(a=0,b=1, lwd=3)
@@ -134,8 +138,8 @@ for ( k in c(1 : nrow(mat_gamma)) ){
     plot(dfrm_A1_S1$prob_as, dfrm_A1_S1$EMest_p_as, cex.main=0.7, main = paste0("set", k, ",  O(1,1), as: ", paste(mat_gamma[k,c(1,2)], collapse = ","), ", pro: " , paste(mat_gamma[k,c(dim_x+1,dim_x+2)], collapse = ","))); abline(a=0,b=1, lwd=3)
     plot(dfrm_A1_S1$prob_pro, dfrm_A1_S1$EMest_p_pro, cex.main=0.7, main = paste0("set", k, ",  O(1,1), as: ", paste(mat_gamma[k,c(1,2)], collapse = ","), ", pro: " , paste(mat_gamma[k,c(dim_x+1,dim_x+2)], collapse = ","))); abline(a=0,b=1, lwd=3)
     # weights
-    hist(dfrm_A1_S1$W_1_as_true, xlim=c(0,1), col="blue", main = paste0("W_1_as, O(1,1)", ". blue-true, green-est"), breaks = 30)
-    hist(dfrm_A1_S1$W_1_as, add=T, col=rgb(0, 1, 0, 0.5), breaks = 30)
+    hist(dfrm_A1_S1$W_1_as_true, xlim=c(0,1), col="blue", main = paste0("W_1_as, O(1,1)", ". blue-true, green-est"), breaks = 50)
+    hist(dfrm_A1_S1$W_1_as, add=T, col=rgb(0, 1, 0, 0.5), breaks = 50)
     
     # full dataset
     datfrm = sum_EM$PS_true_EM_compr
@@ -180,15 +184,17 @@ for ( k in c(1 : nrow(mat_gamma)) ){
 for ( k in c(1 : nrow(mat_gamma)) ){ print(apply(res_lst[[k]], 2, mean)); print(mean(NOT_conv_lst[[k]])) }
 #################################################################################################################
 
-save(sum_EM_S1V, file = "sum_EM_S1V.Rdata")
-
+#save(sum_EM_S1V, file = "sum_EM_S1V.Rdata")
+var_eps = 1; beta1=1
 #w = abs(rnorm(20000, mean = 1))
-w = runif(n = 2000, min = 0.5, max = 1.5)
+w = runif(n = 200000, min = 0.5, max = 1.5)
 weights = w / sum(w)
 smpl_weights = sample(w)
-plot(weights, smpl_weights)
-Y = rnorm(2000, mean = 10, sd=2)
+#plot(weights, smpl_weights)
+Y = rnorm(200000, mean = 5 + beta1*w, sd=sqrt(var_eps))
+cor(Y,w) # sd(w) / ( sqrt( var(w) + (var_eps/beta1^2) ) )
+
 wgt_mean1 = sum(weights*Y)
-wgt_mean11 = sum(sample(weights)*Y)
+wgt_mean12 = sum(sample(weights)*Y)
 wgt_mean2 = mean(w*Y) 
 wgt_mean22 = mean(smpl_weights*Y)

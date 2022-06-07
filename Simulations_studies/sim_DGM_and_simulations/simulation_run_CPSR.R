@@ -11,10 +11,12 @@ simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, 
   # x are the outcome (Y) covariates 
   x = x_obs
   # x_misspec for PS misspec
-  x_misspec = as.matrix(data.frame(X_exp = exp(x_obs[,(ncol(x_obs) - 2)]), 
+  x_misspec = as.matrix(data.frame(X_exp = exp(5*x_obs[,(ncol(x_obs) - 2)]), 
                                    X_sqr = x_obs[,(ncol(x_obs) - 1)]^2 * x_obs[,(ncol(x_obs) - 2)], 
                                    X_log = log(x_obs[,ncol(x_obs)] - (min(x_obs[,ncol(x_obs)]) - 0.1)))) %>% as.data.frame
-  
+  if(cont_x<3){
+    x_misspec = as.matrix(data.frame(X_sqr = x_obs[,(ncol(x_obs))]^2)) %>% as.data.frame
+  }
   #x_misspec = as.matrix(data.frame(X_sqr = x_obs[,(ncol(x_obs) - 1)]^2, 
    #                                X_log = log(x_obs[,ncol(x_obs)] - (min(x_obs[,ncol(x_obs)]) - 0.1)))) %>% as.data.frame
   
@@ -52,8 +54,13 @@ simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, 
   # if misspec_outcome == 0 (default), Y on original (obs) X 
   # if misspec_outcome == 2, Y on the transformation of X, as in the misspec in the PS model
   if(misspec_outcome == 2){ #TODO change it so Y misspec is not necessarily the same as PS misspec 
-    x = as.matrix( data.frame( x_obs[,-c((ncol(x_obs) - 1) ,ncol(x_obs))], x_misspec ) )
-    } 
+    if(cont_x<3){
+      x = as.matrix( data.frame( x_obs[,-tail(1:ncol(x_obs), n=1)], x_misspec ) )
+    }else{  
+      x = as.matrix( data.frame( x_obs[,-tail(1:ncol(x_obs), n=2)], x_misspec[,c("X_sqr", "X_log")] ) )
+      #x = as.matrix( data.frame( x_obs[,-c((ncol(x_obs) - 2), (ncol(x_obs) - 1) ,ncol(x_obs))], x_misspec ) )
+    }
+  } 
   
   if(two_log_models==TRUE){ # two logistic models for s(0) and S(1) given S(0)=1
     #1) log reg of S(0)
@@ -93,7 +100,7 @@ simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, 
   }
   
   # descriptive of the principal scores
-  pis = table(g_vec) / param_n
+  pis = table(g_vec) / param_n #sum(table(g_vec))
   pis = t(c(pis)); colnames(pis) = paste0("pi_", colnames(pis))
   
   # generate data ####
@@ -102,7 +109,7 @@ simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, 
                     A = rbinom(param_n, 1, prob_A))
   data$S = ifelse((data$g == "as") | (data$g == "pro" & data$A == 1) | (data$g == "har" & data$A == 0), 1, 0)
   mean_by_g = data.table(data)[, lapply(.SD, mean), by="g"]
-  mean_by_g$g = mapvalues(mean_by_g$g, from = c("har", "as", "ns", "pro"), to = c(0:3))
+  #mean_by_g$g = mapvalues(mean_by_g$g, from = c("har", "as", "ns", "pro"), to = c(0:3))
   mean_by_A_g = data.table(data)[, lapply(.SD, mean), by=c("A", "g")] %>% arrange(g,A)
   x_har = filter(mean_by_g, g=="har") %>% subset(select = grep("X|^A$", colnames(mean_by_g))) %>% as.matrix
   x_as = filter(mean_by_g, g=="as") %>% subset(select = grep("X|^A$", colnames(mean_by_g))) %>% as.matrix
