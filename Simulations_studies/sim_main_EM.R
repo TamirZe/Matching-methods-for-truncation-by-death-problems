@@ -2,6 +2,8 @@ library(data.table); library(plyr); library(dplyr); library(rlist); library(nnet
 setwd("~/A matching framework for truncation by death problems")
 source("Simulations_studies/sim_gamma_and_pi_CPSR/sim_check_pis_and_covariates.R")
 source("Simulations_studies/sim_DGM_and_simulations/simulation_run_CPSR.R")
+#source("Simulations_studies/sim_DGM_and_simulations/simulation_run_CPSR_new.R")
+#source("Simulations_studies/sim_DGM_and_simulations/DGM_CPSR.R")
 source("Ding_Lu_EM/Sequencial_logistic_regressions/EM_2log_CPSR.R") 
 
 #############################################################################################
@@ -9,7 +11,7 @@ source("Ding_Lu_EM/Sequencial_logistic_regressions/EM_2log_CPSR.R")
 prob_A = 0.5
 # parameters for simulating X
 #@@@@@@@@@@@@ dim_x includes intercept @@@@@@@@@@@@@@@
-dim_x = 3; cont_x = 2; categ_x = 0; vec_p_categ = rep(0.5, categ_x); dim_x_misspec = 2
+dim_x = 4; cont_x = 3; categ_x = 0; vec_p_categ = rep(0.5, categ_x); dim_x_misspec = 2
 mean_x = rep(0.5, cont_x); var_x = rep(1, cont_x) # var_x = rep(1, cont_x)
 #############################################################################################
 
@@ -185,6 +187,9 @@ for ( k in c(1 : nrow(mat_gamma)) ){ print(apply(res_lst[[k]], 2, mean)); print(
 #################################################################################################################
 
 #save(sum_EM_S1V, file = "sum_EM_S1V.Rdata")
+
+#################################################################################################################
+# weighted mean illustration ####
 var_eps = 1; beta1=1
 #w = abs(rnorm(20000, mean = 1))
 w = runif(n = 200000, min = 0.5, max = 1.5)
@@ -198,3 +203,4 @@ wgt_mean1 = sum(weights*Y)
 wgt_mean12 = sum(sample(weights)*Y)
 wgt_mean2 = mean(w*Y) 
 wgt_mean22 = mean(smpl_weights*Y)
+#################################################################################################################

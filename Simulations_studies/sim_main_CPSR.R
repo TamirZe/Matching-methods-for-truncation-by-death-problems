@@ -11,7 +11,8 @@ library(mgsub)
 # source for Simulations_studies
 setwd("~/A matching framework for truncation by death problems")
 source("Simulations_studies/sim_DGM_and_simulations/simulation_run_CPSR.R")
-
+#source("Simulations_studies/sim_DGM_and_simulations/simulation_run_CPSR_new.R")
+#source("Simulations_studies/sim_DGM_and_simulations/DGM_CPSR.R")
 source("Simulations_studies/sim_gamma_and_pi_CPSR/sim_check_pis_and_covariates.R")
 #source("Ding_Lu/PS_M_weighting.R")
 source("Ding_Lu_EM/Sequencial_logistic_regressions/EM_2log_CPSR.R") 

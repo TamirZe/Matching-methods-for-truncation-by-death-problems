@@ -160,4 +160,25 @@ regression_adjusted_function = function(rep_bool, dt_match_S1, m_data, matched_p
 
 
 
+# rep_bool_false_true = 2 for WLS and 1 for OLS
+arrange_lin_reg_estimators = function(rep_bool_false_true, estimator_str,
+                                      CI_or_TABLE_EST_SE="estimator_and_se", name=""){
+  LS_lin_reg_estimators = lapply(rep_bool_false_true:rep_bool_false_true, function(j){
+    lapply(lst_matching_estimators[[j]], "[[",
+           estimator_str)})
+  LS_lin_reg_estimators = lapply(LS_lin_reg_estimators[[1]], "[[", CI_or_TABLE_EST_SE)
+  if(CI_or_TABLE_EST_SE=="estimator_and_se"){
+    colnas = paste0(rep(colnames(LS_lin_reg_estimators[[1]]), times=3), "_",
+                    rep(c("all", "wout_O_0_0", "S1"), each=length(LS_lin_reg_estimators[[1]])))
+    LS_lin_reg_estimators = list.cbind(LS_lin_reg_estimators)
+    colnames(LS_lin_reg_estimators) = colnas
+    
+  }else{
+    colnas = name
+    LS_lin_reg_estimators = list.cbind(LS_lin_reg_estimators)
+    colnames(LS_lin_reg_estimators) =  paste0(colnas, "_", c("all", "wout_O_0_0", "S1"))
+  }
+  
+  return(LS_lin_reg_estimators)
+}
 

@@ -153,7 +153,7 @@ xi_2log_PredTreatEffect = function(Z, D, X, xi_est = 0,
     fit_S0 = glm(AugData_S0[, 1] ~ AugData_S0[, (3:(V+1))], weights = AugData_S0[, (V+2)], family="binomial")
     beta.ah = coef(fit_S0)
     }else{ # if we employ only one logitic regression during the EM, assign beta.S0 as beta.ah
-      beta.ah  = beta.S0
+      beta.ah = beta.S0
     }
     #S(1) given S(0)=0
     fit_S1_given_S0_is_0 = glm(AugData_S1[, 1] ~ AugData_S1[, (3:(V+1))], weights = AugData_S1[, (V+2)], family="binomial")
@@ -281,4 +281,16 @@ xi_2log_PSPS_M_weighting = function(Z, D, X, Y,
   
   return(ACE)
   
+}
+
+# calculate weights: O11_prior_ratio, O11_posterior_ratio W_1_as, and W_1_as_true
+add_weights_func = function(data_with_PS, pis, pis_est){
+  O11_prior_ratio = as.numeric(pis_est["pi_as_est"] / (pis_est["pi_as_est"] + pis_est["pi_pro_est"]))
+  O11_prior_ratio_true = as.numeric(pis[,"pi_as"] / (pis[,"pi_as"] + pis[,"pi_pro"]))
+  data_with_PS[, `:=` ( O11_posterior_ratio = EMest_p_as / (EMest_p_as + EMest_p_pro), 
+                        O11_posterior_ratio_true = data_with_PS$prob_as / (data_with_PS$prob_as + data_with_PS$prob_pro),
+                        O11_prior_ratio = O11_prior_ratio, O11_prior_ratio_true=O11_prior_ratio_true)]
+  data_with_PS$W_1_as = data_with_PS$O11_posterior_ratio / O11_prior_ratio #data_with_PS$O11_posterior_ratio / O11_prior_ratio
+  data_with_PS$W_1_as_true = data_with_PS$O11_posterior_ratio_true / O11_prior_ratio_true 
+  return(list(data_with_PS=data_with_PS, O11_prior_ratio=O11_prior_ratio, O11_prior_ratio_true=O11_prior_ratio_true))
 }
