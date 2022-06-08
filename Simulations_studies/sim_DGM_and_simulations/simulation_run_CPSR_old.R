@@ -1,5 +1,5 @@
 # misspec_PS: 0 <- NO mis, 2: add transformations to PS model, and remain original X's in outcome model.
-simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, xi, xi_est, two_log_models=TRUE, param_n, 
+simulate_data_function_old = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, xi, xi_est, two_log_models=TRUE, param_n, 
                                   misspec_PS, misspec_outcome=0, transform_x=0,
                                   funcform_factor_sqr=0, funcform_factor_log=0, only_mean_x_bool=FALSE){
   if(!is.null(seed_num)){set.seed(seed_num)}
@@ -14,9 +14,6 @@ simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, 
   x_misspec = as.matrix(data.frame(X_exp = exp(5*x_obs[,(ncol(x_obs) - 2)]), 
                                    X_sqr = x_obs[,(ncol(x_obs) - 1)]^2 * x_obs[,(ncol(x_obs) - 2)], 
                                    X_log = log(x_obs[,ncol(x_obs)] - (min(x_obs[,ncol(x_obs)]) - 0.1)))) %>% as.data.frame
-  if(cont_x<3){
-    x_misspec = as.matrix(data.frame(X_sqr = x_obs[,(ncol(x_obs))]^2)) %>% as.data.frame
-  }
   #x_misspec = as.matrix(data.frame(X_sqr = x_obs[,(ncol(x_obs) - 1)]^2, 
    #                                X_log = log(x_obs[,ncol(x_obs)] - (min(x_obs[,ncol(x_obs)]) - 0.1)))) %>% as.data.frame
   
@@ -38,7 +35,7 @@ simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, 
     x_PS = as.matrix( data.frame( x_obs[,-c((ncol(x_obs) - 2), (ncol(x_obs) - 1) ,ncol(x_obs))], x_misspec ) )
     gamma_ah_adj = c(head(gamma_ah, -3),   funcform_factor_sqr*gamma_ah[2], funcform_factor_sqr*gamma_ah[2], funcform_factor_log*gamma_ah[2])
     gamma_pro_adj = c(head(gamma_pro, -3), funcform_factor_sqr*gamma_pro[2], funcform_factor_sqr*gamma_pro[2], funcform_factor_log*gamma_pro[2])
-    gamma_ns_adj = rep(0, length(gamma_ah_adj)) 
+    gamma_ns_adj = gamma_ns 
     betas_GPI_adj = betas_GPI
     colnames(betas_GPI_adj) = rep("", ncol(betas_GPI_adj))
   }
@@ -54,12 +51,8 @@ simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, 
   # if misspec_outcome == 0 (default), Y on original (obs) X 
   # if misspec_outcome == 2, Y on the transformation of X, as in the misspec in the PS model
   if(misspec_outcome == 2){ #TODO change it so Y misspec is not necessarily the same as PS misspec 
-    if(cont_x<3){
-      x = as.matrix( data.frame( x_obs[,-tail(1:ncol(x_obs), n=1)], x_misspec ) )
-    }else{  
-      x = as.matrix( data.frame( x_obs[,-tail(1:ncol(x_obs), n=2)], x_misspec[,c("X_sqr", "X_log")] ) )
-      #x = as.matrix( data.frame( x_obs[,-c((ncol(x_obs) - 2), (ncol(x_obs) - 1) ,ncol(x_obs))], x_misspec ) )
-    }
+    x = as.matrix( data.frame( x_obs[,-tail(1:ncol(x_obs), n=2)], x_misspec[,c("X_sqr", "X_log")] ) )
+    #x = as.matrix( data.frame( x_obs[,-c((ncol(x_obs) - 2), (ncol(x_obs) - 1) ,ncol(x_obs))], x_misspec ) )
   } 
   
   if(two_log_models==TRUE){ # two logistic models for s(0) and S(1) given S(0)=1
@@ -175,7 +168,7 @@ simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, 
 }
 
 
-simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE, index_set_of_params, gamma_ah, gamma_pro, gamma_ns, xi, xi_est, 
+simulate_data_run_EM_and_match_old = function(only_EM_bool=FALSE, return_EM_PS=FALSE, index_set_of_params, gamma_ah, gamma_pro, gamma_ns, xi, xi_est, 
                                           two_log_models=TRUE, two_log_est_EM=FALSE,
                                           misspec_PS, misspec_outcome=0, transform_x=0, 
                                           funcform_factor_sqr=0, funcform_factor_log=0, 
@@ -200,7 +193,7 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
     print(paste0("this is n_sim ", i, " in simulate_data_run_EM_and_match. ",
                  "index_EM_not_conv: ", index_EM_not_conv, ". real number of iterations: "  , real_iter_ind, "."))
     start_time1 <- Sys.time()
-    list_data_for_EM_and_X = simulate_data_function(seed_num=NULL, gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns, 
+    list_data_for_EM_and_X = simulate_data_function_old(seed_num=NULL, gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns, 
             xi=xi, xi_est=xi_est, two_log_models=two_log_models, param_n=param_n,
             misspec_PS=misspec_PS, misspec_outcome=misspec_outcome, transform_x=transform_x,
             funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log)
@@ -265,15 +258,18 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
                     grep(paste(X_sub_cols[-1], collapse="|"), colnames(data_for_EM)))), Y=data_for_EM$Y, 
                     xi_est=xi_est, beta.S0=beta_S0, beta.ah=NULL, beta.c=NULL, # beta.S0=beta_S0 # beta.S0=NULL 
                     iter.max=iterations, error0=epsilon_EM)
+    end_timeDing <- Sys.time()
+    print(paste0("Ding EM lasts ", difftime(end_timeDing, start_timeDing)))
+    
     coeff_ah = est_ding_lst$beta.ah ; coeff_pro = est_ding_lst$beta.c
     list_beta_S0[[i]] = beta_S0; list_coeff_ah[[i]] = coeff_ah; list_coeff_pro[[i]] = coeff_pro
     EM_coeffs = rbind(est_ding_lst$beta.ah, est_ding_lst$beta.c)
-    end_timeDing <- Sys.time()
-    print(paste0("Ding EM lasts ", difftime(end_timeDing, start_timeDing)))
+    
     PS_est = est_ding_lst$ps.score
     data_with_PS = data.table(data_for_EM, PS_est)
     w1a = est_ding_lst$w1a; w0a = est_ding_lst$w0a
     w1a_all = est_ding_lst$w1a_all; w0a_all = est_ding_lst$w0a_all
+    
     # if PS_est contains NAS, it probably implies that the EM process has not converged, so skip this iteration and go to the next
     if( sum(is.na(PS_est)) > 0 | (est_ding_lst$iter == iterations+1 & est_ding_lst$error>=epsilon_EM)){ # or if(est_ding_lst$iter == iterations+1 & est_ding_lst$error>=epsilon_EM)
       print("EM has not convereged")

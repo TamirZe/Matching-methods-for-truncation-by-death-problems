@@ -10,10 +10,11 @@ library(mgsub)
 ########################################################################
 # source for Simulations_studies
 setwd("~/A matching framework for truncation by death problems")
-source("Simulations_studies/sim_DGM_and_simulations/simulation_run_CPSR.R")
+source("Simulations_studies/sim_DGM_and_simulations/simulation_run_CPSR_old.R")
 #source("Simulations_studies/sim_DGM_and_simulations/simulation_run_CPSR_new.R")
 #source("Simulations_studies/sim_DGM_and_simulations/DGM_CPSR.R")
-source("Simulations_studies/sim_gamma_and_pi_CPSR/sim_check_pis_and_covariates.R")
+#source("Simulations_studies/sim_naive_estimation/naive_estimation.R")
+source("Simulations_studies/sim_parameters_and_pis/sim_check_pis_and_covariates.R")
 #source("Ding_Lu/PS_M_weighting.R")
 source("Ding_Lu_EM/Sequencial_logistic_regressions/EM_2log_CPSR.R") 
 source("Simulations_studies/sim_matching_procedure/matching_multiple.R")
@@ -73,7 +74,7 @@ gamma_ns = rep(0, dim_x)
 colnames(mat_gamma) = paste0( "gamma", paste(rep(c(0:(dim_x-1)), times = 2)), rep(c("ah", "pro"), each = dim_x) )
 
 mat_gamma[,c(1,2,dim_x+1,dim_x+2)]
-extract_pis_lst = extract_pis_from_scenarios(nn=500000, xi=xi, misspec_PS=0); mat_pis_per_gamma = extract_pis_lst$mat_pis
+extract_pis_lst = extract_pis_from_scenarios(nn=500000, mat_gamma=mat_gamma, xi=xi, misspec_PS=0); mat_pis_per_gamma = extract_pis_lst$mat_pis
 mat_pis_per_gamma
 ##########################################################
 

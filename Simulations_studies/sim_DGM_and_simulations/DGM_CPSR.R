@@ -1,42 +1,43 @@
-# misspec_PS: 0 <- NO mis, 2: add transformations to PS model, and remain original X's in outcome model.
 simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, xi, xi_est, two_log_models=TRUE, param_n, 
                                   misspec_PS, misspec_outcome=0, transform_x=0,
-                                  funcform_factor_sqr=0, funcform_factor_log=0, only_mean_x_bool=FALSE){
+                                  funcform_factor_sqr, funcform_factor_log, only_mean_x_bool=FALSE){
   if(!is.null(seed_num)){set.seed(seed_num)}
   
   # draw covariate matrix
   x_obs <- matrix( c( rep(1,param_n), 
                       mvrnorm(param_n, mu=mean_x, Sigma = diag(var_x, cont_x))), nrow = param_n )
   colnames(x_obs) = paste0("X", c(1:dim_x))
-  # x are the outcome (Y) covariates 
+  
+  # notice that dim_x = ncol(x_obs), at least when thers are only cont covariates
+  # x are the true outcome's (Y) covariates 
   x = x_obs
   # x_misspec for PS misspec
-  x_misspec = as.matrix(data.frame(X_exp = exp(5*x_obs[,(ncol(x_obs) - 2)]), 
-                                   X_sqr = x_obs[,(ncol(x_obs) - 1)]^2 * x_obs[,(ncol(x_obs) - 2)], 
-                                   X_log = log(x_obs[,ncol(x_obs)] - (min(x_obs[,ncol(x_obs)]) - 0.1)))) %>% as.data.frame
-  if(cont_x<3){
-    x_misspec = as.matrix(data.frame(X_sqr = x_obs[,(ncol(x_obs))]^2)) %>% as.data.frame
+  #x_misspec = as.matrix(data.frame(X_sqr=x_obs[,(ncol(x_obs) - 1)]^2, X_log=log(x_obs[,ncol(x_obs)]-(min(x_obs[,ncol(x_obs)]) - 0.1)))) %>% as.data.frame
+  x_misspec = as.matrix(data.frame(X_exp = exp(5*x_obs[,(dim_x - 2)]), 
+                                   X_sqr = x_obs[,(dim_x - 1)]^2 * x_obs[,(dim_x - 2)], 
+                                   X_log = log(x_obs[,dim_x] - (min(x_obs[,dim_x]) - 0.1)))) %>% as.data.frame
+  if(cont_x<3){ # only one misspecified covariate
+    x_misspec = as.matrix(data.frame(X_sqr = x_obs[,dim_x]^2)) %>% as.data.frame
   }
-  #x_misspec = as.matrix(data.frame(X_sqr = x_obs[,(ncol(x_obs) - 1)]^2, 
-  #                                X_log = log(x_obs[,ncol(x_obs)] - (min(x_obs[,ncol(x_obs)]) - 0.1)))) %>% as.data.frame
   
   # no PS misspecification
   if(misspec_PS == 0){
     x_PS = x_obs
-    gamma_ah_adj = gamma_ah; gamma_pro_adj = gamma_pro; gamma_ns_adj = gamma_ns; betas_GPI_adj = betas_GPI 
+    gamma_ah_adj = gamma_ah; gamma_pro_adj = gamma_pro; gamma_ns_adj = gamma_ns
   }
   
-  # misspec2: replace 2 X's with x^2 and ~log(X), to PS model and possibly to outcome model (if misspec_outcome != 0) 
+  # misspec_PS=2: replace X's with its transformations (x_misspec) in the true PS model, and possibly in the true Y model (if misspec_outcome != 0) 
+  # x_PS: PS true model covariates
   if(misspec_PS == 2){
-    #TODO if(cont_x<3){}
-    
-    # PS true model covariates
-    x_PS = as.matrix( data.frame( x_obs[,-c((ncol(x_obs) - 2), (ncol(x_obs) - 1) ,ncol(x_obs))], x_misspec ) )
-    gamma_ah_adj = c(head(gamma_ah, -3),   funcform_factor_sqr*gamma_ah[2], funcform_factor_sqr*gamma_ah[2], funcform_factor_log*gamma_ah[2])
-    gamma_pro_adj = c(head(gamma_pro, -3), funcform_factor_sqr*gamma_pro[2], funcform_factor_sqr*gamma_pro[2], funcform_factor_log*gamma_pro[2])
-    gamma_ns_adj = rep(0, length(gamma_ah_adj)) 
-    betas_GPI_adj = betas_GPI
-    colnames(betas_GPI_adj) = rep("", ncol(betas_GPI_adj))
+    x_PS = as.matrix( data.frame( x_obs[,-tail(1:dim_x, n=ncol(x_misspec))], x_misspec ) )
+    gamma_ns_adj = gamma_ns
+    if(cont_x<3){ # replace only one misspecified covariate
+      gamma_ah_adj =  c(head(gamma_ah, (dim_x-1)), funcform_factor_sqr*gamma_ah[2])
+      gamma_pro_adj = c(head(gamma_pro, (dim_x-1)), funcform_factor_sqr*gamma_pro[2])
+    }else{ # replace 3 misspecified covariate
+      gamma_ah_adj = c(head(gamma_ah, -3),   funcform_factor_sqr*gamma_ah[2], funcform_factor_sqr*gamma_ah[2], funcform_factor_log*gamma_ah[2])
+      gamma_pro_adj = c(head(gamma_pro, -3), funcform_factor_sqr*gamma_pro[2], funcform_factor_sqr*gamma_pro[2], funcform_factor_log*gamma_pro[2])
+    }
   }
   
   # changing the obs x (for estimation), according to the transformation in the true x_PS
@@ -46,15 +47,15 @@ simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, 
     colnames(x_obs) = paste0("X", c(1:dim_x))
   }
   
-  # Y true model covariates:
+  # x are the true outcome's (Y) covariates 
   # if misspec_outcome == 0 (default), Y on original (obs) X 
-  # if misspec_outcome == 2, Y on the transformation of X, as in the misspec in the PS model
+  # if misspec_outcome == 2, Y on the transformation of X, as in x_misspec in the PS misspec
   if(misspec_outcome == 2){ #TODO change it so Y misspec is not necessarily the same as PS misspec 
+    #x = as.matrix( data.frame( x_obs[,-tail(1:dim_x, n=ncol(x_misspec))], x_misspec ) )
     if(cont_x<3){
-      x = as.matrix( data.frame( x_obs[,-tail(1:ncol(x_obs), n=1)], x_misspec ) )
+      x = as.matrix( data.frame( x_obs[,-tail(1:dim_x, n=1)], x_misspec ) )
     }else{  
-      x = as.matrix( data.frame( x_obs[,-tail(1:ncol(x_obs), n=2)], x_misspec[,c("X_sqr", "X_log")] ) )
-      #x = as.matrix( data.frame( x_obs[,-c((ncol(x_obs) - 2), (ncol(x_obs) - 1) ,ncol(x_obs))], x_misspec ) )
+      x = as.matrix( data.frame( x_obs[,-tail(1:dim_x, n=2)], x_misspec[,c("X_sqr", "X_log")] ) )
     }
   } 
   
@@ -126,8 +127,8 @@ simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, 
     # simulate dependency between errors
     cov_GPI_PO = rho_GPI_PO * sqrt(var_GPI[1]) * sqrt(var_GPI[2])
     cov_mat <- cbind(c(var_GPI[1], cov_GPI_PO), c(cov_GPI_PO, var_GPI[2]))
-    mu_x_beta_Y1 = x %*% matrix(betas_GPI_adj[1,], ncol = 1)
-    mu_x_beta_Y0 = x %*% matrix(betas_GPI_adj[2,], ncol = 1)
+    mu_x_beta_Y1 = x %*% matrix(betas_GPI[1,], ncol = 1)
+    mu_x_beta_Y0 = x %*% matrix(betas_GPI[2,], ncol = 1)
     two_PO = lapply(1:param_n, function(l){
       mvrnorm(1, mu = c(mu_x_beta_Y1[l], mu_x_beta_Y0[l]), cov_mat)
     })
@@ -137,8 +138,8 @@ simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, 
   if(rho_GPI_PO == 0){
     print(paste0("rho_GPI_PO", " is ", 0))
     # wout dependency
-    two_PO = lapply(1 : nrow(betas_GPI_adj), function(l){
-      PO_by_treatment_and_stratum(n=param_n, x_outcome=x, dim_x=dim_x, coeffs=betas_GPI_adj[l,], sigma_square_param=sigma_square_ding[l])
+    two_PO = lapply(1 : nrow(betas_GPI), function(l){
+      PO_by_treatment_and_stratum(n=param_n, x_outcome=x, dim_x=dim_x, coeffs=betas_GPI[l,], sigma_square_param=sigma_square_ding[l])
     })
     two_PO = data.frame(list.cbind(two_PO))
   }

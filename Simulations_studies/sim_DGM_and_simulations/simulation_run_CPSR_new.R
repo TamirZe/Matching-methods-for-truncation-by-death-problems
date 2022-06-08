@@ -1,7 +1,7 @@
 simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE, index_set_of_params, gamma_ah, gamma_pro, gamma_ns, xi, xi_est, 
                                           two_log_models=TRUE, two_log_est_EM=FALSE,
                                           misspec_PS, misspec_outcome=0, transform_x=0, 
-                                          funcform_factor_sqr=0, funcform_factor_log=0, 
+                                          funcform_factor_sqr, funcform_factor_log, 
                                           param_n, param_n_sim, iterations, epsilon_EM = 0.001,
                                           caliper, match_on = NULL, mu_x_fixed=FALSE, x_as, only_naive_bool=FALSE){
   
@@ -21,6 +21,7 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
     print(paste0("this is n_sim ", i, " in simulate_data_run_EM_and_match. ",
                  "index_EM_not_conv: ", index_EM_not_conv, ". real number of iterations: "  , real_iter_ind, "."))
     start_time1 <- Sys.time()
+    # simulate data
     list_data_for_EM_and_X = simulate_data_function(seed_num=NULL, gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns, 
                                                     xi=xi, xi_est=xi_est, two_log_models=two_log_models, param_n=param_n,
                                                     misspec_PS=misspec_PS, misspec_outcome=misspec_outcome, transform_x=transform_x,
@@ -33,10 +34,8 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
     OBS_table = list_data_for_EM_and_X$OBS_table
     pis = list_data_for_EM_and_X$pis; pis_est = list_data_for_EM_and_X$pis_est
     vec_OBS_table = t(c(OBS_table)); colnames(vec_OBS_table) = c("A0_S0", "A1_S0", "A0_S1", "A1_S1")
-    
-    # real parameter
+    # "real" SACE parameter
     SACE = list_data_for_EM_and_X$true_SACE
-    
     # naive estimators
     naive_sace_estimation = naive_sace_estimation_func(data_for_EM)
     # naive (composite)
@@ -58,6 +57,8 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
       next()
     }
     
+    # EM and PS estiamtion
+    # If beta_S0=NULL, employ two logistic regressions during the EM
     if(two_log_est_EM == FALSE){
       #S(0)=1: Logistic regression S(0)=1 on X, using S|A=0
       fit_S0_in_A0 = glm(as.formula(paste0("S ~ ",paste(X_sub_cols[-1], collapse="+"))), data=filter(data_for_EM, A==0), family="binomial")
@@ -70,20 +71,19 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
     #                            weights = 1-P_S0[data_for_EM$A==1], family="quasibinomial")
     #beta_S1 = fit_pseudo_S1_given_A1$coefficients
     
-    # EM
-    # If beta_S0=NULL, employ two logistic regressions during the EM
     start_timeDing <- Sys.time()
     est_ding_lst = xi_2log_PSPS_M_weighting(Z=data_for_EM$A, D=data_for_EM$S,
                                             X=as.matrix(subset(data_for_EM, select = 
                                             grep(paste(X_sub_cols[-1], collapse="|"), colnames(data_for_EM)))), Y=data_for_EM$Y, 
                                             xi_est=xi_est, beta.S0=beta_S0, beta.ah=NULL, beta.c=NULL, 
                                             iter.max=iterations, error0=epsilon_EM)
+    end_timeDing <- Sys.time()
+    print(paste0("Ding EM lasts ", difftime(end_timeDing, start_timeDing)))
+    
     coeff_ah = est_ding_lst$beta.ah ; coeff_pro = est_ding_lst$beta.c
     EM_coeffs = rbind(coeff_ah, coeff_pro)
     list_beta_S0[[i]] = beta_S0; list_coeff_ah[[i]] = coeff_ah; list_coeff_pro[[i]] = coeff_pro
     
-    end_timeDing <- Sys.time()
-    print(paste0("Ding EM lasts ", difftime(end_timeDing, start_timeDing)))
     PS_est = est_ding_lst$ps.score
     data_with_PS = data.table(data_for_EM, PS_est)
     
@@ -143,7 +143,8 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
                   em_NOT_conv = est_ding_lst$iter == iterations+1 & est_ding_lst$error>=epsilon_EM, real_iter_ind=real_iter_ind))
     }
     
-    # run for all options (3 options - full dataset, wout A=0,S=0, only S=1)
+    # matching
+    # perform matching on all the 3 dataset (full, wout A=0,S=0, and only S=1)
     data_list = list(data_with_PS, data_with_PS[OBS != "O(0,0)"], data_with_PS[S==1]) 
     lst_matching_estimators = list()
     replace_vec = c(FALSE, TRUE)
@@ -157,12 +158,10 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
         })
     }
     
-    
     # matching_estimators 
     matching_estimators = lapply(1:length(replace_vec), function(j){
       data.frame(t(unlist(list.rbind(lapply(lst_matching_estimators[[j]], head, 8))))) 
     })
-    
     # MULTIPLE MATCHING WITH BC
     matching_estimators = list.cbind(matching_estimators)
     colnames(matching_estimators) = paste0(paste0("rep", rep(substr(replace_vec,1,1), each=length(matching_estimators)/2)),
@@ -202,8 +201,7 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
     OLS_YESint_matching_reg_estimators = arrange_lin_reg_estimators(1, "OLS_YESinteractions_reg_adj_estimators_and_se")
     OLS_YESint_matching_reg_estimators_CI = arrange_lin_reg_estimators(1, "OLS_YESinteractions_reg_adj_estimators_and_se", "CI_LS", name="OLS_YESint")
     
-    # TODO Coverage CI
-    
+    #TODO Coverage CI
     
     # means_by_subset
     means_by_subset_lst = lapply(1:length(replace_vec), function(j){
@@ -219,30 +217,21 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
                         "[[", "BCclpr_untrt_surv_matched_untrt_matched_trt"))
     })
     
-    # SUMMARIES
-    # put all results together in the current row of mat_param_estimators
+    # add the current iteration (i.e. param_n_sim) to the big lists/matrices that contain info re all iterations
     mat_param_estimators = rbind( mat_param_estimators,
                                   data.frame(SACE
-                                             ,DING_est, DING_model_assisted_est_ps
-                                             ,matching_estimators
+                                             ,DING_est, DING_model_assisted_est_ps, matching_estimators
                                              ,most_naive_est, most_naive_est_se, sur_naive_est, sur_naive_est_se
                                              ,pis, t(pis_est), vec_OBS_table
                                   ))
     
     # regression estimators
-    WLS_NOint_mat_reg_estimators = rbind(WLS_NOint_mat_reg_estimators,
-                                         data.frame(SACE, WLS_NOint_matching_reg_estimators) )
+    WLS_NOint_mat_reg_estimators = rbind(WLS_NOint_mat_reg_estimators, data.frame(SACE, WLS_NOint_matching_reg_estimators))
+    WLS_YESint_mat_reg_estimators = rbind(WLS_YESint_mat_reg_estimators, data.frame(SACE, WLS_YESint_matching_reg_estimators))
+    OLS_NOint_mat_reg_estimators = rbind(OLS_NOint_mat_reg_estimators, data.frame(SACE, OLS_NOint_matching_reg_estimators))
+    OLS_YESint_mat_reg_estimators = rbind(OLS_YESint_mat_reg_estimators, data.frame(SACE, OLS_YESint_matching_reg_estimators))
     
-    WLS_YESint_mat_reg_estimators = rbind(WLS_YESint_mat_reg_estimators,
-                                          data.frame(SACE, WLS_YESint_matching_reg_estimators) )
-    
-    OLS_NOint_mat_reg_estimators = rbind(OLS_NOint_mat_reg_estimators,
-                                         data.frame(SACE, OLS_NOint_matching_reg_estimators) )
-    
-    OLS_YESint_mat_reg_estimators = rbind(OLS_YESint_mat_reg_estimators,
-                                          data.frame(SACE, OLS_YESint_matching_reg_estimators) )
-    
-    # CI of matching plain estimators and regression matching estimators
+    # CI of matching crude, BC and regression estimators after matching
     CI_mat = rbind( CI_mat, data.frame(SACE
                                        ,CI_naives_before_matching, CI_matching_estimators
                                        ,WLS_NOint_matching_reg_estimators_CI, WLS_YESint_matching_reg_estimators_CI
@@ -270,8 +259,6 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
     return(list(list_beta_S0=list_beta_S0, list_coeff_ah=list_coeff_ah, list_coeff_pro=list_coeff_pro))
   }
   
-  # summaries
-  
   # summary of mat_param_estimators: mean, med, empirical sd and MSE
   param_SACE = mean(mat_param_estimators$SACE)
   MSE_fun <- function (x) mean((x-param_SACE)^2) # param_SACE SACE mean(x)
@@ -292,7 +279,6 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
     rownames(list_reg_LS[[i]]) = c(c(1:param_n_sim),c("mean","med","sd","MSE"))
   }
   
-  #apply(CI_mat[,c(1:2)], 2, as.numeric)
   CI_mat$SACE = mean(CI_mat$SACE)
   
   #TODO if only_naive_bool==TRUE, i.e. we want only naive, stop here
@@ -365,3 +351,4 @@ arrange_EM_coeffs = function(list_coeff_ah, list_coeff_pro, dim_x){
   #rownames(EM_coeffs_df) = c("coeff_ah_0", "coeff_ah_1","coeff_pro_0", "coeff_pro_1")
   return(EM_coeffs_df)
 }
+
