@@ -1,5 +1,5 @@
 # for now we use covariates. we dont use reg_covariates currently
-regression_adjusted_function = function(rep_bool, dt_match_S1, m_data, matched_pairs,
+regression_adjusted_function = function(dt_match_S1, m_data, matched_pairs,
                                         covariates = X_sub_cols[-1], reg_covariates = X_sub_cols[-1],
                                         interactions_bool = TRUE, LS="OLS", mu_x_fixed = FALSE, x_as){
   estimation_with_interactions = function(lin_reg_fit_matched, coeffs_table, data_matched_reg, 
@@ -58,9 +58,6 @@ regression_adjusted_function = function(rep_bool, dt_match_S1, m_data, matched_p
   }
     return(estimators)
 }
-  
-  # run only OLS when matching is wout replacement, and WLS when matching is with replacement
-  if( (rep_bool == T & LS == "OLS") | (rep_bool == F & LS == "WLS") ){return("not the regression model we need")}
   
   # reg covariares
   reg_data_matched_wout_pairs = filter(m_data, id %in% 

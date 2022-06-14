@@ -284,7 +284,7 @@ xi_2log_PSPS_M_weighting = function(Z, D, X, Y,
 }
 
 # calculate weights: O11_prior_ratio, O11_posterior_ratio W_1_as, and W_1_as_true
-add_weights_func = function(data_with_PS, pis, pis_est){
+add_PS_weights_func = function(data_with_PS, pis, pis_est){
   O11_prior_ratio = as.numeric(pis_est["pi_as_est"] / (pis_est["pi_as_est"] + pis_est["pi_pro_est"]))
   O11_prior_ratio_true = as.numeric(pis[,"pi_as"] / (pis[,"pi_as"] + pis[,"pi_pro"]))
   data_with_PS[, `:=` ( O11_posterior_ratio = EMest_p_as / (EMest_p_as + EMest_p_pro), 

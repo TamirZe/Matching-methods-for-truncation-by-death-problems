@@ -1,0 +1,226 @@
+library(data.table); library(plyr); library(dplyr); library(rlang); library(rlist)
+library(nnet); library(locfit); library(splitstackshape)
+library(Matching); library(sandwich); library(clubSandwich); library(lmtest)
+library(mgsub)
+
+########################################################################
+# source for Simulations_studies
+setwd("~/A matching framework for truncation by death problems")
+source("Simulations_studies/sim_parameters_and_pis/sim_check_pis_and_covariates.R")
+source("Simulations_studies/sim_DGM_and_simulations/simulation_run_CPSR.R")
+source("Simulations_studies/sim_DGM_and_simulations/DGM_CPSR.R")
+source("Simulations_studies/sim_naive_estimation/naive_estimation.R")
+#source("Ding_Lu/PS_M_weighting.R")
+source("Ding_Lu_EM/Sequencial_logistic_regressions/EM_2log_CPSR.R") 
+source("Simulations_studies/sim_matching_procedure/matching_multiple.R")
+source("Simulations_studies/sim_post_matching_analysis/sim_regression_estimators.R")
+source("Simulations_studies/sim_tables_and_figures/Tables/table_design_multiple_func.R")
+source("Simulations_studies/sim_tables_and_figures/Tables/coverage_naive_est.R")
+#############################################################################################
+set.seed(101)
+#############################################################################################
+# treatment probability
+prob_A = 0.5
+
+# parameters for simulating X
+#@@@@@@@@@@@@ dim_x includes intercept @@@@@@@@@@@@@@@
+dim_x = 6; cont_x = 5; categ_x = 0; vec_p_categ = rep(0.5, categ_x); dim_x_misspec = 2
+mean_x = rep(0.5, cont_x); var_x = rep(1, cont_x)
+
+# misspec parameters (for PS model and Y model:
+# misspec_PS: 0 <- NO, 1:only PS model, 2: PS model (possibly also Y)
+misspec_PS = 2 # 0: no misspec of PS model # 2: PS functional form misspecification
+funcform_factor_sqr=5; funcform_factor_log=-5 # funcform_factor_sqr=-3; funcform_factor_log=3
+mean_x_misspec = rep(0.5, dim_x_misspec)
+transform_x = 0; misspec_outcome = 0
+
+# CPSR parameter 
+two_log_models = TRUE
+xi = 0
+xi_est = xi # xi
+# EM convergence parameters
+iterations = 200; epsilon_EM = 10^-6
+#############################################################################################
+
+###############################################################################################
+# beta ####
+# with interactions between A and X:
+betas_GPI = as.matrix(rbind(c(22,5,2,1), c(20,3,3,0))) # cont_x=3
+betas_GPI = as.matrix(rbind(c(22,5,2,1,3,5), c(20,3,3,0,1,3))) # cont_x=5
+betas_GPI = as.matrix(rbind(c(22,rep(c(5,2,1,3,5),2)), c(20,rep(c(3,3,0,1,3),2)))) # cont_x=10 
+
+# without interactions between A and X: "simple effect" is 2
+betas_GPI = as.matrix(rbind(c(22,3,4,5), c(20,3,4,5))) # cont_x=3
+betas_GPI = as.matrix(rbind(c(22,3,4,5,1,3), c(20,3,4,5,1,3))) # cont_x=5
+betas_GPI = as.matrix(rbind(c(22,rep(c(5,2,1,3,5),2)), c(20,rep(c(5,2,1,3,5),2)))) # cont_x=10
+
+rownames(betas_GPI) = c("beta_treatment", "beta_control")
+###############################################################################################
+
+###############################################################################################
+# correlation structure between PO'
+var_GPI = as.matrix(rbind(1, 1))
+rownames(var_GPI) = c("var_treatment", "var_control")
+rho_GPI_PO = 0.4 
+###############################################################################################
+
+###############################################################################################
+# assign 0's to gamma_ns and add coefficients names ####
+gamma_ns = rep(0, dim_x)
+colnames(mat_gamma) = paste0( "gamma", paste(rep(c(0:(dim_x-1)), times = 2)), rep(c("ah", "pro"), each = dim_x) )
+
+mat_gamma[,c(1,2,dim_x+1,dim_x+2)]
+extract_pis_lst = extract_pis_from_scenarios(nn=500000, mat_gamma=mat_gamma, xi=xi, misspec_PS=0); mat_pis_per_gamma = extract_pis_lst$mat_pis
+mat_pis_per_gamma
+##########################################################
+
+param_n = 2000; param_n_sim = 1000 # param_n = 2000; param_n_sim = 1000
+caliper = 0.25; match_on = "O11_posterior_ratio" 
+mu_x_fixed = FALSE # mat_x_as; x_as = mat_x_as[1,]
+
+
+param_measures = c("mean","med","sd","MSE"); num_of_param_measures_per_param_set = length(param_measures)
+list_all_mat_SACE_estimators <- list_all_WLS_NOint_regression_estimators <- list_all_WLS_YESint_regression_estimators <-
+  list_all_OLS_NOint_regression_estimators <- list_all_OLS_YESint_regression_estimators <- list_all_CI <- 
+  list_all_EM_coeffs <- list_all_means_by_subset  <- list_all_means_by_g <- list_all_EM_not_conv <- list_all_BCclpr <- list()
+
+
+########################################################################
+# run over different values of gamma's: 1:nrow(mat_gamma) ####
+# param_n_sim * time per run * nrow(mat_gamma)
+colnames(mat_gamma) = paste0( "gamma", paste(rep(c(0:(dim_x-1)), times = 2)), rep(c("ah", "pro"), each = dim_x) )
+for ( k in c(1 : nrow(mat_gamma)) ){
+  print(paste0("in the outer for loop ", k))
+  gamma_ah=as.numeric(mat_gamma[k, c(1:dim_x)])
+  gamma_pro=as.numeric(mat_gamma[k, (dim_x+1): (2*dim_x)])
+  gamma_ns=gamma_ns
+  start_time <- Sys.time()
+  EM_and_matching = simulate_data_run_EM_and_match(only_EM_bool=FALSE, return_EM_PS=FALSE, index_set_of_params=k,
+                                                   gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns, xi=xi, xi_est=xi_est, two_log_models=TRUE, two_log_est_EM=FALSE,
+                                                   misspec_PS=misspec_PS, misspec_outcome=misspec_outcome, funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log, 
+                                                   param_n=param_n, param_n_sim=param_n_sim, iterations=iterations, epsilon_EM=epsilon_EM, caliper=caliper,
+                                                   match_on=match_on, mu_x_fixed=mu_x_fixed, x_as=NULL)
+  
+  mat_SACE_estimators = EM_and_matching[["mat_param_estimators"]]
+  df_parameters = matrix(rep(as.numeric(mat_gamma[k,])
+                             , each = nrow(mat_SACE_estimators))
+                         , nrow = nrow(mat_SACE_estimators))
+  colnames(df_parameters) = colnames(mat_gamma)
+  mat_SACE_estimators = data.frame(mat_SACE_estimators, df_parameters)
+  
+  list_all_mat_SACE_estimators[[k]] = mat_SACE_estimators
+  list_all_WLS_NOint_regression_estimators[[k]] = EM_and_matching[["WLS_NOint_mat_reg_estimators"]]
+  list_all_WLS_YESint_regression_estimators[[k]] = EM_and_matching[["WLS_YESint_mat_reg_estimators"]]
+  list_all_OLS_NOint_regression_estimators[[k]] = EM_and_matching[["OLS_NOint_mat_reg_estimators"]]
+  list_all_OLS_YESint_regression_estimators[[k]] = EM_and_matching[["OLS_YESint_mat_reg_estimators"]]
+  list_all_CI[[k]] = EM_and_matching[["CI_mat"]]
+  list_all_EM_coeffs[[k]] = EM_and_matching[["coeffs_df"]]
+  list_all_means_by_subset[[k]] = EM_and_matching[["mean_list_means_by_subset"]]
+  rownames(list_all_means_by_subset[[k]]) = paste0("s", k, rownames(list_all_means_by_subset[[k]]))
+  list_all_means_by_g[[k]] = EM_and_matching[["mean_list_by_g"]]
+  list_all_EM_not_conv[[k]] = EM_and_matching[["list_EM_not_conv"]]
+  if(! is_empty(list_all_EM_not_conv[[k]])){names(list_all_EM_not_conv[[k]]) = paste0("s", k, names(list_all_EM_not_conv[[k]]))}
+  list_all_BCclpr[[k]] = EM_and_matching[["list_BCclpr"]]
+  
+  end_time <- Sys.time()
+  print(paste0("in the end of outer for loop ", k, ", ", difftime(end_time, start_time)))
+}
+########################################################################
+
+########################################################################
+# check ties in BC with caliper ####
+ties_setA = sum(abs(list.rbind(list_all_BCclpr[[1]])$trt_added_by_ties))
+ties_setB = sum(abs(list.rbind(list_all_BCclpr[[2]])$trt_added_by_ties))
+ties = c(ties_setA=ties_setA, ties_setB=ties_setB)
+########################################################################
+
+########################################################################
+# function that changes rownames to LETTERS per each parameter (gammas) set ####
+change_rownames_to_LETTERS_by_param_set = function(df, mat_params=mat_gamma,
+                                                   num_of_param_measures=num_of_param_measures_per_param_set){
+  rownames(df) = paste0(rep(LETTERS[1:nrow(mat_params)],each = num_of_param_measures), "_",
+                        rep(rownames(df)[1:num_of_param_measures], times = nrow(mat_params)))
+  return(df)
+}
+########################################################################
+
+########################################################################
+# summary of SACE estimators ####
+mat_all_estimators = list.rbind(lapply(list_all_mat_SACE_estimators, tail, length(param_measures)))
+#num_of_param_measures_per_param_set = nrow(mat_all_estimators) / nrow(mat_gamma) # = length(param_measures)
+mat_all_estimators = data.frame(subset(mat_all_estimators, select = grep("gamma", colnames(mat_all_estimators))),
+                                subset(mat_all_estimators, select = -grep("gamma", colnames(mat_all_estimators))))
+mat_all_estimators = change_rownames_to_LETTERS_by_param_set(mat_all_estimators)
+pi_from_mat_all_estimators = subset(mat_all_estimators, select = grep("pi_", colnames(mat_all_estimators))) %>% round(3)
+
+# list_all_regression_estimators
+WLS_NOint_mat_regression_estimators = list.rbind(lapply(list_all_WLS_NOint_regression_estimators, tail, length(param_measures)))
+WLS_NOint_mat_regression_estimators = change_rownames_to_LETTERS_by_param_set(WLS_NOint_mat_regression_estimators)
+WLS_YESint_mat_regression_estimators = list.rbind(lapply(list_all_WLS_YESint_regression_estimators, tail, length(param_measures)))
+WLS_YESint_mat_regression_estimators = change_rownames_to_LETTERS_by_param_set(WLS_YESint_mat_regression_estimators)
+OLS_NOint_mat_regression_estimators = list.rbind(lapply(list_all_OLS_NOint_regression_estimators, tail, length(param_measures)))
+OLS_NOint_mat_regression_estimators = change_rownames_to_LETTERS_by_param_set(OLS_NOint_mat_regression_estimators)
+OLS_YESint_mat_regression_estimators = list.rbind(lapply(list_all_OLS_YESint_regression_estimators, tail, length(param_measures)))
+OLS_YESint_mat_regression_estimators = change_rownames_to_LETTERS_by_param_set(OLS_YESint_mat_regression_estimators)
+
+
+# summary of EM estimators for the gamms's- the PS coefficient- logistic reg of stratum on X ####
+########################################################################
+summary_EM_coeffs = list.rbind(lapply(list_all_EM_coeffs, function(x) x[c((param_n_sim + 1):(param_n_sim + 5))]))
+rownames(summary_EM_coeffs) = paste0(rep(LETTERS[1:nrow(mat_gamma)],each = ncol(mat_gamma)), "_",
+                                     rep(rownames(summary_EM_coeffs)[1:ncol(mat_gamma)],times = nrow(mat_gamma)))
+########################################################################
+
+# covariates means by A and S, before and after matching (+ mean of as) ####
+########################################################################
+mat_all_means_by_subset = NULL
+first_3_rows = c("mean_as", "mean_A0_S1", "mean_A1_S1_as")
+for(i in c(1:length(list_all_means_by_subset))){
+  first_3_rows_ind = grep(paste0(first_3_rows, collapse = "|"), rownames(list_all_means_by_subset[[i]]))
+  mat_all_means_by_subset = rbind(mat_all_means_by_subset, list_all_means_by_subset[[i]][-first_3_rows_ind[-c(1:3)], ])
+}
+########################################################################
+
+########################################################################
+# initial summaries
+means_by_subset_sum = mat_all_means_by_subset[grep("S1|mean_as", 
+                                                   rownames(mat_all_means_by_subset), ignore.case = F) , ] %>% round(3)
+means_by_subset_sum = means_by_subset_sum[-grep("_approx", rownames(means_by_subset_sum)),]
+#pi_from_mat_all_estimators VS 
+pis = mat_all_estimators[grep("_mean",rownames(mat_all_estimators)),grep("pi",colnames(mat_all_estimators))] %>% round(3)
+pis = data.frame(pi_as=pis$pi_as, pi_pro=pis$pi_pro, pi_ns=pis$pi_ns)
+
+# checking pis from extract_pis_from_scenarios are the same as pis, when nn = param_n
+'''mat_pis_per_gamma_1 <- mat_pis_per_gamma_2 <- matrix(0, nrow = 200 ,ncol = 3)
+for (i in 1:200) {
+  extract_pis_lst = extract_pis_from_scenarios(nn=2000, xi=xi, misspec_PS=2)
+  mat_pis_per_gamma_1[i,] = extract_pis_lst$mat_pis[1,]; mat_pis_per_gamma_2[i,] = extract_pis_lst$mat_pis[2,]  
+}
+apply(mat_pis_per_gamma_1, 2, mean); apply(mat_pis_per_gamma_2, 2, mean)'''
+########################################################################
+
+########################################################################
+# TABLE DESIGN ####
+list_all_CI_temp = list_all_CI # list_all_CI from main
+data_set_names_vec = c("_all", "_wout_O_0_0", "_S1")
+
+lst_final_tables_ALL_est_ALL_dataset = TABLES_before_coverage_and_wout_naive_and_DING(data_set_names_vec,
+                                                                                      estimators_names=c("PS Crude", "mahal Crude", "Crude", "HL", "BC", "BC caliper", "BC inter", "BC caliper inter"))
+lst_final_tables_ALL_est_ALL_dataset_PLUS_naives = 
+  TABLES_add_coverage(data_set_names_vec, lst_final_tables_ALL_est_ALL_dataset, list_all_CI)
+lst_final_tables_ALL_est_ALL_dataset = lst_final_tables_ALL_est_ALL_dataset_PLUS_naives$lst_final_tables_ALL_est_ALL_dataset
+naives_before_matching_coverage = lst_final_tables_ALL_est_ALL_dataset_PLUS_naives$naives_before_matching_coverage
+final_tables = TABLES_add_naive_and_ding(data_set_names_vec, lst_final_tables_ALL_est_ALL_dataset, naives_before_matching_coverage)
+final_tables_general = adjustments_for_final_tables(final_tables)
+final_tables_crude = adjustments_for_final_tables_crude_est(final_tables)
+final_tables_general$'_S1'
+########################################################################
+
+
+save(final_tables_general, file = "final_tables_general.Rdata")
+save(final_tables_crude, file = "final_tables_crude.Rdata")
+save(list_all_CI_temp, file = "list_all_CI_temp.Rdata")
+save(mat_all_means_by_subset, file = "mat_all_means_by_subset.Rdata")
+save(list_all_means_by_g, file = "list_all_means_by_g.Rdata")
+save(pis, file = "pis.Rdata")
+save(ties, file = "ties.Rdata")

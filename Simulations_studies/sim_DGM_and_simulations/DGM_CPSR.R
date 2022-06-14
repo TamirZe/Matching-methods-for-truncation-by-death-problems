@@ -1,6 +1,8 @@
-simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, xi, xi_est, two_log_models=TRUE, param_n, 
-                                  misspec_PS, misspec_outcome=0, transform_x=0,
-                                  funcform_factor_sqr, funcform_factor_log, only_mean_x_bool=FALSE){
+simulate_data_func = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, 
+                              xi, xi_est, two_log_models_DGM=TRUE, param_n, 
+                              misspec_PS, misspec_outcome=0, transform_x=0,
+                              funcform_factor_sqr, funcform_factor_log, 
+                              betas_GPI, var_GPI, rho_GPI_PO, only_mean_x_bool=FALSE){
   if(!is.null(seed_num)){set.seed(seed_num)}
   
   # draw covariate matrix
@@ -61,7 +63,7 @@ simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, 
     }
   } 
   
-  if(two_log_models==TRUE){ # two logistic models for s(0) and S(1) given S(0)=1
+  if(two_log_models_DGM==TRUE){ # two logistic models for s(0) and S(1) given S(0)=1
     #1) log reg of S(0)
     exp_S0 = exp(x_PS%*%gamma_ah_adj)
     prob_S0 = exp_S0 / ( 1 + exp_S0 )
@@ -107,8 +109,8 @@ simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, 
   data = data.frame(prob, x_obs, g = g_vec, g_num = g_vec_num,
                     A = rbinom(param_n, 1, prob_A))
   data$S = ifelse((data$g == "as") | (data$g == "pro" & data$A == 1) | (data$g == "har" & data$A == 0), 1, 0)
-  mean_by_g = data.table(data)[, lapply(.SD, mean), by="g"]
-  #mean_by_g$g = mapvalues(mean_by_g$g, from = c("har", "as", "ns", "pro"), to = c(0:3))
+  mean_by_g = data.table(data)[, lapply(.SD, mean), by="g"] %>% arrange(g)
+  mean_by_g$g = mapvalues(mean_by_g$g, from = c("har", "as", "ns", "pro"), to = c(0:3))
   mean_by_A_g = data.table(data)[, lapply(.SD, mean), by=c("A", "g")] %>% arrange(g,A)
   x_har = filter(mean_by_g, g=="har") %>% subset(select = grep("X|^A$", colnames(mean_by_g))) %>% as.matrix
   x_as = filter(mean_by_g, g=="as") %>% subset(select = grep("X|^A$", colnames(mean_by_g))) %>% as.matrix
@@ -160,15 +162,9 @@ simulate_data_function = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, 
   OBS_table = matrix(c(obs_table[1], obs_table[3], obs_table[2], obs_table[4]), nrow = 2, ncol = 2)
   OBS_table = OBS_table/ param_n
   rownames(OBS_table) = c("A=0", "A=1"); colnames(OBS_table) = c("S=0", "S=1")
+  vec_OBS_table = t(c(OBS_table))
+  colnames(vec_OBS_table) = c("A0_S0", "A1_S0", "A0_S1", "A1_S1")
   
-  # estimation of strata proportions (under CPSR) 
-  p1 = mean(filter(dt, A==1)$S); p0 = mean(filter(dt, A==0)$S)
-  pi_har_est = (xi_est/(1+xi_est))*p0
-  pi_as_est = (1/(1 + xi_est))*p0
-  pi_ns_est = 1 - p1 - (xi_est/(1+xi_est))*p0
-  pi_pro_est = p1 - (1/(1+xi_est))*p0
-  pis_est = c(pi_har_est = pi_har_est, pi_as_est = pi_as_est, pi_ns_est = pi_ns_est, pi_pro_est = pi_pro_est)
-  
-  return(list(dt=dt, x_obs=x_obs, x_PS=x_PS, x_outcome=x, mean_by_g=mean_by_g,
-              OBS_table=OBS_table, pis=pis, pis_est=pis_est, true_SACE=true_SACE))
+  return(list(true_SACE=true_SACE, dt=dt, x_obs=x_obs, x_PS=x_PS, x_outcome=x, mean_by_g=mean_by_g,
+              OBS_table=OBS_table, vec_OBS_table=vec_OBS_table, pis=pis))
 }

@@ -112,8 +112,10 @@ my_matching_func_multiple = function(match_on = NULL, X_sub_cols, m_data, weight
                           ,caliper = vec_caliper, Weight.matrix = w_mat
     )
     BCclpr_untrt_surv_matched_untrt_matched_trt = data.frame( untrt_surv = sum(1-m_data$A),
-                                                              matched_untrt = matchBC_clpr$index.control %>% length(), unq_matched_untrt = unique(matchBC_clpr$index.control) %>% length(),
-                                                              matched_trt = matchBC_clpr$index.treated %>% length(), unq_matched_trt = unique(matchBC_clpr$index.treated) %>% length() )
+                              matched_untrt = matchBC_clpr$index.control %>% length(),
+                              unq_matched_untrt = unique(matchBC_clpr$index.control) %>% length(),
+                              matched_trt = matchBC_clpr$index.treated %>% length(),
+                              unq_matched_trt = unique(matchBC_clpr$index.treated) %>% length() )
     BCclpr_untrt_surv_matched_untrt_matched_trt$trt_added_by_ties = 
       BCclpr_untrt_surv_matched_untrt_matched_trt$matched_trt - BCclpr_untrt_surv_matched_untrt_matched_trt$matched_untrt 
     BCest_clpr = as.numeric(matchBC_clpr$est)
