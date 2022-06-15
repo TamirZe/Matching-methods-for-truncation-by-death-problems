@@ -5,12 +5,14 @@ library(Matching); library(sandwich); library(clubSandwich); library(lmtest); li
 ########################################################################
 # source for Simulations_studies
 setwd("~/A matching framework for truncation by death problems")
+source("Simulations_studies/sim_parameters_and_pis/sim_set_parameters.R")
 source("Simulations_studies/sim_parameters_and_pis/sim_check_pis_and_covariates.R")
 source("Simulations_studies/sim_DGM_and_simulations/DGM_CPSR.R")
 source("Simulations_studies/sim_naive_estimation/naive_estimation.R")
 #source("Ding_Lu/PS_M_weighting.R")  # EM with one multinomial regression 
 source("Ding_Lu_EM/Sequencial_logistic_regressions/EM_2log_CPSR.R") 
 source("Simulations_studies/sim_matching_procedure/sim_matching.R")
+source("Simulations_studies/sim_post_matching_analysis/sim_post_matching_analysis.R")
 source("Simulations_studies/sim_post_matching_analysis/sim_regression_estimators.R")
 #############################################################################################
 
@@ -44,19 +46,21 @@ misspec_outcome = 2 # 0: no misspec of Y model # 2: Y functional form misspecifi
 #############################################################################################
 # EM  parameters ####
 # two_log_est_EM: S(0)=1, is estimated within A=0, with label according to S, before the EM process.
-# In both cases, sequencial logistic models are being estimated. For one multinomial midel, use anotehr EM function
+# In both cases, sequencial logistic models are being estimated. For one multinational model, use PS_M_weighting (and seq_log_or_multinomial_EM=FALSE)
 two_log_est_EM = FALSE 
 terations_EM = 200; epsilon_EM = 10^-6
+# seq_log_or_multinomial_EM = TRUE
 #############################################################################################
 
 #################################################################################################################
 # beta_and_gamma ####
+# scenario is determined according to mat_gamma (and its row, k) and betas_GPI
+
 beta_and_gamma = set_parameters_func(dim_x=dim_x, high_pi_pro=T, AX_interactions=T) # high_pi_pro = T/F
 # beta
 betas_GPI = beta_and_gamma$betas_GPI
 # gamma
 mat_gamma = beta_and_gamma$mat_gamma
-mat_gamma[,c(1,2,dim_x+1,dim_x+2)]
 
 k=2 # k=1 (pi as = 0.5) # k=2 (pi as = 0.75)
 gamma_ns = rep(0, dim_x)
@@ -66,10 +70,10 @@ gamma_pro =  as.numeric(mat_gamma[k, (dim_x+1): (2*dim_x)])
 
 ##################################################################################################################
 # extract pis, wout and with PS misspecification ####
-extract_pis_lst = extract_pis_from_scenarios(nn=300000, mat_gamma=mat_gamma, xi=xi, misspec_PS=0, two_log_models=T)
+extract_pis_lst = extract_pis_from_scenarios(nn=300000, mat_gamma=mat_gamma, xi=xi, misspec_PS=0, two_log_models_DGM=T)
 mat_pis_per_gamma = extract_pis_lst$mat_pis
 mat_pis_per_gamma
-extract_pis_lst_mis_PS = extract_pis_from_scenarios(nn=300000, mat_gamma=mat_gamma, xi=xi, misspec_PS=2, two_log_models=T)
+extract_pis_lst_mis_PS = extract_pis_from_scenarios(nn=300000, mat_gamma=mat_gamma, xi=xi, misspec_PS=2, two_log_models_DGM=T)
 mat_pis_per_gamma_mis_PS = extract_pis_lst_mis_PS$mat_pis
 mat_pis_per_gamma_mis_PS
 ##################################################################################################################
@@ -88,14 +92,14 @@ caliper = 0.25; match_on = "O11_posterior_ratio"
 ###############################################################################################
 
 ###############################################################################################
-param_n = 2000; param_n_sim = 100 # param_n = 2000; param_n_sim = 1000
+param_n = 2000; param_n_sim = 1000 # param_n = 2000; param_n_sim = 1000
 mu_x_fixed = FALSE
 ###############################################################################################
 
 ###############################################################################################
 # true SACE parameter from one large simulation
 one_large_simulation = simulate_data_func(gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns,
-                               xi=xi, xi_est=xi_est, two_log_models_DGM=two_log_models_DGM, param_n=100000, 
+                               xi=xi, two_log_models_DGM=two_log_models_DGM, param_n=100000, 
                                misspec_PS=misspec_PS, misspec_outcome=misspec_outcome, transform_x=transform_x,
                                funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log,
                                betas_GPI=betas_GPI, var_GPI=var_GPI, rho_GPI_PO=rho_GPI_PO)
@@ -115,8 +119,9 @@ CI_mat <- matrix(nrow = param_n_sim, ncol = 21)
 BC_ties_multiple_treated_mat <- matrix(nrow = param_n_sim, ncol = 12)
 OLS_NOint_mat<- OLS_YESint_mat <- matrix(nrow = param_n_sim, ncol =  3)
 WLS_NOint_mat <- WLS_YESint_mat <- matrix(nrow = param_n_sim, ncol =  5)
-scen_parameter_lst = list(true_SACE=true_SACE, gamma_ah=gamma_ah, gamma_pro=gamma_pro,
-    xi=xi, xi_est=xi_est, two_log_models=two_log_models, param_n=param_n, param_n_sim=param_n_sim,
+scen_parameter_lst = list(true_SACE=true_SACE, param_n=param_n, param_n_sim=param_n_sim,
+    gamma_ah=gamma_ah, gamma_pro=gamma_pro,
+    xi=xi, xi_est=xi_est, two_log_models_DGM=two_log_models_DGM, 
     misspec_PS=misspec_PS, misspec_outcome=misspec_outcome, transform_x=transform_x,
     funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log,
     betas_GPI=betas_GPI, var_GPI=var_GPI, rho_GPI_PO=rho_GPI_PO)
@@ -134,7 +139,7 @@ for (i in 1:param_n_sim){
   # DGM: simulate data
   list_data_for_EM_and_X = simulate_data_func(seed_num=NULL, 
           gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns, 
-          xi=xi, xi_est=xi_est, two_log_models=two_log_models, param_n=param_n,
+          xi=xi, two_log_models_DGM=two_log_models_DGM, param_n=param_n,
           misspec_PS=misspec_PS, misspec_outcome=misspec_outcome, transform_x=transform_x,
           funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log,
           betas_GPI=betas_GPI, var_GPI=var_GPI, rho_GPI_PO=rho_GPI_PO)
@@ -185,7 +190,7 @@ for (i in 1:param_n_sim){
   DL_est = c(DL_est = est_ding_lst$AACE, DL_MA_est = est_ding_lst$AACE.reg)
   
   # if PS_est contains NAS, it probably implies that the EM process has not converged, so skip this iteration and go to the next
-  if( sum(is.na(PS_est)) > 0 | (est_ding_lst$iter == iterations+1 & est_ding_lst$error>=epsilon_EM) ){ # or if(est_ding_lst$iter == iterations+1 & est_ding_lst$error>=epsilon_EM)
+  if( sum(is.na(PS_est)) > 0 | (est_ding_lst$iter == terations_EM + 1 & est_ding_lst$error >= epsilon_EM) ){ 
     print("EM has not convereged")
     i_EM_not_conv = c(i_EM_not_conv, i)
     index_EM_not_conv = index_EM_not_conv + 1
@@ -286,7 +291,7 @@ for (i in 1:param_n_sim){
   print(difftime(end_time1, start_time1))
 } # out of for loop for all the iterations (param_n_sim iterations in total)
 
-#TODO summaries of one scenario from the simulations in summaries_newWF.R
+#TODO summaries of all iterations of one scenario (according to mat_gamma and its row, k) from the simulations in summaries_newWF.R
 #source("Simulations_studies/sim_DGM_and_simulations/summaries_newWF.R")
 
 

@@ -1,5 +1,5 @@
 simulate_data_func = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, 
-                              xi, xi_est, two_log_models_DGM=TRUE, param_n, 
+                              xi, two_log_models_DGM=TRUE, param_n, 
                               misspec_PS, misspec_outcome=0, transform_x=0,
                               funcform_factor_sqr, funcform_factor_log, 
                               betas_GPI, var_GPI, rho_GPI_PO, only_mean_x_bool=FALSE){
