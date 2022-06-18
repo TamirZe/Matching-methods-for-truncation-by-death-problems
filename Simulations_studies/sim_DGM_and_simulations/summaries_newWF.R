@@ -91,8 +91,9 @@ balance_with_rep_sum = calculate_mean_repeated_as_and_pro(
 
 #############################################################################################
 # summary tables for LaTeX of the etimators
-results_table = data.frame(t(rbind(matching_estimators_sum, matching_estimators_SE_sum, coverage)))
-
+results_table = data.frame(t(rbind(matching_estimators_sum, matching_estimators_SE_sum, coverage))) %>% round(3)
+results_table = results_table[!(row.names(results_table) %in% c("BC_rep_FALSE", "BC_cal_rep_FALSE")),] 
+true_SACE
 # Reduce(function(x, y) merge(x, y, by=0),
 #        list(t(matching_estimators_sum), t(matching_estimators_SE_sum), t(coverage)))
 #############################################################################################

@@ -92,17 +92,17 @@ caliper = 0.25; match_on = "O11_posterior_ratio"
 ###############################################################################################
 
 ###############################################################################################
-param_n = 2000; param_n_sim = 1000 # param_n = 2000; param_n_sim = 1000
+param_n = 2000; param_n_sim = 200 # param_n = 2000; param_n_sim = 1000
 mu_x_fixed = FALSE
 ###############################################################################################
 
 ###############################################################################################
 # true SACE parameter from one large simulation
 one_large_simulation = simulate_data_func(gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns,
-                               xi=xi, two_log_models_DGM=two_log_models_DGM, param_n=100000, 
-                               misspec_PS=misspec_PS, misspec_outcome=misspec_outcome, transform_x=transform_x,
-                               funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log,
-                               betas_GPI=betas_GPI, var_GPI=var_GPI, rho_GPI_PO=rho_GPI_PO)
+           xi=xi, two_log_models_DGM=two_log_models_DGM, param_n=100000, 
+           misspec_PS=misspec_PS, misspec_outcome=misspec_outcome, transform_x=transform_x,
+           funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log,
+           betas_GPI=betas_GPI, var_GPI=var_GPI, rho_GPI_PO=rho_GPI_PO)
 true_SACE = one_large_simulation$true_SACE
 true_SACE
 ###############################################################################################
