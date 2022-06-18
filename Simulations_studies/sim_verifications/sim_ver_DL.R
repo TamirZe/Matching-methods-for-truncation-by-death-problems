@@ -20,7 +20,7 @@ mean_x = rep(0.5, cont_x); var_x = rep(1, cont_x) # var_x = rep(1, cont_x)
 # misspec_PS: 0 <- NO, 1:only PS model, 2: PS model (possibly also Y)
 misspec_PS = 2 # 0: no misspec of PS model # 2: PS functional form misspecification
 funcform_factor_sqr=5; funcform_factor_log=-5 # thesis: funcform_factor_sqr=-3; funcform_factor_log=3
-misspec_outcome = 0
+misspec_outcome = 2
 #############################################################################################
 
 #############################################################################################
@@ -52,7 +52,7 @@ mat_pis_per_gamma = extract_pis_lst$mat_pis; mat_pis_per_gamma
 ##################################################################################################################
 # summary of EM after one run, and DL estimators ####
 set.seed(101)
-k=2
+k=1
 gamma_ns = rep(0, dim_x)
 gamma_ah = as.numeric(mat_gamma[k, c(1:dim_x)])
 gamma_pro =  as.numeric(mat_gamma[k, (dim_x+1): (2*dim_x)])
@@ -61,8 +61,9 @@ sum_EM = simulate_data_EM_and_DL(gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_n
                                   two_log_models=TRUE, two_log_est_EM=FALSE,
                                   misspec_PS=2, misspec_outcome=2, transform_x=0,
                                   funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log, 
-                                  param_n=10000, iterations=iterations, epsilon_EM=epsilon_EM,
-                                  mu_x_fixed=FALSE, x_as=NULL)
+                                  param_n=40000, iterations=iterations, epsilon_EM=epsilon_EM,
+                                  mu_x_fixed=FALSE, x_as=NULL,
+                                  betas_GPI=betas_GPI, var_GPI=var_GPI, rho_GPI_PO=rho_GPI_PO, only_mean_x_bool=FALSE)
 
 SACE_end_DL_est = c(sum_EM$SACE, sum_EM$DL_MA, sum_EM$DL)
     

@@ -105,7 +105,7 @@ simulate_data_run_EM_and_match = function(only_EM_bool=FALSE, return_EM_PS=FALSE
     }
     
     # calculate weights: O11_prior_ratio, O11_posterior_ratio W_1_as, and W_1_as_true
-    weights_lst = add_weights_func(data_with_PS=data_with_PS, pis=pis, pis_est=pis_est)
+    weights_lst = add_PS_weights_func(data_with_PS=data_with_PS, pis=pis, pis_est=pis_est)
     O11_prior_ratio = weights_lst$O11_prior_ratio
     O11_prior_ratio_true = weights_lst$O11_prior_ratio_true
     data_with_PS = weights_lst$data_with_PS 

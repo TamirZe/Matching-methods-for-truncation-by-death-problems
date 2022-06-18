@@ -1,18 +1,20 @@
-simulate_data_EM_and_DL = function(gamma_ah, gamma_pro, gamma_ns, xi, xi_est, 
-                                          two_log_models=TRUE, two_log_est_EM=FALSE,
-                                          misspec_PS, misspec_outcome=0, transform_x=0, 
-                                          funcform_factor_sqr, funcform_factor_log, 
-                                          param_n, iterations, epsilon_EM = 0.001,
-                                          mu_x_fixed=FALSE, x_as){
+simulate_data_EM_and_DL = function(gamma_ah, gamma_pro, gamma_ns, xi, xi_est,
+                                   two_log_models_DGM=TRUE, two_log_est_EM=FALSE,
+                                   misspec_PS, misspec_outcome=0, transform_x=0, 
+                                   funcform_factor_sqr, funcform_factor_log, 
+                                   param_n, iterations, epsilon_EM = 0.001,
+                                   mu_x_fixed=FALSE, x_as,
+                                   betas_GPI, var_GPI, rho_GPI_PO, only_mean_x_bool=FALSE){
   
   X_sub_cols = paste0("X", c(1:(dim_x)))
   
   # simulate data
-  list_data_for_EM_and_X = simulate_data_function(seed_num=NULL, gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns, 
-                                                  xi=xi, xi_est=xi_est, two_log_models=two_log_models, param_n=param_n,
-                                                  misspec_PS=misspec_PS, misspec_outcome=misspec_outcome, transform_x=transform_x,
-                                                  funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log)
-  
+  list_data_for_EM_and_X = simulate_data_func(gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns, 
+                                xi=xi, two_log_models_DGM=two_log_models_DGM, param_n=param_n,
+                                misspec_PS=misspec_PS, misspec_outcome=misspec_outcome, transform_x=transform_x,
+                                funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log,
+                                betas_GPI=betas_GPI, var_GPI=var_GPI, rho_GPI_PO=rho_GPI_PO, only_mean_x_bool=FALSE)
+
   data_for_EM = list_data_for_EM_and_X$dt
   mean_by_g = list_data_for_EM_and_X$mean_by_g
   x = list_data_for_EM_and_X$x_obs; x_PS = data.frame(list_data_for_EM_and_X$x_PS)
@@ -50,7 +52,7 @@ simulate_data_EM_and_DL = function(gamma_ah, gamma_pro, gamma_ns, xi, xi_est,
   DING_model_assisted_est_ps = est_ding_lst$AACE.reg
   
   # calculate weights: O11_prior_ratio, O11_posterior_ratio W_1_as, and W_1_as_true
-  weights_lst = add_weights_func(data_with_PS=data_with_PS, pis=pis, pis_est=pis_est)
+  weights_lst = add_PS_weights_func(data_with_PS=data_with_PS, pis=pis, pis_est=pis_est)
   O11_prior_ratio = weights_lst$O11_prior_ratio
   O11_prior_ratio_true = weights_lst$O11_prior_ratio_true
   data_with_PS = weights_lst$data_with_PS 

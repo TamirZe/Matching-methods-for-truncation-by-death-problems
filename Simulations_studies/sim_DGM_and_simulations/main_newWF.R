@@ -62,7 +62,7 @@ betas_GPI = beta_and_gamma$betas_GPI
 # gamma
 mat_gamma = beta_and_gamma$mat_gamma
 
-k=2 # k=1 (pi as = 0.5) # k=2 (pi as = 0.75)
+k=1 # k=1 (pi as = 0.5) # k=2 (pi as = 0.75)
 gamma_ns = rep(0, dim_x)
 gamma_ah = as.numeric(mat_gamma[k, c(1:dim_x)])
 gamma_pro =  as.numeric(mat_gamma[k, (dim_x+1): (2*dim_x)])  
