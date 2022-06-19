@@ -61,7 +61,7 @@ sum_EM = simulate_data_EM_and_DL(gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_n
                                   two_log_models=TRUE, two_log_est_EM=FALSE,
                                   misspec_PS=2, misspec_outcome=2, transform_x=0,
                                   funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log, 
-                                  param_n=40000, iterations=iterations, epsilon_EM=epsilon_EM,
+                                  param_n=20000, iterations=iterations, epsilon_EM=epsilon_EM,
                                   mu_x_fixed=FALSE, x_as=NULL,
                                   betas_GPI=betas_GPI, var_GPI=var_GPI, rho_GPI_PO=rho_GPI_PO, only_mean_x_bool=FALSE)
 

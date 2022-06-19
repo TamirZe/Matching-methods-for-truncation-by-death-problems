@@ -15,9 +15,9 @@ simulate_data_func = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns,
   x = x_obs
   # x_misspec for PS misspec
   #x_misspec = as.matrix(data.frame(X_sqr=x_obs[,(ncol(x_obs) - 1)]^2, X_log=log(x_obs[,ncol(x_obs)]-(min(x_obs[,ncol(x_obs)]) - 0.1)))) %>% as.data.frame
-  x_misspec = as.matrix(data.frame(X_exp = exp(5*x_obs[,(dim_x - 2)]), 
-                                   X_sqr = x_obs[,(dim_x - 1)]^2 * x_obs[,(dim_x - 2)], 
-                                   X_log = log(x_obs[,dim_x] - (min(x_obs[,dim_x]) - 0.1)))) %>% as.data.frame
+  x_misspec = as.matrix(data.frame(X_exp = exp(x_obs[,(dim_x - 2)]), 
+                                   X_sqr = 2*x_obs[,(dim_x - 1)]^2 * x_obs[,(dim_x - 2)], 
+                                   X_log = 2*log(x_obs[,dim_x] - (min(x_obs[,dim_x]) - 0.1)))) %>% as.data.frame
   if(cont_x<3){ # only one misspecified covariate
     x_misspec = as.matrix(data.frame(X_sqr = x_obs[,dim_x]^2)) %>% as.data.frame
     #x_misspec = as.matrix(data.frame(X_log = log(x_obs[,dim_x] - (min(x_obs[,dim_x]) - 0.1)))) %>% as.data.frame 
