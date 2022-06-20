@@ -119,35 +119,18 @@ simulate_data_func = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns,
     return(list(x_har=x_har, x_as=x_as, x_pro=x_pro, x_ns=x_ns, pis=pis, mean_by_A_g=mean_by_A_g))
   }
   
-  # models for Y(1) & y(0) 
-  PO_by_treatment_and_stratum = function(n, x_outcome, dim_x, coeffs, sigma_square_param){
-    return(rnorm(n, mean = x_outcome %*% matrix(coeffs,nrow = dim_x, ncol = 1), sd = sqrt(sigma_square_param)))
-  }
-  
-  # TODO model with PI with pair dependent errors 
-  if(rho_GPI_PO != 0){
-    #print(paste0("rho_GPI_PO", " is ", rho_GPI_PO))
-    # simulate dependency between errors
-    cov_GPI_PO = rho_GPI_PO * sqrt(var_GPI[1]) * sqrt(var_GPI[2])
-    cov_mat <- cbind(c(var_GPI[1], cov_GPI_PO), c(cov_GPI_PO, var_GPI[2]))
-    mu_x_beta_Y1 = x %*% matrix(betas_GPI[1,], ncol = 1)
-    mu_x_beta_Y0 = x %*% matrix(betas_GPI[2,], ncol = 1)
-    two_PO = lapply(1:param_n, function(l){
-      mvrnorm(1, mu = c(mu_x_beta_Y1[l], mu_x_beta_Y0[l]), cov_mat)
-    })
-    two_PO = data.frame(list.rbind(two_PO))
-  }
-  # model with PI with pair independent errors
-  if(rho_GPI_PO == 0){
-    #print(paste0("rho_GPI_PO", " is ", 0))
-    # wout dependency
-    two_PO = lapply(1 : nrow(betas_GPI), function(l){
-      PO_by_treatment_and_stratum(n=param_n, x_outcome=x, dim_x=dim_x, coeffs=betas_GPI[l,], sigma_square_param=sigma_square_ding[l])
-    })
-    two_PO = data.frame(list.cbind(two_PO))
-  }
-  
+  # Y model with PI with pair dependent errors 
+  #print(paste0("rho_GPI_PO", " is ", rho_GPI_PO))
+  cov_GPI_PO = rho_GPI_PO * sqrt(var_GPI[1]) * sqrt(var_GPI[2])
+  cov_mat <- cbind(c(var_GPI[1], cov_GPI_PO), c(cov_GPI_PO, var_GPI[2]))
+  mu_x_beta_Y1 = x %*% matrix(betas_GPI[1,], ncol = 1)
+  mu_x_beta_Y0 = x %*% matrix(betas_GPI[2,], ncol = 1)
+  two_PO = lapply(1:param_n, function(l){
+    mvrnorm(1, mu = c(mu_x_beta_Y1[l], mu_x_beta_Y0[l]), cov_mat)
+  })
+  two_PO = data.frame(list.rbind(two_PO))
   colnames(two_PO) = c("Y1", "Y0")
+  
   dt = data.frame(dt, two_PO)
   # generate Y with SUTVA
   dt$Y = (dt$A * dt$Y1 + (1 - dt$A) * dt$Y0) * dt$S

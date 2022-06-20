@@ -1,19 +1,19 @@
 library(data.table); library(plyr); library(dplyr); library(rlang); library(rlist)
-library(nnet); library(locfit); library(splitstackshape)
+library(nnet); library(locfit); library(splitstackshape); library(MASS)
 library(Matching); library(sandwich); library(clubSandwich); library(lmtest); library(mgsub)
 
 ########################################################################
 # source for Simulations_studies
 setwd("~/A matching framework for truncation by death problems")
-source("Simulations_studies/sim_parameters_and_pis/sim_set_parameters.R")
-source("Simulations_studies/sim_parameters_and_pis/sim_check_pis_and_covariates.R")
-source("Simulations_studies/sim_DGM_and_simulations/DGM_CPSR.R")
-source("Simulations_studies/sim_naive_estimation/naive_estimation.R")
-#source("Ding_Lu/PS_M_weighting.R")  # EM with one multinomial regression 
-source("Ding_Lu_EM/Sequencial_logistic_regressions/EM_2log_CPSR.R") 
-source("Simulations_studies/sim_matching_procedure/sim_matching.R")
-source("Simulations_studies/sim_post_matching_analysis/sim_post_matching_analysis.R")
-source("Simulations_studies/sim_post_matching_analysis/sim_regression_estimators.R")
+source("Simulations/sim_set_parameters.R")
+source("Simulations/sim_check_pis_and_covariates.R")
+source("Simulations/DGM_CPSR.R")
+source("Simulations/naive_estimation.R")
+#source("Simulations/PS_M_weighting.R")  # EM with one multinomial regression 
+source("Simulations/EM_2log_CPSR.R") 
+source("Simulations/sim_matching.R")
+source("Simulations/sim_post_matching_analysis.R")
+source("Simulations/sim_regression_estimators.R")
 #############################################################################################
 
 set.seed(101)
@@ -49,7 +49,7 @@ misspec_outcome = 2 # 0: no misspec of Y model # 2: Y functional form misspecifi
 # two_log_est_EM: S(0)=1, is estimated within A=0, with label according to S, before the EM process.
 # In both cases, sequencial logistic models are being estimated. For one multinational model, use PS_M_weighting (and seq_log_or_multinomial_EM=FALSE)
 two_log_est_EM = FALSE 
-terations_EM = 200; epsilon_EM = 10^-6
+iterations_EM = 200; epsilon_EM = 10^-6
 # seq_log_or_multinomial_EM = TRUE
 #############################################################################################
 
@@ -70,7 +70,7 @@ betas_GPI = beta_and_gamma$betas_GPI
 # gamma
 mat_gamma = beta_and_gamma$mat_gamma
 
-k=1 # k=1 (pi as = 0.5) # k=2 (pi as = 0.75)
+k=2 # k=1 (pi as = 0.5) # k=2 (pi as = 0.75)
 gamma_ns = rep(0, dim_x)
 gamma_ah = as.numeric(mat_gamma[k, c(1:dim_x)])
 gamma_pro =  as.numeric(mat_gamma[k, (dim_x+1): (2*dim_x)])  
@@ -81,7 +81,7 @@ gamma_pro =  as.numeric(mat_gamma[k, (dim_x+1): (2*dim_x)])
 extract_pis_lst = extract_pis_from_scenarios(nn=200000, mat_gamma=mat_gamma, xi=xi, misspec_PS=0, two_log_models_DGM=T)
 mat_pis_per_gamma = extract_pis_lst$mat_pis
 mat_pis_per_gamma
-extract_pis_lst_mis_PS = extract_pis_from_scenarios(nn=100000, mat_gamma=mat_gamma, xi=xi, misspec_PS=2, two_log_models_DGM=T)
+extract_pis_lst_mis_PS = extract_pis_from_scenarios(nn=200000, mat_gamma=mat_gamma, xi=xi, misspec_PS=2, two_log_models_DGM=T)
 mat_pis_per_gamma_mis_PS = extract_pis_lst_mis_PS$mat_pis
 mat_pis_per_gamma_mis_PS
 ##################################################################################################################
@@ -101,35 +101,41 @@ mu_x_fixed = FALSE
 # true SACE parameter from one large simulation
 one_large_simulation = simulate_data_func(
   gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns,
-  xi=xi, two_log_models_DGM=two_log_models_DGM, param_n=200000, 
-  misspec_PS=0, misspec_outcome=2, transform_x=transform_x,
+  xi=xi, two_log_models_DGM=two_log_models_DGM, param_n=1000000, 
+  misspec_PS=2, misspec_outcome=0, transform_x=transform_x,
   funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log,
   betas_GPI=betas_GPI, var_GPI=var_GPI, rho_GPI_PO=rho_GPI_PO)
-
+true_SACE = one_large_simulation$true_SACE
 
 # SACE parameter from mean of multiple simulations of sample size param_n
-SACE_vec = Y1_vec = Y0_vec = vector(length = 100)
+SACE_vec = Y1_as_vec = Y0_as_vec = Y1_vec = Y0_vec = vector(length = 100)
 for (i in 1:length(SACE_vec)){
+  print(i)
   one_small_simulation = simulate_data_func(
     gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns,
     xi=xi, two_log_models_DGM=two_log_models_DGM, param_n=param_n, 
-    misspec_PS=0, misspec_outcome=2, transform_x=transform_x,
+    misspec_PS=2, misspec_outcome=0, transform_x=transform_x,
     funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log,
     betas_GPI=betas_GPI, var_GPI=var_GPI, rho_GPI_PO=rho_GPI_PO)
   SACE_vec[i] = one_small_simulation$true_SACE
-  Y1_vec[i] = mean(one_small_simulation$dt[g == "as", Y1])
-  Y0_vec[i] = mean(one_small_simulation$dt[g == "as", Y0])
+  Y1_as_vec[i] = mean(one_small_simulation$dt[g == "as", Y1])
+  Y0_as_vec[i] = mean(one_small_simulation$dt[g == "as", Y0])
+  Y1_vec[i] = mean(one_small_simulation$dt[, Y1])
+  Y0_vec[i] = mean(one_small_simulation$dt[, Y0])
 }
 
-true_SACE = one_large_simulation$true_SACE
 true_SACE
-mean(one_large_simulation$dt[g == "as",]$Y1)
-mean(one_large_simulation$dt[g == "as",]$Y0)
-
 mean(SACE_vec)
-mean(Y1_vec)
-mean(Y0_vec)
 
+mean(one_large_simulation$dt[g == "as", Y1])
+mean(Y1_as_vec)
+mean(one_large_simulation$dt[,Y1])
+mean(Y1_vec)
+
+mean(one_large_simulation$dt[g == "as", Y0])
+mean(Y0_as_vec)
+mean(one_large_simulation$dt[, Y0])
+mean(Y0_vec)
 ###############################################################################################
 
 ###############################################################################################
