@@ -10,14 +10,14 @@ simulate_data_func = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns,
                       mvrnorm(param_n, mu=mean_x, Sigma = diag(var_x, cont_x))), nrow = param_n )
   colnames(x_obs) = paste0("X", c(1:dim_x))
   
-  # notice that dim_x = ncol(x_obs), at least when thers are only cont covariates
+  # notice that dim_x = ncol(x_obs), at least when there are only cont covariates
   # x are the true outcome's (Y) covariates 
   x = x_obs
   # x_misspec for PS misspec
   #x_misspec = as.matrix(data.frame(X_sqr=x_obs[,(ncol(x_obs) - 1)]^2, X_log=log(x_obs[,ncol(x_obs)]-(min(x_obs[,ncol(x_obs)]) - 0.1)))) %>% as.data.frame
-  x_misspec = as.matrix(data.frame(X_exp = exp(x_obs[,(dim_x - 2)]), 
-                                   X_sqr = 2*x_obs[,(dim_x - 1)]^2 * x_obs[,(dim_x - 2)], 
-                                   X_log = 2*log(x_obs[,dim_x] - (min(x_obs[,dim_x]) - 0.1)))) %>% as.data.frame
+  x_misspec = data.frame(X_exp = exp(x_obs[,(dim_x - 2)]), 
+                                   X_sqr = 1.5*x_obs[,(dim_x - 1)]^2 * x_obs[,(dim_x - 2)], 
+                                   X_log = 1.5*log(x_obs[,dim_x] - (min(x_obs[,dim_x]) - 0.1)))
   if(cont_x<3){ # only one misspecified covariate
     x_misspec = as.matrix(data.frame(X_sqr = x_obs[,dim_x]^2)) %>% as.data.frame
     #x_misspec = as.matrix(data.frame(X_log = log(x_obs[,dim_x] - (min(x_obs[,dim_x]) - 0.1)))) %>% as.data.frame 
@@ -105,7 +105,7 @@ simulate_data_func = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns,
   pis = t(c(pis)); colnames(pis) = paste0("pi_", colnames(pis))
   
   # generate data ####
-  # data is going to be used in the EM first, in simulate_data_run_EM_and_match. Thus, data contains the "obs" X (x_obs).
+  # data is going to be used in the EM first. Thus, data contains the "obs" X (x_obs).
   data = data.frame(prob, x_obs, g = g_vec, g_num = g_vec_num,
                     A = rbinom(param_n, 1, prob_A))
   data$S = ifelse((data$g == "as") | (data$g == "pro" & data$A == 1) | (data$g == "har" & data$A == 0), 1, 0)
@@ -149,7 +149,7 @@ simulate_data_func = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns,
   }
   
   colnames(two_PO) = c("Y1", "Y0")
-  mean(two_PO$Y1, na.rm = T); mean(two_PO$Y0, na.rm = T)
+  # mean(two_PO$Y1, na.rm = T); mean(two_PO$Y0, na.rm = T)
   dt = data.frame(data, two_PO)
   # generate Y with SUTVA
   dt$Y = (dt$A * dt$Y1 + (1 - dt$A) * dt$Y0) * dt$S

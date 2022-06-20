@@ -39,7 +39,7 @@ two_log_models_DGM = TRUE # DGM includes sequential 2 logistic regressions
 #############################################################################################
 # misspec parameters (for PS model and Y models) ####
 misspec_PS = 2 # 0: no misspec of PS model # 2: PS functional form misspecification
-funcform_factor_sqr=5; funcform_factor_log=-5 # funcform_factor_sqr=-3; funcform_factor_log=3
+funcform_factor_sqr=2; funcform_factor_log=-2 # funcform_factor_sqr=-3; funcform_factor_log=3
 transform_x = 0
 misspec_outcome = 2 # 0: no misspec of Y model # 2: Y functional form misspecification
 #############################################################################################
@@ -53,6 +53,13 @@ terations_EM = 200; epsilon_EM = 10^-6
 # seq_log_or_multinomial_EM = TRUE
 #############################################################################################
 
+###############################################################################################
+# correlation structure between PO'
+var_GPI = as.matrix(rbind(1, 1))
+rownames(var_GPI) = c("var_treatment", "var_control")
+rho_GPI_PO = 0.4 
+###############################################################################################
+
 #################################################################################################################
 # beta_and_gamma ####
 # scenario is determined according to mat_gamma (and its row, k) and betas_GPI
@@ -63,7 +70,7 @@ betas_GPI = beta_and_gamma$betas_GPI
 # gamma
 mat_gamma = beta_and_gamma$mat_gamma
 
-k=2 # k=1 (pi as = 0.5) # k=2 (pi as = 0.75)
+k=1 # k=1 (pi as = 0.5) # k=2 (pi as = 0.75)
 gamma_ns = rep(0, dim_x)
 gamma_ah = as.numeric(mat_gamma[k, c(1:dim_x)])
 gamma_pro =  as.numeric(mat_gamma[k, (dim_x+1): (2*dim_x)])  
@@ -71,20 +78,48 @@ gamma_pro =  as.numeric(mat_gamma[k, (dim_x+1): (2*dim_x)])
 
 ##################################################################################################################
 # extract pis, wout and with PS misspecification ####
-extract_pis_lst = extract_pis_from_scenarios(nn=500000, mat_gamma=mat_gamma, xi=xi, misspec_PS=0, two_log_models_DGM=T)
+extract_pis_lst = extract_pis_from_scenarios(nn=200000, mat_gamma=mat_gamma, xi=xi, misspec_PS=0, two_log_models_DGM=T)
 mat_pis_per_gamma = extract_pis_lst$mat_pis
 mat_pis_per_gamma
-extract_pis_lst_mis_PS = extract_pis_from_scenarios(nn=500000, mat_gamma=mat_gamma, xi=xi, misspec_PS=2, two_log_models_DGM=T)
+extract_pis_lst_mis_PS = extract_pis_from_scenarios(nn=100000, mat_gamma=mat_gamma, xi=xi, misspec_PS=2, two_log_models_DGM=T)
 mat_pis_per_gamma_mis_PS = extract_pis_lst_mis_PS$mat_pis
 mat_pis_per_gamma_mis_PS
 ##################################################################################################################
 
-###############################################################################################
-# correlation structure between PO'
-var_GPI = as.matrix(rbind(1, 1))
-rownames(var_GPI) = c("var_treatment", "var_control")
-rho_GPI_PO = 0.4 
-###############################################################################################
+##################################################################################################################
+# check PS sd over N
+mat_pis_per_gamma = mat_pis_per_gamma_mis_PS = NULL
+sd_lst = mean_lst = list()
+n_vec = c(2000, 20000, 100000)
+for (j in 1:length(n_vec)){
+  print(j)
+  for (i in 1:100) {
+    extract_pis_lst = extract_pis_from_scenarios(nn=n_vec[j], mat_gamma=mat_gamma, xi=xi, misspec_PS=0, two_log_models_DGM=T)
+    mat_pis_per_gamma = rbind(mat_pis_per_gamma, 
+                              cbind(extract_pis_lst$mat_pis[1,], extract_pis_lst$mat_pis[2,]))
+    
+    extract_pis_lst_mis_PS = extract_pis_from_scenarios(nn=n_vec[j], mat_gamma=mat_gamma, xi=xi, misspec_PS=2, two_log_models_DGM=T)
+    mat_pis_per_gamma_mis_PS = rbind(mat_pis_per_gamma_mis_PS, 
+                                     cbind(extract_pis_lst_mis_PS$mat_pis[1,], extract_pis_lst_mis_PS$mat_pis[2,]))
+    
+  }
+  
+  # sd and mean over all iterations, by g, mis/correct and N
+  sd_pis = data.frame(g = rownames(mat_pis_per_gamma), mat_pis_per_gamma) %>% group_by(g) %>% summarise_each(sd) 
+  sd_pis_mis_PS = data.frame(g = rownames(mat_pis_per_gamma_mis_PS), mat_pis_per_gamma_mis_PS) %>% group_by(g) %>% summarise_each(sd)
+  sd_lst[[j]] = cbind(crc = sd_pis, mis = sd_pis_mis_PS)
+  
+  mean_pis = data.frame(g = rownames(mat_pis_per_gamma), mat_pis_per_gamma) %>% group_by(g) %>% summarise_each(mean) 
+  mean_pis_mis_PS = data.frame(g = rownames(mat_pis_per_gamma_mis_PS), mat_pis_per_gamma_mis_PS) %>% group_by(g) %>% summarise_each(mean)
+  mean_lst[[j]] = cbind(crc = mean_pis, mis = mean_pis_mis_PS)
+  
+  names(sd_lst)[[j]] = names(mean_lst)[[j]] = paste0("n = ", n_vec[j])
+  
+  # sd_over_n
+  sd_over_n = list.rbind(mean_lst)[,-1] %>% group_by(mis.g) %>% summarise_each(sd) 
+}
+a=sd_lst; b=mean_lst
+##################################################################################################################
 
 ###############################################################################################
 # matching arguments
@@ -93,7 +128,7 @@ caliper = 0.25; match_on = "O11_posterior_ratio"
 ###############################################################################################
 
 ###############################################################################################
-param_n = 500; param_n_sim = 50 # param_n = 2000; param_n_sim = 1000
+param_n = 2000; param_n_sim = 100 # param_n = 2000; param_n_sim = 1000
 mu_x_fixed = FALSE
 ###############################################################################################
 
@@ -101,25 +136,34 @@ mu_x_fixed = FALSE
 # true SACE parameter from one large simulation
 one_large_simulation = simulate_data_func(
   gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns,
-  xi=xi, two_log_models_DGM=two_log_models_DGM, param_n=1000000, 
-  misspec_PS=misspec_PS, misspec_outcome=misspec_outcome, transform_x=transform_x,
+  xi=xi, two_log_models_DGM=two_log_models_DGM, param_n=200000, 
+  misspec_PS=0, misspec_outcome=2, transform_x=transform_x,
   funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log,
   betas_GPI=betas_GPI, var_GPI=var_GPI, rho_GPI_PO=rho_GPI_PO)
-true_SACE = one_large_simulation$true_SACE
-true_SACE
+
 
 # SACE parameter from mean of multiple simulations of sample size param_n
-SACE_vec = vector(length = 500)
-for (i in 1:length(SACE_vec)) {
+SACE_vec = Y1_vec = Y0_vec = vector(length = 100)
+for (i in 1:length(SACE_vec)){
   one_small_simulation = simulate_data_func(
     gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns,
     xi=xi, two_log_models_DGM=two_log_models_DGM, param_n=param_n, 
-    misspec_PS=misspec_PS, misspec_outcome=misspec_outcome, transform_x=transform_x,
+    misspec_PS=0, misspec_outcome=2, transform_x=transform_x,
     funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log,
     betas_GPI=betas_GPI, var_GPI=var_GPI, rho_GPI_PO=rho_GPI_PO)
   SACE_vec[i] = one_small_simulation$true_SACE
+  Y1_vec[i] = mean(one_small_simulation$dt[g == "as", Y1])
+  Y0_vec[i] = mean(one_small_simulation$dt[g == "as", Y0])
 }
+
+true_SACE = one_large_simulation$true_SACE
+true_SACE
+mean(one_large_simulation$dt[g == "as",]$Y1)
+mean(one_large_simulation$dt[g == "as",]$Y0)
+
 mean(SACE_vec)
+mean(Y1_vec)
+mean(Y0_vec)
 
 ###############################################################################################
 
@@ -128,7 +172,6 @@ mean(SACE_vec)
 list_EM_not_conv <- list_mean_by_g <- balance_wout_rep_lst <- balance_with_rep_lst <- list()
 pis_pis_est_obs_mat = NULL
 coeff_ah_mat <- coeff_pro_mat <- beta_S0_mat <-  matrix(nrow = param_n_sim, ncol = dim_x) 
-#balance_wout_rep <- balance_with_rep <- matrix(nrow = param_n_sim, ncol = (dim_x-1))
 matching_estimators_mat <- matrix(nrow = param_n_sim, ncol = 21)
 matching_estimators_SE_mat <- matrix(nrow = param_n_sim, ncol = 21)
 CI_mat <- matrix(nrow = param_n_sim, ncol = 21)
@@ -308,7 +351,7 @@ for (i in 1:param_n_sim){
 } # out of for loop for all the iterations (param_n_sim iterations in total)
 
 #TODO summaries of all iterations of one scenario (according to mat_gamma and its row, k) from the simulations in summaries_newWF.R
-#source("Simulations_studies/sim_DGM_and_simulations/summaries_newWF.R")
-
+source("Simulations/summaries_newWF.R")
+print(results_table)
 
 

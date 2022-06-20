@@ -19,7 +19,7 @@ mean_x = rep(0.5, cont_x); var_x = rep(1, cont_x) # var_x = rep(1, cont_x)
 # misspec parameters (for PS model and Y model):
 # misspec_PS: 0 <- NO, 1:only PS model, 2: PS model (possibly also Y)
 misspec_PS = 2 # 0: no misspec of PS model # 2: PS functional form misspecification
-funcform_factor_sqr=5; funcform_factor_log=-5 # thesis: funcform_factor_sqr=-3; funcform_factor_log=3
+funcform_factor_sqr=2; funcform_factor_log=-2 # thesis: funcform_factor_sqr=-3; funcform_factor_log=3
 misspec_outcome = 2
 #############################################################################################
 
@@ -52,7 +52,7 @@ mat_pis_per_gamma = extract_pis_lst$mat_pis; mat_pis_per_gamma
 ##################################################################################################################
 # summary of EM after one run, and DL estimators ####
 set.seed(101)
-k=1
+k=2
 gamma_ns = rep(0, dim_x)
 gamma_ah = as.numeric(mat_gamma[k, c(1:dim_x)])
 gamma_pro =  as.numeric(mat_gamma[k, (dim_x+1): (2*dim_x)])

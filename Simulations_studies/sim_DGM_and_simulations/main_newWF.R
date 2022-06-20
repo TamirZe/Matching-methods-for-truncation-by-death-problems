@@ -1,5 +1,5 @@
 library(data.table); library(plyr); library(dplyr); library(rlang); library(rlist)
-library(nnet); library(locfit); library(splitstackshape)
+library(nnet); library(locfit); library(splitstackshape); library(MASS)
 library(Matching); library(sandwich); library(clubSandwich); library(lmtest); library(mgsub)
 
 ########################################################################
@@ -63,7 +63,7 @@ betas_GPI = beta_and_gamma$betas_GPI
 # gamma
 mat_gamma = beta_and_gamma$mat_gamma
 
-k=2 # k=1 (pi as = 0.5) # k=2 (pi as = 0.75)
+k=2 # k=1 (correct PS specification: pi as = 0.5) # k=2 (correct PS specification: pi as = 0.75)
 gamma_ns = rep(0, dim_x)
 gamma_ah = as.numeric(mat_gamma[k, c(1:dim_x)])
 gamma_pro =  as.numeric(mat_gamma[k, (dim_x+1): (2*dim_x)])  
@@ -80,7 +80,7 @@ mat_pis_per_gamma_mis_PS
 ##################################################################################################################
 
 ###############################################################################################
-# correlation structure between PO'
+# correlation structure between PO's
 var_GPI = as.matrix(rbind(1, 1))
 rownames(var_GPI) = c("var_treatment", "var_control")
 rho_GPI_PO = 0.4 
@@ -93,7 +93,7 @@ caliper = 0.25; match_on = "O11_posterior_ratio"
 ###############################################################################################
 
 ###############################################################################################
-param_n = 500; param_n_sim = 50 # param_n = 2000; param_n_sim = 1000
+param_n = 2000; param_n_sim = 50 # param_n = 2000; param_n_sim = 1000
 mu_x_fixed = FALSE
 ###############################################################################################
 
@@ -102,7 +102,7 @@ mu_x_fixed = FALSE
 one_large_simulation = simulate_data_func(
   gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns,
   xi=xi, two_log_models_DGM=two_log_models_DGM, param_n=1000000, 
-  misspec_PS=misspec_PS, misspec_outcome=misspec_outcome, transform_x=transform_x,
+  misspec_PS=0, misspec_outcome=0, transform_x=transform_x,
   funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log,
   betas_GPI=betas_GPI, var_GPI=var_GPI, rho_GPI_PO=rho_GPI_PO)
 true_SACE = one_large_simulation$true_SACE
@@ -114,7 +114,7 @@ for (i in 1:length(SACE_vec)) {
   one_small_simulation = simulate_data_func(
     gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns,
     xi=xi, two_log_models_DGM=two_log_models_DGM, param_n=param_n, 
-    misspec_PS=misspec_PS, misspec_outcome=misspec_outcome, transform_x=transform_x,
+    misspec_PS=0, misspec_outcome=0, transform_x=transform_x,
     funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log,
     betas_GPI=betas_GPI, var_GPI=var_GPI, rho_GPI_PO=rho_GPI_PO)
   SACE_vec[i] = one_small_simulation$true_SACE

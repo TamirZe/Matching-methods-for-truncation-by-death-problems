@@ -98,3 +98,4 @@ true_SACE
 # Reduce(function(x, y) merge(x, y, by=0),
 #        list(t(matching_estimators_sum), t(matching_estimators_SE_sum), t(coverage)))
 #############################################################################################
+

@@ -10,18 +10,16 @@ simulate_data_func = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns,
                       mvrnorm(param_n, mu=mean_x, Sigma = diag(var_x, cont_x))), nrow = param_n )
   colnames(x_obs) = paste0("X", c(1:dim_x))
   
-  # notice that dim_x = ncol(x_obs), at least when thers are only cont covariates
+  # notice that when there are only cont covariates, dim_x = ncol(x_obs)
   # x are the true outcome's (Y) covariates 
   x = x_obs
   # x_misspec for PS misspec
-  #x_misspec = as.matrix(data.frame(X_sqr=x_obs[,(ncol(x_obs) - 1)]^2, X_log=log(x_obs[,ncol(x_obs)]-(min(x_obs[,ncol(x_obs)]) - 0.1)))) %>% as.data.frame
-  x_misspec = as.matrix(data.frame(X_exp = exp(5*x_obs[,(dim_x - 2)]), 
-                                   X_sqr = x_obs[,(dim_x - 1)]^2 * x_obs[,(dim_x - 2)], 
-                                   X_log = log(x_obs[,dim_x] - (min(x_obs[,dim_x]) - 0.1)))) %>% as.data.frame
+  x_misspec = data.frame(X_exp = exp(x_obs[,(dim_x - 2)]), 
+                                   X_sqr = 2*x_obs[,(dim_x - 1)]^2 * x_obs[,(dim_x - 2)], 
+                                   X_log = 2*log(x_obs[,dim_x] - (min(x_obs[,dim_x]) - 0.1)))
+  
   if(cont_x<3){ # only one misspecified covariate
     x_misspec = as.matrix(data.frame(X_sqr = x_obs[,dim_x]^2)) %>% as.data.frame
-    #x_misspec = as.matrix(data.frame(X_log = log(x_obs[,dim_x] - (min(x_obs[,dim_x]) - 0.1)))) %>% as.data.frame 
-    #x_misspec = as.matrix(data.frame(X_exp = exp(5*x_obs[,dim_x]))) %>% as.data.frame
   }
   
   # no PS misspecification
@@ -56,6 +54,7 @@ simulate_data_func = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns,
   # if misspec_outcome == 2, Y on the transformation of X, as in x_misspec in the PS misspec
   if(misspec_outcome == 2){ #TODO change it so Y misspec is not necessarily the same as PS misspec 
     #x = as.matrix( data.frame( x_obs[,-tail(1:dim_x, n=ncol(x_misspec))], x_misspec ) )
+    #betas_GPI_adj
     if(cont_x<3){
       x = as.matrix( data.frame( x_obs[,-tail(1:dim_x, n=1)], x_misspec ) )
     }else{  
@@ -105,13 +104,13 @@ simulate_data_func = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns,
   pis = t(c(pis)); colnames(pis) = paste0("pi_", colnames(pis))
   
   # generate data ####
-  # data is going to be used in the EM first, in simulate_data_run_EM_and_match. Thus, data contains the "obs" X (x_obs).
-  data = data.frame(prob, x_obs, g = g_vec, g_num = g_vec_num,
+  # dt is going to be used in the EM first. Thus, dt contains the "obs" X (x_obs).
+  dt = data.frame(prob, x_obs, g = g_vec, g_num = g_vec_num,
                     A = rbinom(param_n, 1, prob_A))
-  data$S = ifelse((data$g == "as") | (data$g == "pro" & data$A == 1) | (data$g == "har" & data$A == 0), 1, 0)
-  mean_by_g = data.table(data)[, lapply(.SD, mean), by="g"] %>% arrange(g)
+  dt$S = ifelse((dt$g == "as") | (dt$g == "pro" & dt$A == 1) | (dt$g == "har" & dt$A == 0), 1, 0)
+  mean_by_g = data.table(dt)[, lapply(.SD, mean), by="g"] %>% arrange(g)
   mean_by_g$g = mapvalues(mean_by_g$g, from = c("har", "as", "ns", "pro"), to = c(0:3))
-  mean_by_A_g = data.table(data)[, lapply(.SD, mean), by=c("A", "g")] %>% arrange(g,A)
+  mean_by_A_g = data.table(dt)[, lapply(.SD, mean), by=c("A", "g")] %>% arrange(g,A)
   x_har = filter(mean_by_g, g=="har") %>% subset(select = grep("X|^A$", colnames(mean_by_g))) %>% as.matrix
   x_as = filter(mean_by_g, g=="as") %>% subset(select = grep("X|^A$", colnames(mean_by_g))) %>% as.matrix
   x_pro = filter(mean_by_g, g=="pro") %>% subset(select = grep("X|^A$", colnames(mean_by_g))) %>% as.matrix
@@ -127,7 +126,7 @@ simulate_data_func = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns,
   
   # TODO model with PI with pair dependent errors 
   if(rho_GPI_PO != 0){
-    print(paste0("rho_GPI_PO", " is ", rho_GPI_PO))
+    #print(paste0("rho_GPI_PO", " is ", rho_GPI_PO))
     # simulate dependency between errors
     cov_GPI_PO = rho_GPI_PO * sqrt(var_GPI[1]) * sqrt(var_GPI[2])
     cov_mat <- cbind(c(var_GPI[1], cov_GPI_PO), c(cov_GPI_PO, var_GPI[2]))
@@ -140,7 +139,7 @@ simulate_data_func = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns,
   }
   # model with PI with pair independent errors
   if(rho_GPI_PO == 0){
-    print(paste0("rho_GPI_PO", " is ", 0))
+    #print(paste0("rho_GPI_PO", " is ", 0))
     # wout dependency
     two_PO = lapply(1 : nrow(betas_GPI), function(l){
       PO_by_treatment_and_stratum(n=param_n, x_outcome=x, dim_x=dim_x, coeffs=betas_GPI[l,], sigma_square_param=sigma_square_ding[l])
@@ -149,8 +148,7 @@ simulate_data_func = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns,
   }
   
   colnames(two_PO) = c("Y1", "Y0")
-  mean(two_PO$Y1, na.rm = T); mean(two_PO$Y0, na.rm = T)
-  dt = data.frame(data, two_PO)
+  dt = data.frame(dt, two_PO)
   # generate Y with SUTVA
   dt$Y = (dt$A * dt$Y1 + (1 - dt$A) * dt$Y0) * dt$S
   dt = data.table(id = c(1:param_n), dt)
