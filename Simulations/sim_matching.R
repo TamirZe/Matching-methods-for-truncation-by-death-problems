@@ -4,8 +4,8 @@
 
 matching_all_measures_func = function(m_data, match_on = NULL, X_sub_cols, 
                                      M=1, replace, estimand = "ATC", mahal_match = 2, caliper = 0.05){
-  m_data$id = c(1:nrow(m_data))
-  print(paste0("replace is ", replace, " nrows is ", nrow(m_data)))
+  #m_data$id = c(1:nrow(m_data))
+  print(paste0("replace is ", replace, ". nrows is ", nrow(m_data), "."))
   # mahal_match for Weight = 2 for mahalanobis distance. 
   vec_caliper = c(rep(1000, length(X_sub_cols[-1])), caliper)
   
@@ -62,9 +62,9 @@ matching_all_measures_func = function(m_data, match_on = NULL, X_sub_cols,
     }
   
   # distribution of the x's; before matching and after matching
-  mean_by_subset_only_ps = mean_x_summary(m_data=m_data, dt_match_S1=only_ps_lst$dt_match_S1)
-  mean_by_subset_maha_wout_cal = mean_x_summary(m_data=m_data, dt_match_S1=maha_wout_cal_lst$dt_match_S1)
-  mean_by_subset_maha_cal = mean_x_summary(m_data=m_data, dt_match_S1=maha_cal_lst$dt_match_S1)
+  mean_by_subset_only_ps = mean_x_summary(m_data=m_data, matched_data=only_ps_lst$matched_data)
+  mean_by_subset_maha_wout_cal = mean_x_summary(m_data=m_data, matched_data=maha_wout_cal_lst$matched_data)
+  mean_by_subset_maha_cal = mean_x_summary(m_data=m_data, matched_data=maha_cal_lst$matched_data)
   balance_all_measures = list(mean_by_subset_only_ps=mean_by_subset_only_ps, mean_by_subset_maha_wout_cal=mean_by_subset_maha_wout_cal,
                               mean_by_subset_maha_cal=mean_by_subset_maha_cal)
   
@@ -79,13 +79,15 @@ matching_all_measures_func = function(m_data, match_on = NULL, X_sub_cols,
 
 # arrange dataset after matching, and create dt_match_S1 - dataset of matched pairs with only pairs of survivorss
 arrange_dataset_after_matching = function(match_obj, m_data, replace_bool, X_sub_cols){
+  x_ind = which(grepl(paste(c(X_sub_cols[-1],"x_PS","x_out"),collapse="|"), colnames(m_data)) & !grepl("X1",colnames(m_data)))
+  x_cols = colnames(m_data)[x_ind]
   ncols  = ncol(subset(m_data[match_obj$index.treated, ], 
-                       select = c("id", "EMest_p_as", "Y", "A", "S", "g", X_sub_cols[-1]))) + 1
+                       select = c("id", "EMest_p_as", "Y", "A", "S", "g", x_cols))) + 1 # X_sub_cols[-1] # x_cols
   dt_match = data.table(subset(m_data[match_obj$index.treated, ], 
-                       select = c("id", "EMest_p_as", "Y", "A", "S", "g", X_sub_cols[-1])),
+                       select = c("id", "EMest_p_as", "Y", "A", "S", "g", x_cols)), # X_sub_cols[-1] # x_cols
                         match_obj$index.treated, match_obj$index.control,
                         subset(m_data[match_obj$index.control, ], 
-                               select = c("id","EMest_p_as", "Y", "A", "S", "g", X_sub_cols[-1])))
+                               select = c("id","EMest_p_as", "Y", "A", "S", "g", x_cols))) # X_sub_cols[-1] # x_cols
   colnames(dt_match)[(ncols + 1): (2 * ncols)] = 
     paste0("A0_", colnames(dt_match)[(ncols + 1): (2 * ncols)])
   colnames(dt_match)[c(ncols: (ncols+1))] = c("id_trt", "id_ctrl")
@@ -104,7 +106,7 @@ arrange_dataset_after_matching = function(match_obj, m_data, replace_bool, X_sub
   wts = data.frame(table(matched_pairs$id))
   colnames(wts) = c("id", "w")
   wts$id = as.numeric(as.character(wts$id))
-  matched_data = merge(wts,  merge(matched_pairs, m_data, by="id", all.x=T, all.y=F), by="id") %>% arrange(id)
+  matched_data = merge(wts, merge(matched_pairs, m_data, by="id", all.x=T, all.y=F), by="id") %>% arrange(id)
   #chck = expandRows(merge(wts, m_data, by="id", all.x=T, all.y=F), "w") %>% arrange(id)
   #summary(comparedf(matched_data, chck)); identical(subset(matched_data, select = -c(w, pair)), chck)
   #a = c(dt_match_S1$id_ctrl, dt_match_S1$id_trt); b = matched_data$id
@@ -114,23 +116,24 @@ arrange_dataset_after_matching = function(match_obj, m_data, replace_bool, X_sub
 }
 
 # balance; before matching and after matching
-mean_x_summary = function(m_data, dt_match_S1){
+mean_x_summary = function(m_data, matched_data){
   # descriprive before matching
-  initial_data_x = subset(m_data, select = c("id", "A", "S", "g", X_sub_cols[-1]))
+  x_ind = which(grepl(paste(c(X_sub_cols[-1], "x_PS", "x_out"), collapse="|"), colnames(m_data)) & !grepl("X1", colnames(m_data)))
+  x_cols = colnames(m_data)[x_ind] # colnames(m_data)[x_ind] # c("id", "A", "S", "g", X_sub_cols[-1])
+  initial_data_x = subset(m_data, select = c("id", "A", "S", "g", x_cols)) 
   initial_data_x_as = filter(initial_data_x, g=="as")
   initial_data_x_as_A0S1 = filter(initial_data_x, A==0, S==1) 
   initial_data_x_as_A1S1 = filter(initial_data_x, A==1, S==1)
-  mean_as = apply(subset(initial_data_x_as, select = X_sub_cols[-1]), 2, mean)
-  mean_A0S1 = apply(subset(initial_data_x_as_A0S1, select = X_sub_cols[-1]), 2, mean)
-  mean_A1S1 = apply(subset(initial_data_x_as_A1S1, select = X_sub_cols[-1]), 2, mean)
+  mean_as = apply(subset(initial_data_x_as, select = x_cols), 2, mean) # X_sub_cols[-1]
+  mean_A0S1 = apply(subset(initial_data_x_as_A0S1, select = x_cols), 2, mean)
+  mean_A1S1 = apply(subset(initial_data_x_as_A1S1, select = x_cols), 2, mean)
   
   # descriprive after matching
-  dt_match_A0S1 = subset(dt_match_S1, select = grep("A0|ctr", colnames(dt_match_S1)))
-  mean_match_A0 = apply(subset(dt_match_A0S1,select = paste0(rep("A0_"),X_sub_cols[-1])),2,mean)
-  dt_match_A1S1 = subset(dt_match_S1, select = -grep("A0|ctr", colnames(dt_match_S1)))
-  mean_match_A1 = apply(subset(dt_match_A1S1, select = X_sub_cols[-1]), 2, mean)
+  mean_match_A0 = apply(subset(filter(matched_data, A==0 & S==1), select = x_cols), 2, mean)
+  mean_match_A1 = apply(subset(filter(matched_data, A==1 & S==1), select = x_cols), 2, mean)
+  diff_match = mean_match_A1 - mean_match_A0
   
-  means_by_subset = rbind(mean_as, mean_A0S1, mean_A1S1, mean_match_A0, mean_match_A1)
+  means_by_subset = rbind(mean_as, mean_A0S1, mean_A1S1, mean_match_A0, mean_match_A1, diff_match)
   return(means_by_subset)
 } 
 

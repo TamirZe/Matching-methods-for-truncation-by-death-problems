@@ -1,9 +1,13 @@
 set_parameters_func = function(dim_x=dim_x, high_pi_pro=T, AX_interactions=T){
   # notice that cont_x = dim_x-1
   if(high_pi_pro == T){
-    if(dim_x == 2 & AX_interactions){
+    if(dim_x == 2){
       # beta
-      betas_GPI = as.matrix(rbind(c(22,7), c(20,3)))
+      if (AX_interactions == TRUE) {
+        betas_GPI = as.matrix(rbind(c(22,7), c(20,3)))
+      }else{
+        betas_GPI = as.matrix(rbind(c(22,7), c(20,7)))
+      }
       # gamma
       mat_gamma = matrix(c(
         c(-0.69, rep(0.46, dim_x-1)), c(0.5, rep(0.56, dim_x-1)) # @@@@

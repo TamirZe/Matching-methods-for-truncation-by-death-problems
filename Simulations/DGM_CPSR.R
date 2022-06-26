@@ -14,9 +14,10 @@ simulate_data_func = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns,
   # x are the true outcome's (Y) covariates 
   x = x_obs
   # x_misspec for PS misspec
-  x_misspec = data.frame(X_exp = exp(x_obs[,(dim_x - 2)]), 
-                                   X_sqr = 2*x_obs[,(dim_x - 1)]^2 * x_obs[,(dim_x - 2)], 
-                                   X_log = 2*log(x_obs[,dim_x] - (min(x_obs[,dim_x]) - 0.1)))
+  x_misspec = data.frame(          X_exp = exp(x_obs[,(dim_x - 2)])
+                                  ,X_sqr = x_obs[,(dim_x - 1)]^2 * x_obs[,(dim_x - 2)] 
+                                  #,X_log = log(x_obs[,dim_x] - (min(x_obs[,dim_x]) - 0.1))
+                         )
   
   if(cont_x<3){ # only one misspecified covariate
     x_misspec = as.matrix(data.frame(X_sqr = x_obs[,dim_x]^2)) %>% as.data.frame
@@ -50,15 +51,16 @@ simulate_data_func = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns,
   }
   
   # x are the true outcome's (Y) covariates 
-  # if misspec_outcome == 0 (default), Y on original (obs) X 
-  # if misspec_outcome == 2, Y on the transformation of X, as in x_misspec in the PS misspec
+  # if misspec_outcome == 0 (default), Y on original (obs) X # if misspec_outcome == 2, Y on the transformation of X, as in x_misspec in the PS misspec
   if(misspec_outcome == 2){ #TODO change it so Y misspec is not necessarily the same as PS misspec 
     #x = as.matrix( data.frame( x_obs[,-tail(1:dim_x, n=ncol(x_misspec))], x_misspec ) )
     #betas_GPI_adj
     if(cont_x<3){
       x = as.matrix( data.frame( x_obs[,-tail(1:dim_x, n=1)], x_misspec ) )
     }else{  
-      x = as.matrix( data.frame( x_obs[,-tail(1:dim_x, n=2)], x_misspec[,c("X_sqr", "X_log")] ) )
+      #x = as.matrix( data.frame( x_obs[,-tail(1:dim_x, n=2)], x_misspec[,c("X_sqr", "X_log")] ) )
+      x = as.matrix( data.frame( x_obs[,-tail(1:dim_x, n=2)], x_misspec[,c("X_exp", "X_sqr")] ) )
+      #x=x_PS
     }
   } 
   
@@ -105,10 +107,10 @@ simulate_data_func = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns,
   
   # generate data ####
   # dt is going to be used in the EM first. Thus, dt contains the "obs" X (x_obs).
-  dt = data.frame(prob, x_obs, g = g_vec, g_num = g_vec_num,
+  dt = data.frame(prob, x_obs, x_PS = x_PS, x_out = x, g = g_vec, g_num = g_vec_num,
                     A = rbinom(param_n, 1, prob_A))
   dt$S = ifelse((dt$g == "as") | (dt$g == "pro" & dt$A == 1) | (dt$g == "har" & dt$A == 0), 1, 0)
-  mean_by_g = data.table(dt)[, lapply(.SD, mean), by="g"] %>% arrange(g)
+  mean_by_g = data.table(dt, x_misspec)[, lapply(.SD, mean), by="g"] %>% arrange(g)
   mean_by_g$g = mapvalues(mean_by_g$g, from = c("har", "as", "ns", "pro"), to = c(0:3))
   mean_by_A_g = data.table(dt)[, lapply(.SD, mean), by=c("A", "g")] %>% arrange(g,A)
   x_har = filter(mean_by_g, g=="har") %>% subset(select = grep("X|^A$", colnames(mean_by_g))) %>% as.matrix
@@ -146,6 +148,6 @@ simulate_data_func = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns,
   vec_OBS_table = t(c(OBS_table))
   colnames(vec_OBS_table) = c("A0_S0", "A1_S0", "A0_S1", "A1_S1")
   
-  return(list(true_SACE=true_SACE, dt=dt, x_obs=x_obs, x_PS=x_PS, x_outcome=x, mean_by_g=mean_by_g,
+  return(list(true_SACE=true_SACE, dt=dt, x_obs=x_obs, x_misspec=x_misspec, x_PS=x_PS, x_outcome=x, mean_by_g=mean_by_g,
               OBS_table=OBS_table, vec_OBS_table=vec_OBS_table, pis=pis))
 }

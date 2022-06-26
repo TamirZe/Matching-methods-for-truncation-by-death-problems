@@ -1,5 +1,5 @@
 library(data.table); library(plyr); library(dplyr); library(rlang); library(rlist)
-library(nnet); library(locfit); library(splitstackshape); library(MASS)
+library(nnet); library(locfit); library(splitstackshape); library(ggplot2)
 library(Matching); library(sandwich); library(clubSandwich); library(lmtest); library(mgsub)
 
 ########################################################################
@@ -24,7 +24,7 @@ prob_A = 0.5
 
 # parameters for simulating X
 # @@@@@@@@@@@@ dim_x includes an intercept @@@@@@@@@@@@@@@
-dim_x = 4; cont_x = dim_x - 1
+dim_x = 6; cont_x = dim_x - 1
 mean_x = rep(0.5, cont_x); var_x = rep(1, cont_x)
 X_sub_cols = paste0("X", c(1:(dim_x)))
 #############################################################################################
@@ -93,54 +93,25 @@ caliper = 0.25; match_on = "O11_posterior_ratio"
 ###############################################################################################
 
 ###############################################################################################
-param_n = 2000; param_n_sim = 100 # param_n = 2000; param_n_sim = 1000
+param_n = 2000; param_n_sim = 50 # param_n = 2000; param_n_sim = 1000
 mu_x_fixed = FALSE
 ###############################################################################################
 
 ###############################################################################################
-# true SACE parameter from one large simulation
 one_large_simulation = simulate_data_func(
   gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns,
-  xi=xi, two_log_models_DGM=two_log_models_DGM, param_n=1000000, 
-  misspec_PS=2, misspec_outcome=0, transform_x=transform_x,
+  xi=xi, two_log_models_DGM=two_log_models_DGM, param_n=100000, 
+  misspec_PS=misspec_PS, misspec_outcome=misspec_outcome, transform_x=transform_x,
   funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log,
   betas_GPI=betas_GPI, var_GPI=var_GPI, rho_GPI_PO=rho_GPI_PO)
 true_SACE = one_large_simulation$true_SACE
-
-# SACE parameter from mean of multiple simulations of sample size param_n
-SACE_vec = Y1_as_vec = Y0_as_vec = Y1_vec = Y0_vec = vector(length = 100)
-for (i in 1:length(SACE_vec)){
-  print(i)
-  one_small_simulation = simulate_data_func(
-    gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns,
-    xi=xi, two_log_models_DGM=two_log_models_DGM, param_n=param_n, 
-    misspec_PS=2, misspec_outcome=0, transform_x=transform_x,
-    funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log,
-    betas_GPI=betas_GPI, var_GPI=var_GPI, rho_GPI_PO=rho_GPI_PO)
-  SACE_vec[i] = one_small_simulation$true_SACE
-  Y1_as_vec[i] = mean(one_small_simulation$dt[g == "as", Y1])
-  Y0_as_vec[i] = mean(one_small_simulation$dt[g == "as", Y0])
-  Y1_vec[i] = mean(one_small_simulation$dt[, Y1])
-  Y0_vec[i] = mean(one_small_simulation$dt[, Y0])
-}
-
-true_SACE
-mean(SACE_vec)
-
-mean(one_large_simulation$dt[g == "as", Y1])
-mean(Y1_as_vec)
-mean(one_large_simulation$dt[,Y1])
-mean(Y1_vec)
-
-mean(one_large_simulation$dt[g == "as", Y0])
-mean(Y0_as_vec)
-mean(one_large_simulation$dt[, Y0])
-mean(Y0_vec)
+rm(one_large_simulation)
 ###############################################################################################
 
 ###############################################################################################
 # matrices and lists to retain results from all iterations ####
-list_EM_not_conv <- list_mean_by_g <- balance_wout_rep_lst <- balance_with_rep_lst <- list()
+list_EM_not_conv <- list_mean_by_g <- balance_PS_wout_rep_lst <- balance_PS_with_rep_lst <-
+  balance_wout_rep_lst <- balance_with_rep_lst <- balance_maha_wout_rep_lst <- balance_maha_with_rep_lst <- list()
 pis_pis_est_obs_mat = NULL
 coeff_ah_mat <- coeff_pro_mat <- beta_S0_mat <-  matrix(nrow = param_n_sim, ncol = dim_x) 
 matching_estimators_mat <- matrix(nrow = param_n_sim, ncol = 21)
@@ -156,7 +127,6 @@ scen_parameter_lst = list(true_SACE=true_SACE, param_n=param_n, param_n_sim=para
     funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log,
     betas_GPI=betas_GPI, var_GPI=var_GPI, rho_GPI_PO=rho_GPI_PO)
 ###############################################################################################
-
 
 # run over param_n_sim different iterations, in each iteration, sample contains param_n observations
 index_EM_not_conv = 0; i_EM_not_conv = c() # check proportion of iteration when EM has not converged
@@ -205,9 +175,10 @@ for (i in 1:param_n_sim){
   start_timeDing <- Sys.time()
   est_ding_lst = xi_2log_PSPS_M_weighting(Z=data_for_EM$A, D=data_for_EM$S,
         X=as.matrix(subset(data_for_EM, select = 
-        grep(paste(X_sub_cols[-1], collapse="|"), colnames(data_for_EM)))), Y=data_for_EM$Y, 
+        grep(paste(paste0("^",X_sub_cols[-1], "$"), collapse="|"), colnames(data_for_EM)))),
+        Y=data_for_EM$Y, 
         xi_est=xi_est, beta.S0=beta_S0, beta.ah=NULL, beta.c=NULL, 
-        iter.max=terations_EM, error0=epsilon_EM)
+        iter.max=iterations_EM, error0=epsilon_EM)
   end_timeDing <- Sys.time()
   print(paste0("Ding EM lasts ", difftime(end_timeDing, start_timeDing)))
   
@@ -220,7 +191,7 @@ for (i in 1:param_n_sim){
   DL_est = c(DL_est = est_ding_lst$AACE, DL_MA_est = est_ding_lst$AACE.reg)
   
   # if PS_est contains NAS, it probably implies that the EM process has not converged, so skip this iteration and go to the next
-  if( sum(is.na(PS_est)) > 0 | (est_ding_lst$iter == terations_EM + 1 & est_ding_lst$error >= epsilon_EM) ){ 
+  if( sum(is.na(PS_est)) > 0 | (est_ding_lst$iter == iterations_EM + 1 & est_ding_lst$error >= epsilon_EM) ){ 
     print("EM has not convereged")
     i_EM_not_conv = c(i_EM_not_conv, i)
     index_EM_not_conv = index_EM_not_conv + 1
@@ -246,13 +217,17 @@ for (i in 1:param_n_sim){
   # matching
   # perform matching with all units with S=1
   # matching_datasets_lst[[1]] - wout replacement, matching_datasets_lst[[2]] - with replacement
+  m_data=data_with_PS[S==1]
+  m_data$id = c(1:nrow(m_data))
   matching_datasets_lst = list()
   replace_vec = c(FALSE, TRUE)
   for(j in c(1:length(replace_vec))){
     matching_datasets_lst[[j]] = 
-        matching_all_measures_func(m_data=data_with_PS[S==1], match_on=match_on, X_sub_cols=X_sub_cols, 
+        matching_all_measures_func(m_data=m_data, match_on=match_on, X_sub_cols=X_sub_cols, 
          M=1, replace=replace_vec[j], estimand="ATC", mahal_match=2, caliper = caliper)
   }
+  dim(matching_datasets_lst[[2]]$only_ps_lst$matched_data)
+  length(unique(matching_datasets_lst[[2]]$only_ps_lst$matched_data$id))
   
   # post-matching analysis for 2 (wout/with replacement) datasets
   matching_measures = c("PS", "maha", "maha_cal", "BC", "BC_cal", "wilcox")
@@ -260,7 +235,7 @@ for (i in 1:param_n_sim){
   matching_estimators = matching_estimators_SE = matching_estimators_CI = c()
   for(j in c(1:length(replace_vec))){
     post_matching_analysis_lst[[j]] =
-      post_matching_analysis_func(m_data=data_with_PS[S==1], replace=replace_vec[j], all_measures_matched_lst=matching_datasets_lst[[j]])
+      post_matching_analysis_func(m_data=m_data, replace=replace_vec[j], all_measures_matched_lst=matching_datasets_lst[[j]])
     # extract estimators and SE + CI of crude/BC/HL matching estimators of all distance measures (for crude)
     for (l in 1:length(matching_measures)){
       # extract estimators, SE and CI of crude/BC/HL matching estimators
@@ -302,17 +277,21 @@ for (i in 1:param_n_sim){
   matching_estimators_mat[i,] = estimators
   colnames(matching_estimators_mat) = names(estimators)
   
-  DL_mis = -101 # DL estimators do not include SE and CI
-  SE = c(SACE=SACE, naive_estimators_SE, c(DL_est=DL_mis, DL_MA_est=DL_mis), matching_estimators_SE, regression_matching_estimators_SE)
+  DL_na = -101 # DL estimators do not include SE and CI
+  SE = c(SACE=SACE, naive_estimators_SE, c(DL_est=DL_na, DL_MA_est=DL_na), matching_estimators_SE, regression_matching_estimators_SE)
   matching_estimators_SE_mat[i,] = SE
   colnames(matching_estimators_SE_mat) = names(SE)
   
   # CI of matching crude, BC and regression estimators after matching
-  CI_mat[i,] = c(SACE=SACE, unlist(naive_estimators_CI), c(DL_est=DL_mis, DL_MA_est=DL_mis), matching_estimators_CI, regression_matching_estimators_CI)
+  CI_mat[i,] = c(SACE=SACE, unlist(naive_estimators_CI), c(DL_est=DL_na, DL_MA_est=DL_na), matching_estimators_CI, regression_matching_estimators_CI)
   colnames(CI_mat) = c("SACE", names(unlist(naive_estimators_CI)), names(DL_est),
                        names(matching_estimators_CI), names(regression_matching_estimators_CI))
   
-  # balance (mean_by_subset) of x_obs (original covariates)
+  # balance (mean_by_subset) of x_obs (original covariates) and PS+Y transformations
+  balance_PS_wout_rep_lst[[i]] = matching_datasets_lst[[1]]$balance_all_measures$mean_by_subset_only_ps
+  balance_PS_with_rep_lst[[i]] = matching_datasets_lst[[2]]$balance_all_measures$mean_by_subset_only_ps
+  balance_maha_wout_rep_lst[[i]] = matching_datasets_lst[[1]]$balance_all_measures$mean_by_subset_maha_wout_cal
+  balance_maha_with_rep_lst[[i]] = matching_datasets_lst[[2]]$balance_all_measures$mean_by_subset_maha_wout_cal
   balance_wout_rep_lst[[i]] = matching_datasets_lst[[1]]$balance_all_measures$mean_by_subset_maha_cal
   balance_with_rep_lst[[i]] = matching_datasets_lst[[2]]$balance_all_measures$mean_by_subset_maha_cal
   
@@ -323,6 +302,7 @@ for (i in 1:param_n_sim){
 
 #TODO summaries of all iterations of one scenario (according to mat_gamma and its row, k) from the simulations in summaries_newWF.R
 source("Simulations/summaries_newWF.R")
+a=results_table
 print(results_table)
-
+true_SACE
 

@@ -1,22 +1,14 @@
 #############################################################################################
-calculate_mean_repeated_as_and_pro = function(list_of_lists, mean_repeated_as_and_pro_boll=TRUE){
+calculate_mean_elements_lst_of_lsts = function(list_of_lists){
   temp = lapply(1:length(list_of_lists), function(i){
     list_of_lists[[i]] = as.matrix(list_of_lists[[i]])
     apply(list_of_lists[[i]], 2, as.numeric)
   })
-  mean_repeated_as_and_pro = data.frame(apply(simplify2array(temp), 1:2, mean))
-  rownames(mean_repeated_as_and_pro) = rownames(list_of_lists[[1]])
-  if(mean_repeated_as_and_pro_boll == TRUE){
-    as_rep = subset(mean_repeated_as_and_pro,
-                    select = grep("as_", colnames(mean_repeated_as_and_pro)))
-    pro_rep = subset(mean_repeated_as_and_pro,
-                     select = grep("pro_", colnames(mean_repeated_as_and_pro)))
-    #mean_as = as.matrix(as_rep) %*% c(1:ncol(as_rep)) / ifelse(as_rep>0, 1, 0) %*% c(1:ncol(as_rep))
-    mean_as = as.matrix(as_rep) %*% c(1:ncol(as_rep)) / apply(as_rep, 1, sum)
-    mean_pro = as.matrix(pro_rep) %*% c(1:ncol(pro_rep)) / apply(pro_rep, 1, sum)
-    mean_repeated_as_and_pro = data.frame(mean_repeated_as_and_pro, mean_as = mean_as, mean_pro = mean_pro)
-  }
-  return(mean_repeated_as_and_pro)
+  mean_elements_lst_of_lsts = data.frame(apply(simplify2array(temp), 1:2, mean))
+  rownames(mean_elements_lst_of_lsts) = rownames(list_of_lists[[1]])
+  # mean_elements_lst_of_lsts = rbind(mean_elements_lst_of_lsts, 
+  #    diff_match = mean_elements_lst_of_lsts["mean_match_A1",] - mean_elements_lst_of_lsts["mean_match_A0",])
+  return(mean_elements_lst_of_lsts)
 }
 #############################################################################################
 
@@ -43,7 +35,7 @@ index_EM_not_conv / param_n_sim # check number of iterations where the EM algo h
 i_EM_not_conv
 
 # summary of matching_estimators_sum: mean, med, empirical sd and MSE ####
-param_SACE = mean(matching_estimators_mat[,"SACE"])
+param_SACE = mean(matching_estimators_mat[,"SACE"], na.rm = T)
 MSE_fun <- function (x) mean((x-true_SACE)^2) # mean((x-param_SACE)^2) # mean((x-true_SACE)^2)
 matching_estimators_sum = data.frame( rbind(na.omit(matching_estimators_mat), 
      mean = apply(na.omit(matching_estimators_mat), 2, mean), med = apply(na.omit(matching_estimators_mat), 2, median),
@@ -63,7 +55,7 @@ rownames(pis_pis_est_obs_sum) = c(c(1:param_n_sim), "mean")
 
 # summary of CI_mat ####
 coverage_sum = calculate_coverage(CI_mat=na.omit(CI_mat))
-coverage = data.frame(SACE = true_SACE, coverage_sum["Coverage",])
+coverage = data.frame(SACE = param_SACE, coverage_sum["Coverage",]) # SACE = true_SACE # SACE = param_SACE
 
 # check existence of ties when using the BC estimator ####
 BC_ties_multiple_treated_sum = apply(na.omit(BC_ties_multiple_treated_mat), 2, mean)
@@ -77,16 +69,26 @@ coeff_pro_sum = apply(na.omit(coeff_pro_mat), 2, mean) # na.omit(coeff_pro_mat) 
 
 # summary of mean_by_g before matching
 # mapvalues(mean_by_g$g, from = c("har", "as", "ns", "pro"), to = c(0:3))
-mean_list_by_g_sum = apply(simplify2array(list_mean_by_g), 2, rowMeans, na.rm = TRUE)
+mean_list_by_g_sum = data.frame(apply(simplify2array(list_mean_by_g), 2, rowMeans, na.rm = TRUE))
 mean_list_by_g_sum[,1] = c(mapvalues(as.numeric(mean_list_by_g_sum[,1]), from = c(0:3), to = c("har", "as", "ns", "pro")))
-mean_list_by_g_sum = data.frame(mean_list_by_g_sum)
 
 # summary of balance - mean (over all simulation iterations) of the X's means
 # Filter(Negate... ) removes NULL lists (when EM has not converged) from the list_of_lists
-balance_wout_rep_sum = calculate_mean_repeated_as_and_pro(
-  list_of_lists=Filter(Negate(function(x) is.null(unlist(x))), balance_wout_rep_lst), FALSE)
-balance_with_rep_sum = calculate_mean_repeated_as_and_pro(
-  list_of_lists=Filter(Negate(function(x) is.null(unlist(x))), balance_with_rep_lst), FALSE)
+balance_PS_wout_rep_sum = calculate_mean_elements_lst_of_lsts(list_of_lists=Filter(Negate(function(x) is.null(unlist(x))), balance_PS_wout_rep_lst))
+balance_PS_with_rep_sum = calculate_mean_elements_lst_of_lsts(list_of_lists=Filter(Negate(function(x) is.null(unlist(x))), balance_PS_with_rep_lst))
+balance_maha_wout_rep_sum = calculate_mean_elements_lst_of_lsts(list_of_lists=Filter(Negate(function(x) is.null(unlist(x))), balance_maha_wout_rep_lst))
+balance_maha_with_rep_sum = calculate_mean_elements_lst_of_lsts(list_of_lists=Filter(Negate(function(x) is.null(unlist(x))), balance_maha_with_rep_lst))
+balance_maha_cal_wout_rep_sum = calculate_mean_elements_lst_of_lsts(list_of_lists=Filter(Negate(function(x) is.null(unlist(x))), balance_wout_rep_lst))
+balance_maha_cal_with_rep_sum = calculate_mean_elements_lst_of_lsts(list_of_lists=Filter(Negate(function(x) is.null(unlist(x))), balance_with_rep_lst))
+
+# SD over all simulation iterations
+dims_bal = dim(balance_PS_wout_rep_lst[[1]]) # 5 * 3*cont_x
+balance_PS_wout_rep_sd = apply(array(unlist(balance_PS_wout_rep_lst), c(dims_bal[1], dims_bal[2], param_n_sim)), c(1,2), sd)
+balance_PS_with_rep_sd = apply(array(unlist(balance_PS_with_rep_lst), c(dims_bal[1], dims_bal[2], param_n_sim)), c(1,2), sd)
+balance_maha_wout_rep_sd = apply(array(unlist(balance_maha_wout_rep_lst), c(dims_bal[1], dims_bal[2], param_n_sim)), c(1,2), sd)
+balance_maha_with_rep_sd = apply(array(unlist(balance_maha_with_rep_lst), c(dims_bal[1], dims_bal[2], param_n_sim)), c(1,2), sd)
+balance_maha_cal_wout_rep_sd = apply(array(unlist(balance_wout_rep_lst), c(dims_bal[1], dims_bal[2], param_n_sim)), c(1,2), sd)
+balance_maha_cal_with_rep_sd = apply(array(unlist(balance_with_rep_lst), c(dims_bal[1], dims_bal[2], param_n_sim)), c(1,2), sd)
 #############################################################################################
 
 #############################################################################################
@@ -94,7 +96,6 @@ balance_with_rep_sum = calculate_mean_repeated_as_and_pro(
 results_table = data.frame(t(rbind(matching_estimators_sum, matching_estimators_SE_sum, coverage))) %>% round(3)
 results_table = results_table[,c("mean", "SE", "sd", "MSE")]
 results_table = results_table[!(row.names(results_table) %in% c("BC_rep_FALSE", "BC_cal_rep_FALSE")),] 
-true_SACE
 # Reduce(function(x, y) merge(x, y, by=0),
 #        list(t(matching_estimators_sum), t(matching_estimators_SE_sum), t(coverage)))
 #############################################################################################

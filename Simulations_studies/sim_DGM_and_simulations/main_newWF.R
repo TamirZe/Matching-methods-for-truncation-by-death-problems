@@ -49,7 +49,7 @@ misspec_outcome = 2 # 0: no misspec of Y model # 2: Y functional form misspecifi
 # two_log_est_EM: S(0)=1, is estimated within A=0, with label according to S, before the EM process.
 # In both cases, sequencial logistic models are being estimated. For one multinational model, use PS_M_weighting (and seq_log_or_multinomial_EM=FALSE)
 two_log_est_EM = FALSE 
-terations_EM = 200; epsilon_EM = 10^-6
+iterations_EM = 200; epsilon_EM = 10^-6
 # seq_log_or_multinomial_EM = TRUE
 #############################################################################################
 
@@ -193,7 +193,7 @@ for (i in 1:param_n_sim){
         X=as.matrix(subset(data_for_EM, select = 
         grep(paste(X_sub_cols[-1], collapse="|"), colnames(data_for_EM)))), Y=data_for_EM$Y, 
         xi_est=xi_est, beta.S0=beta_S0, beta.ah=NULL, beta.c=NULL, 
-        iter.max=terations_EM, error0=epsilon_EM)
+        iter.max=iterations_EM, error0=epsilon_EM)
   end_timeDing <- Sys.time()
   print(paste0("Ding EM lasts ", difftime(end_timeDing, start_timeDing)))
   
@@ -206,7 +206,7 @@ for (i in 1:param_n_sim){
   DL_est = c(DL_est = est_ding_lst$AACE, DL_MA_est = est_ding_lst$AACE.reg)
   
   # if PS_est contains NAS, it probably implies that the EM process has not converged, so skip this iteration and go to the next
-  if( sum(is.na(PS_est)) > 0 | (est_ding_lst$iter == terations_EM + 1 & est_ding_lst$error >= epsilon_EM) ){ 
+  if( sum(is.na(PS_est)) > 0 | (est_ding_lst$iter == iterations_EM + 1 & est_ding_lst$error >= epsilon_EM) ){ 
     print("EM has not convereged")
     i_EM_not_conv = c(i_EM_not_conv, i)
     index_EM_not_conv = index_EM_not_conv + 1

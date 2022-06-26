@@ -14,6 +14,7 @@ post_matching_analysis_func = function(m_data, replace, all_measures_matched_lst
   crude_inference_maha_cal_lst = 
     crude_estimator_inference(match_lst=all_measures_matched_lst$maha_cal_lst, replace_bool=replace)
   dt_match_S1_maha_cal = all_measures_matched_lst$maha_cal_lst$dt_match_S1
+  matched_data_maha_cal = all_measures_matched_lst$maha_cal_lst$matched_data
   matched_pairs_maha_cal = all_measures_matched_lst$maha_cal_lst$matched_pairs
   # dt_match_S1_pairs = merge(rbind(dt_match_S1[,1:(ncols-1)], dt_match_S1[,(ncols + 2) : (2 * ncols)], use.names=FALSE) %>% 
   #     subset(select = c("id", "A", "Y")), matched_pairs_maha_cal, by="id") %>% arrange(pair)
@@ -41,12 +42,12 @@ post_matching_analysis_func = function(m_data, replace, all_measures_matched_lst
   LS_bool = ifelse(replace == F, "OLS", "WLS")
   reg_wout_interactions_inference_lst =
     regression_adjusted_function(dt_match_S1=dt_match_S1_maha_cal, 
-                                 m_data=m_data, matched_pairs=matched_pairs_maha_cal,
+                                 m_data=m_data, matched_data=matched_data_maha_cal, matched_pairs=matched_pairs_maha_cal,
                                  covariates=X_sub_cols[-1], reg_covariates=X_sub_cols[-1],
                                  interactions_bool=FALSE, LS=LS_bool, mu_x_fixed=F, x_as=x_as)
   reg_with_interactions_inference_lst =
     regression_adjusted_function(dt_match_S1=dt_match_S1_maha_cal, 
-                                 m_data=m_data, matched_pairs=matched_pairs_maha_cal,
+                                 m_data=m_data, matched_data=matched_data_maha_cal, matched_pairs=matched_pairs_maha_cal,
                                  covariates =X_sub_cols[-1], reg_covariates=X_sub_cols[-1],
                                  interactions_bool=TRUE, LS=LS_bool, mu_x_fixed=F, x_as=x_as)
   
