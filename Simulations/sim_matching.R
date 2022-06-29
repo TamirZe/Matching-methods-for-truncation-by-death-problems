@@ -1,6 +1,6 @@
 # m_data = data_with_PS[S==1]
 # caliper is in sd
-# replace = T; estimand = "ATC"; change_id = TRUE; mahal_match = 2; M=1; caliper = 0.25
+replace = T; estimand = "ATC"; change_id = TRUE; mahal_match = 2; M=1; caliper = 0.25
 
 matching_all_measures_func = function(m_data, match_on = NULL, X_sub_cols, 
                                      M=1, replace, estimand = "ATC", mahal_match = 2, caliper = 0.05){
@@ -12,7 +12,7 @@ matching_all_measures_func = function(m_data, match_on = NULL, X_sub_cols,
   # TODO MATCHING ONLY ONLY on the weights, O11_posterior_ratio
   print("MATCHING ON PS")
   ps_only_obj <- Match(Y=m_data[,Y], Tr=m_data[,A]
-                          , X = subset(m_data, select = match_on)
+                          ,X = subset(m_data, select = match_on)
                           ,ties=FALSE
                           ,M=M, replace = replace, estimand = estimand, Weight = mahal_match
   )
@@ -21,16 +21,16 @@ matching_all_measures_func = function(m_data, match_on = NULL, X_sub_cols,
   # TODO MAHALANOBIS WITHOUT PS CALIPER
   print("MAHALANOBIS WITHOUT PS CALIPER")
   maha_wout_cal_obj  <- Match(Y=m_data[,Y], Tr=m_data[,A]
-                               , X = subset(m_data, select = c(X_sub_cols[-1]))
+                               ,X = subset(m_data, select = c(X_sub_cols[-1]))
                                ,ties=FALSE
                                ,M=M, replace = replace, estimand = estimand, Weight = mahal_match
   ) 
-  maha_wout_cal_lst = arrange_dataset_after_matching(match_obj=maha_wout_cal_obj, m_data=m_data, replace_bool= replace, X_sub_cols=X_sub_cols)
+  maha_wout_cal_lst = arrange_dataset_after_matching(match_obj=maha_wout_cal_obj, m_data=m_data, replace_bool=replace, X_sub_cols=X_sub_cols)
   
   # TODO MAHALANOBIS WITH PS CALIPER
   print("MAHALANOBIS WITH PS CALIPER")
   maha_with_cal_obj  <- Match(Y=m_data[,Y], Tr=m_data[,A]
-                         , X = subset(m_data, select = c(X_sub_cols[-1], match_on))
+                         ,X = subset(m_data, select = c(X_sub_cols[-1], match_on))
                          ,ties=FALSE
                          ,caliper = vec_caliper 
                          ,M=M, replace = replace, estimand = estimand, Weight = mahal_match

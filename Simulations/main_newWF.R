@@ -14,6 +14,7 @@ source("Simulations/EM_2log_CPSR.R")
 source("Simulations/sim_matching.R")
 source("Simulations/sim_post_matching_analysis.R")
 source("Simulations/sim_regression_estimators.R")
+source("Simulations/summaries_newWF.R")
 #############################################################################################
 
 set.seed(101)
@@ -24,7 +25,7 @@ prob_A = 0.5
 
 # parameters for simulating X
 # @@@@@@@@@@@@ dim_x includes an intercept @@@@@@@@@@@@@@@
-dim_x = 6; cont_x = dim_x - 1
+dim_x = 4; cont_x = dim_x - 1
 mean_x = rep(0.5, cont_x); var_x = rep(1, cont_x)
 X_sub_cols = paste0("X", c(1:(dim_x)))
 #############################################################################################
@@ -39,7 +40,7 @@ two_log_models_DGM = TRUE # DGM includes sequential 2 logistic regressions
 #############################################################################################
 # misspec parameters (for PS model and Y models) ####
 misspec_PS = 2 # 0: no misspec of PS model # 2: PS functional form misspecification
-funcform_factor_sqr=2; funcform_factor_log=-2 # funcform_factor_sqr=-3; funcform_factor_log=3
+funcform_factor1=2; funcform_factor2=-2 # funcform_factor_sqr=-3; funcform_factor_log=3
 transform_x = 0
 misspec_outcome = 2 # 0: no misspec of Y model # 2: Y functional form misspecification
 #############################################################################################
@@ -93,25 +94,26 @@ caliper = 0.25; match_on = "O11_posterior_ratio"
 ###############################################################################################
 
 ###############################################################################################
-param_n = 2000; param_n_sim = 50 # param_n = 2000; param_n_sim = 1000
-mu_x_fixed = FALSE
-###############################################################################################
-
-###############################################################################################
 one_large_simulation = simulate_data_func(
   gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns,
-  xi=xi, two_log_models_DGM=two_log_models_DGM, param_n=100000, 
+  xi=xi, two_log_models_DGM=two_log_models_DGM, param_n=200000, 
   misspec_PS=misspec_PS, misspec_outcome=misspec_outcome, transform_x=transform_x,
-  funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log,
+  funcform_factor1=funcform_factor1, funcform_factor2=funcform_factor2,
   betas_GPI=betas_GPI, var_GPI=var_GPI, rho_GPI_PO=rho_GPI_PO)
 true_SACE = one_large_simulation$true_SACE
 rm(one_large_simulation)
 ###############################################################################################
 
 ###############################################################################################
+param_n = 2000; param_n_sim = 30 # param_n = 2000; param_n_sim = 1000
+mu_x_fixed = FALSE
+###############################################################################################
+
+###############################################################################################
 # matrices and lists to retain results from all iterations ####
-list_EM_not_conv <- list_mean_by_g <- balance_PS_wout_rep_lst <- balance_PS_with_rep_lst <-
-  balance_wout_rep_lst <- balance_with_rep_lst <- balance_maha_wout_rep_lst <- balance_maha_with_rep_lst <- list()
+list_EM_not_conv <- list_mean_by_g <- 
+  balance_PS_wout_rep_lst <- balance_PS_with_rep_lst <- balance_maha_wout_rep_lst <- balance_maha_with_rep_lst <- 
+  balance_maha_cal_wout_rep_lst <- balance_maha_cal_with_rep_lst <- list()
 pis_pis_est_obs_mat = NULL
 coeff_ah_mat <- coeff_pro_mat <- beta_S0_mat <-  matrix(nrow = param_n_sim, ncol = dim_x) 
 matching_estimators_mat <- matrix(nrow = param_n_sim, ncol = 21)
@@ -124,16 +126,16 @@ scen_parameter_lst = list(true_SACE=true_SACE, param_n=param_n, param_n_sim=para
     gamma_ah=gamma_ah, gamma_pro=gamma_pro,
     xi=xi, xi_est=xi_est, two_log_models_DGM=two_log_models_DGM, 
     misspec_PS=misspec_PS, misspec_outcome=misspec_outcome, transform_x=transform_x,
-    funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log,
+    funcform_factor1=funcform_factor1, funcform_factor2=funcform_factor2,
     betas_GPI=betas_GPI, var_GPI=var_GPI, rho_GPI_PO=rho_GPI_PO)
 ###############################################################################################
 
 # run over param_n_sim different iterations, in each iteration, sample contains param_n observations
-index_EM_not_conv = 0; i_EM_not_conv = c() # check proportion of iteration when EM has not converged
+num_iterations_EM_not_conv = 0; i_EM_not_conv = c() # check proportion of iteration when EM has not converged
 #while (i <= param_n_sim){
 for (i in 1:param_n_sim){
   print(paste0("this is n_sim ", i, " in simulate_data_run_EM_and_match. ",
-               "index_EM_not_conv: ", index_EM_not_conv, "."))
+               "num_iterations_EM_not_conv: ", num_iterations_EM_not_conv, "."))
   start_time1 <- Sys.time()
   
   # DGM: simulate data
@@ -141,7 +143,7 @@ for (i in 1:param_n_sim){
       gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns, 
       xi=xi, two_log_models_DGM=two_log_models_DGM, param_n=param_n,
       misspec_PS=misspec_PS, misspec_outcome=misspec_outcome, transform_x=transform_x,
-      funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log,
+      funcform_factor1=funcform_factor1, funcform_factor2=funcform_factor2,
       betas_GPI=betas_GPI, var_GPI=var_GPI, rho_GPI_PO=rho_GPI_PO)
   
   data_for_EM = list_data_DGM$dt
@@ -194,11 +196,11 @@ for (i in 1:param_n_sim){
   if( sum(is.na(PS_est)) > 0 | (est_ding_lst$iter == iterations_EM + 1 & est_ding_lst$error >= epsilon_EM) ){ 
     print("EM has not convereged")
     i_EM_not_conv = c(i_EM_not_conv, i)
-    index_EM_not_conv = index_EM_not_conv + 1
-    list_EM_not_conv$probs[[index_EM_not_conv]] = PS_est
-    list_EM_not_conv$coeffs[[index_EM_not_conv]] = data.frame(rbind(coeff_ah=est_ding_lst$beta.ah, coeff_pro=est_ding_lst$beta.c))
-    colnames(list_EM_not_conv$coeffs[[index_EM_not_conv]]) = X_sub_cols
-    list_EM_not_conv$probs_nas[[index_EM_not_conv]] = c(total_na = sum(is.na(PS_est)), 
+    num_iterations_EM_not_conv = num_iterations_EM_not_conv + 1
+    list_EM_not_conv$probs[[num_iterations_EM_not_conv]] = PS_est
+    list_EM_not_conv$coeffs[[num_iterations_EM_not_conv]] = data.frame(rbind(coeff_ah=est_ding_lst$beta.ah, coeff_pro=est_ding_lst$beta.c))
+    colnames(list_EM_not_conv$coeffs[[num_iterations_EM_not_conv]]) = X_sub_cols
+    list_EM_not_conv$probs_nas[[num_iterations_EM_not_conv]] = c(total_na = sum(is.na(PS_est)), 
               prop_na = sum(is.na(PS_est)) / ( nrow(PS_est) * ncol(PS_est) ) ) %>% round(3)
     next()
   }
@@ -219,15 +221,17 @@ for (i in 1:param_n_sim){
   # matching_datasets_lst[[1]] - wout replacement, matching_datasets_lst[[2]] - with replacement
   m_data=data_with_PS[S==1]
   m_data$id = c(1:nrow(m_data))
+  #Y1_as_mean = mean(filter(m_data, g=="as")$Y1); Y0_as_mean = mean(filter(m_data, g=="as")$Y0)
+  #SACE
   matching_datasets_lst = list()
   replace_vec = c(FALSE, TRUE)
   for(j in c(1:length(replace_vec))){
     matching_datasets_lst[[j]] = 
         matching_all_measures_func(m_data=m_data, match_on=match_on, X_sub_cols=X_sub_cols, 
-         M=1, replace=replace_vec[j], estimand="ATC", mahal_match=2, caliper = caliper)
+         M=1, replace=replace_vec[j], estimand="ATC", mahal_match=2, caliper=caliper)
   }
-  dim(matching_datasets_lst[[2]]$only_ps_lst$matched_data)
-  length(unique(matching_datasets_lst[[2]]$only_ps_lst$matched_data$id))
+  #dim(matching_datasets_lst[[2]]$only_ps_lst$matched_data)
+  #length(unique(matching_datasets_lst[[2]]$only_ps_lst$matched_data$id))
   
   # post-matching analysis for 2 (wout/with replacement) datasets
   matching_measures = c("PS", "maha", "maha_cal", "BC", "BC_cal", "wilcox")
@@ -292,8 +296,8 @@ for (i in 1:param_n_sim){
   balance_PS_with_rep_lst[[i]] = matching_datasets_lst[[2]]$balance_all_measures$mean_by_subset_only_ps
   balance_maha_wout_rep_lst[[i]] = matching_datasets_lst[[1]]$balance_all_measures$mean_by_subset_maha_wout_cal
   balance_maha_with_rep_lst[[i]] = matching_datasets_lst[[2]]$balance_all_measures$mean_by_subset_maha_wout_cal
-  balance_wout_rep_lst[[i]] = matching_datasets_lst[[1]]$balance_all_measures$mean_by_subset_maha_cal
-  balance_with_rep_lst[[i]] = matching_datasets_lst[[2]]$balance_all_measures$mean_by_subset_maha_cal
+  balance_maha_cal_wout_rep_lst[[i]] = matching_datasets_lst[[1]]$balance_all_measures$mean_by_subset_maha_cal
+  balance_maha_cal_with_rep_lst[[i]] = matching_datasets_lst[[2]]$balance_all_measures$mean_by_subset_maha_cal
   
   end_time1 <- Sys.time()
   print(paste0("one iteration lasts ", difftime(end_time1, start_time1)))
@@ -301,8 +305,13 @@ for (i in 1:param_n_sim){
 } # out of for loop for all the iterations (param_n_sim iterations in total)
 
 #TODO summaries of all iterations of one scenario (according to mat_gamma and its row, k) from the simulations in summaries_newWF.R
-source("Simulations/summaries_newWF.R")
-a=results_table
-print(results_table)
+results_summary = summary_func(true_SACE, param_n_sim, matching_estimators_mat, matching_estimators_SE_mat, CI_mat, 
+                               BC_ties_multiple_treated_mat, pis_pis_est_obs_mat, 
+                               beta_S0_mat, coeff_ah_mat, coeff_pro_mat, list_mean_by_g,
+                               balance_PS_wout_rep_lst, balance_PS_with_rep_lst, 
+                               balance_maha_wout_rep_lst, balance_maha_with_rep_lst, 
+                               balance_maha_cal_wout_rep_lst, balance_maha_cal_with_rep_lst)
+print(results_summary$results_table)
+#a=results_table
 true_SACE
 

@@ -48,7 +48,7 @@ my_matching_func_multiple = function(match_on = NULL, X_sub_cols, m_data, weight
   # TODO MAHALANOBIS WITHOUT PS CALIPER
   print("MAHALANOBIS WITHOUT PS CALIPER")
   MATCH_MAHA_wout_PS  <- Match(Y=m_data[,Y], Tr=m_data[,A]
-                               , X = subset(m_data, select = c(X_sub_cols[-1]))
+                               ,X = subset(m_data, select = c(X_sub_cols[-1]))
                                ,ties=FALSE
                                ,M=M, replace = replace, estimand = estimand, Weight = mahal_match
   )

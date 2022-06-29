@@ -9,7 +9,7 @@ extract_pis_from_scenarios = function(nn=250000, mat_gamma=mat_gamma, xi=0, miss
     lst_mean_x_and_pi = simulate_data_func(gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns,
                            xi=xi, two_log_models_DGM=two_log_models_DGM, param_n=nn, 
                            misspec_PS=misspec_PS, misspec_outcome=0, transform_x=0,
-                           funcform_factor_sqr=funcform_factor_sqr, funcform_factor_log=funcform_factor_log,
+                           funcform_factor1=funcform_factor1, funcform_factor2=funcform_factor2,
                            betas_GPI=betas_GPI, var_GPI=var_GPI, rho_GPI_PO=rho_GPI_PO, only_mean_x_bool=TRUE)
     
     big_lst[[k]] = lst_mean_x_and_pi

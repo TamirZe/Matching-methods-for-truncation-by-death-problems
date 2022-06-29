@@ -213,7 +213,7 @@ xi_2log_PSPS_M_weighting = function(Z, D, X, Y,
   ##estimate the propensity scores using Multinomial Logistic Regression
   ##PS_pred returns 4 columns: c, d, a, n
   ps.score.fit = xi_2log_PredTreatEffect(Z=Z, D=D, X=X, xi_est=xi_est, 
-                             beta.S0=beta.S0, beta.ah = beta.ah, beta.c=beta.c, 
+                             beta.S0=beta.S0, beta.ah=beta.ah, beta.c=beta.c, 
                              iter.max=iter.max, error0=error0, prob.pred=TRUE)
   # c(prob.c, prob.d, prob.a, prob.n)
   ps.score  = ps.score.fit$PROB

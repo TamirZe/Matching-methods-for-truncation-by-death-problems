@@ -16,6 +16,14 @@ post_matching_analysis_func = function(m_data, replace, all_measures_matched_lst
   dt_match_S1_maha_cal = all_measures_matched_lst$maha_cal_lst$dt_match_S1
   matched_data_maha_cal = all_measures_matched_lst$maha_cal_lst$matched_data
   matched_pairs_maha_cal = all_measures_matched_lst$maha_cal_lst$matched_pairs
+  
+  mean(filter(matched_data_maha_cal, A==1)$Y)
+  mean(filter(matched_data_maha_cal, g=="as")$Y1)
+  mean(filter(matched_data_maha_cal, A==1&g=="as")$Y)
+  
+  mean(filter(matched_data_maha_cal, A==0)$Y)
+  mean(filter(matched_data_maha_cal, g=="as")$Y0)
+  
   # dt_match_S1_pairs = merge(rbind(dt_match_S1[,1:(ncols-1)], dt_match_S1[,(ncols + 2) : (2 * ncols)], use.names=FALSE) %>% 
   #     subset(select = c("id", "A", "Y")), matched_pairs_maha_cal, by="id") %>% arrange(pair)
   
@@ -135,7 +143,8 @@ wilcoxon_and_HL_func = function(match_lst, boot_HL=FALSE){
     SACE_matching_est_HL_bool = mean(HL_boot_vec)
     SACE_matching_SE = sd(HL_boot_vec)
   }else{
-    SACE_matching_SE = SACE_matching_pval_HL
+    wilc_na = -101
+    SACE_matching_SE = wilc_na
   }
   
   CI = c(as.character(as.numeric(round(wilcoxon$conf.int, 3))[1]), 

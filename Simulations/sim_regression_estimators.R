@@ -97,9 +97,9 @@ regression_adjusted_function = function(dt_match_S1, m_data, matched_data, match
       se_beta_est = coeftest(lin_reg_matched, vcov. = vcovCL, cluster = ~ pair)["A", "Std. Error", drop = FALSE]
       #se_beta_est2 = data.frame(coef_test(lin_reg_matched, vcov = "CR1", cluster = reg_data_matched$pair))["A", "SE"]
       estimator_and_se = c(beta_est, se_beta_est)
-      
+    }
     # WITH INTERACTIONS
-    }else{
+    if(interactions_bool == TRUE){
       estimator_and_se = estimation_with_interactions(lin_reg_fit_matched=lin_reg_matched, coeffs_table= coeffs_table,
                             LS_for_estimation="OLS", data_matched_reg=reg_data_matched, x_as=x_as)
     }
@@ -135,9 +135,9 @@ regression_adjusted_function = function(dt_match_S1, m_data, matched_data, match
       # robust clustered SE estimator
       se_beta_est_clstr <- coeftest(lin_reg_matched, vcov. = vcovCL, cluster = ~ pair + id)["A","Std. Error",drop = FALSE]
       estimator_and_se <- c(beta_est, se_beta_est_naive, se_beta_est_sand, se_beta_est_clstr)
-      
+    }
     # WITH INTERACTIONS
-    }else{
+    if(interactions_bool == TRUE){
       # summary of WLS
       sum_matched = summary(lin_reg_matched)
       sum_matched_wls = summary(lin_reg_matched_wls)
@@ -154,7 +154,7 @@ regression_adjusted_function = function(dt_match_S1, m_data, matched_data, match
     CI_LS = paste(CI_LS, sep = ' ', collapse = " , ")
   }
   
-  return(list(estimator_and_se=estimator_and_se, CI_LS=CI_LS))
+  return(list(estimator_and_se=estimator_and_se, CI_LS=CI_LS, lm_obj=lin_reg_matched))
 }
 
 

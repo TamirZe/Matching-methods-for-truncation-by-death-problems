@@ -1,7 +1,7 @@
 simulate_data_func = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, 
                               xi, two_log_models_DGM=TRUE, param_n, 
                               misspec_PS, misspec_outcome=0, transform_x=0,
-                              funcform_factor_sqr, funcform_factor_log, 
+                              funcform_factor1, funcform_factor2, 
                               betas_GPI, var_GPI, rho_GPI_PO, only_mean_x_bool=FALSE){
   if(!is.null(seed_num)){set.seed(seed_num)}
   
@@ -14,8 +14,10 @@ simulate_data_func = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns,
   # x are the true outcome's (Y) covariates 
   x = x_obs
   # x_misspec for PS misspec
-  x_misspec = data.frame(          X_exp = exp(x_obs[,(dim_x - 2)])
-                                  ,X_sqr = x_obs[,(dim_x - 1)]^2 * x_obs[,(dim_x - 2)] 
+  x_misspec = data.frame(          X_int = x_obs[,(dim_x-2)] * x_obs[,(dim_x - 1)] 
+                                  ,X_exp = exp(x_obs[,(dim_x - 1)])
+                                  ,X_sqr = x_obs[,(dim_x)]^2 
+                                  #,X_sqr = x_obs[,(dim_x - 1)]^2 * x_obs[,(dim_x - 2)] 
                                   #,X_log = log(x_obs[,dim_x] - (min(x_obs[,dim_x]) - 0.1))
                          )
   
@@ -35,11 +37,13 @@ simulate_data_func = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns,
     x_PS = as.matrix( data.frame( x_obs[,-tail(1:dim_x, n=ncol(x_misspec))], x_misspec ) )
     gamma_ns_adj = gamma_ns
     if(cont_x<3){ # replace only one misspecified covariate
-      gamma_ah_adj =  c(head(gamma_ah, (dim_x-1)), funcform_factor_sqr*gamma_ah[2])
-      gamma_pro_adj = c(head(gamma_pro, (dim_x-1)), funcform_factor_sqr*gamma_pro[2])
+      gamma_ah_adj =  c(head(gamma_ah, (dim_x-1)), funcform_factor1*gamma_ah[2])
+      gamma_pro_adj = c(head(gamma_pro, (dim_x-1)), funcform_factor1*gamma_pro[2])
     }else{ # replace 3 misspecified covariate
-      gamma_ah_adj = c(head(gamma_ah, -3),   funcform_factor_sqr*gamma_ah[2], funcform_factor_sqr*gamma_ah[2], funcform_factor_log*gamma_ah[2])
-      gamma_pro_adj = c(head(gamma_pro, -3), funcform_factor_sqr*gamma_pro[2], funcform_factor_sqr*gamma_pro[2], funcform_factor_log*gamma_pro[2])
+      gamma_ah_adj = c(head(gamma_ah, -3), 
+                       funcform_factor1*gamma_ah[2], funcform_factor1*gamma_ah[2], funcform_factor2*gamma_ah[2])
+      gamma_pro_adj = c(head(gamma_pro, -3), 
+                        funcform_factor1*gamma_pro[2], funcform_factor1*gamma_pro[2], funcform_factor2*gamma_pro[2])
     }
   }
   
@@ -59,7 +63,7 @@ simulate_data_func = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns,
       x = as.matrix( data.frame( x_obs[,-tail(1:dim_x, n=1)], x_misspec ) )
     }else{  
       #x = as.matrix( data.frame( x_obs[,-tail(1:dim_x, n=2)], x_misspec[,c("X_sqr", "X_log")] ) )
-      x = as.matrix( data.frame( x_obs[,-tail(1:dim_x, n=2)], x_misspec[,c("X_exp", "X_sqr")] ) )
+      x = as.matrix( data.frame( x_obs[,-tail(1:dim_x, n=2)], x_misspec[,c("X_exp", "X_sqr")] ) ) 
       #x=x_PS
     }
   } 
