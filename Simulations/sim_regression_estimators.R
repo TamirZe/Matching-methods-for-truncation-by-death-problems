@@ -6,7 +6,7 @@
 
 #TODO dont really need dt_match_S1 
 #TODO for now we use covariates. we don't use reg_covariates currently
-regression_adjusted_function = function(dt_match_S1, m_data, matched_data, matched_pairs,
+regression_adjusted_function = function(m_data, matched_data, matched_pairs,
                                         covariates, reg_covariates, interactions_bool, LS, mu_x_fixed=FALSE, x_as){
   estimation_with_interactions = function(lin_reg_fit_matched, coeffs_table, data_matched_reg, 
                                           lin_reg_fit_wls_matched=NULL, coeffs_table_wls=NULL, # data_matched_reg_weights=NULL,

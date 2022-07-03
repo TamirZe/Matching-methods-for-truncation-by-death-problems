@@ -79,7 +79,7 @@ matching_all_measures_func = function(m_data, match_on = NULL, X_sub_cols,
 
 # arrange dataset after matching, and create dt_match_S1 - dataset of matched pairs with only pairs of survivorss
 arrange_dataset_after_matching = function(match_obj, m_data, replace_bool, X_sub_cols){
-  x_ind = which(grepl(paste(c(X_sub_cols[-1],"x_PS","x_out"),collapse="|"), colnames(m_data)) & !grepl("X1",colnames(m_data)))
+  x_ind = which(grepl(paste(c(X_sub_cols[-1],"x_PS","x_out"),collapse="|"), colnames(m_data)) & !grepl("X1$", colnames(m_data)))
   x_cols = colnames(m_data)[x_ind]
   ncols  = ncol(subset(m_data[match_obj$index.treated, ], 
                        select = c("id", "EMest_p_as", "Y", "A", "S", "g", x_cols))) + 1 # X_sub_cols[-1] # x_cols
@@ -118,7 +118,7 @@ arrange_dataset_after_matching = function(match_obj, m_data, replace_bool, X_sub
 # balance; before matching and after matching
 mean_x_summary = function(m_data, matched_data){
   # descriprive before matching
-  x_ind = which(grepl(paste(c(X_sub_cols[-1], "x_PS", "x_out"), collapse="|"), colnames(m_data)) & !grepl("X1", colnames(m_data)))
+  x_ind = which(grepl(paste(c(X_sub_cols[-1], "x_PS", "x_out"), collapse="|"), colnames(m_data)) & !grepl("X1$", colnames(m_data)))
   x_cols = colnames(m_data)[x_ind] # colnames(m_data)[x_ind] # c("id", "A", "S", "g", X_sub_cols[-1])
   initial_data_x = subset(m_data, select = c("id", "A", "S", "g", x_cols)) 
   initial_data_x_as = filter(initial_data_x, g=="as")

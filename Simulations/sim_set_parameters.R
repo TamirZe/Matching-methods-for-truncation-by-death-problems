@@ -45,7 +45,7 @@ set_parameters_func = function(dim_x=dim_x, high_pi_pro=T, AX_interactions=T){
         ) ,nrow = 2, byrow = T) 
     }
     
-    if(dim_x == 11 & AX_interactions){
+    if(dim_x == 11){
       # beta
       if (AX_interactions == TRUE){
         betas_GPI = as.matrix(rbind(c(22,rep(c(5,2,1,3,5),2)), c(20,rep(c(3,3,0,1,3),2))))
@@ -55,7 +55,7 @@ set_parameters_func = function(dim_x=dim_x, high_pi_pro=T, AX_interactions=T){
       # gamma
       mat_gamma = matrix(c(
         c(-0.3, rep(0.06, dim_x-1)), c(0.17, rep(0.15, dim_x-1)) # XXXX 0.5
-        ,c(-2.5, rep(0.5, dim_x-1)), c(0.1, rep(0.25, dim_x-1))  # XXXX 0.5
+        #,c(-2.5, rep(0.5, dim_x-1)), c(0.1, rep(0.25, dim_x-1))  # XXXX 0.5
         ,c(-0.5, rep(0.38, dim_x-1)), c(0.5, rep(0.5, dim_x-1)) # @@@@  0.75
       ) ,nrow = 2, byrow = T) 
     }

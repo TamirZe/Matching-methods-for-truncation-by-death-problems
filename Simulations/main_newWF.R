@@ -25,7 +25,7 @@ prob_A = 0.5
 
 # parameters for simulating X
 # @@@@@@@@@@@@ dim_x includes an intercept @@@@@@@@@@@@@@@
-dim_x = 4; cont_x = dim_x - 1
+dim_x = 11; cont_x = dim_x - 1
 mean_x = rep(0.5, cont_x); var_x = rep(1, cont_x)
 X_sub_cols = paste0("X", c(1:(dim_x)))
 #############################################################################################
@@ -40,7 +40,7 @@ two_log_models_DGM = TRUE # DGM includes sequential 2 logistic regressions
 #############################################################################################
 # misspec parameters (for PS model and Y models) ####
 misspec_PS = 2 # 0: no misspec of PS model # 2: PS functional form misspecification
-funcform_factor1=2; funcform_factor2=-2 # funcform_factor_sqr=-3; funcform_factor_log=3
+funcform_factor1 = 2; funcform_factor2 = -2 # funcform_factor_sqr=-3; funcform_factor_log=3
 transform_x = 0
 misspec_outcome = 2 # 0: no misspec of Y model # 2: Y functional form misspecification
 #############################################################################################
@@ -71,7 +71,7 @@ betas_GPI = beta_and_gamma$betas_GPI
 # gamma
 mat_gamma = beta_and_gamma$mat_gamma
 
-k=2 # k=1 (pi as = 0.5) # k=2 (pi as = 0.75)
+k=1 # k=1 (pi as = 0.5) # k=2 (pi as = 0.75)
 gamma_ns = rep(0, dim_x)
 gamma_ah = as.numeric(mat_gamma[k, c(1:dim_x)])
 gamma_pro =  as.numeric(mat_gamma[k, (dim_x+1): (2*dim_x)])  
@@ -96,7 +96,7 @@ caliper = 0.25; match_on = "O11_posterior_ratio"
 ###############################################################################################
 one_large_simulation = simulate_data_func(
   gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns,
-  xi=xi, two_log_models_DGM=two_log_models_DGM, param_n=200000, 
+  xi=xi, two_log_models_DGM=two_log_models_DGM, param_n=100000, 
   misspec_PS=misspec_PS, misspec_outcome=misspec_outcome, transform_x=transform_x,
   funcform_factor1=funcform_factor1, funcform_factor2=funcform_factor2,
   betas_GPI=betas_GPI, var_GPI=var_GPI, rho_GPI_PO=rho_GPI_PO)
@@ -105,7 +105,7 @@ rm(one_large_simulation)
 ###############################################################################################
 
 ###############################################################################################
-param_n = 2000; param_n_sim = 30 # param_n = 2000; param_n_sim = 1000
+param_n = 2000; param_n_sim = 100 # param_n = 2000; param_n_sim = 1000
 mu_x_fixed = FALSE
 ###############################################################################################
 
@@ -145,7 +145,6 @@ for (i in 1:param_n_sim){
       misspec_PS=misspec_PS, misspec_outcome=misspec_outcome, transform_x=transform_x,
       funcform_factor1=funcform_factor1, funcform_factor2=funcform_factor2,
       betas_GPI=betas_GPI, var_GPI=var_GPI, rho_GPI_PO=rho_GPI_PO)
-  
   data_for_EM = list_data_DGM$dt
   list_mean_by_g[[i]] = apply(list_data_DGM$mean_by_g, 2, as.numeric) # x_obs
   x_obs = list_data_DGM$x_obs
@@ -312,6 +311,13 @@ results_summary = summary_func(true_SACE, param_n_sim, matching_estimators_mat, 
                                balance_maha_wout_rep_lst, balance_maha_with_rep_lst, 
                                balance_maha_cal_wout_rep_lst, balance_maha_cal_with_rep_lst)
 print(results_summary$results_table)
-#a=results_table
-true_SACE
+k; dim_x 
+results_summary$balance_lst$balance_PS_wout_rep_sum
+results_summary$balance_lst$balance_maha_cal_wout_rep_sum
+results_summary$balance_lst$balance_PS_with_rep_sum
+results_summary$balance_lst$balance_maha_cal_with_rep_sum
+#results_table10_50 = results_summary$results_table
+save(results_table10_50, file = paste0("results_table10_50.Rdata"))
+
+
 

@@ -16,26 +16,16 @@ library(Matching); library(sandwich); library(clubSandwich); library(lmtest); li
 main_path = paste0("/a/home/cc/stud_math/tamirzehavi/MatchingSACE/Simulation_studies/")
 path_code = paste0(main_path, "Code/Scripts/") 
 
-# source(paste0(path_code, "Simulations/sim_set_parameters.R"))
-# source(paste0(path_code, "Simulations/DGM_CPSR.R"))
-# source(paste0(path_code, "Simulations/naive_estimation.R"))
-# #source(paste0(path_code, "Simulations/PS_M_weighting.R")) # EM with one multinomial regression
-# source(paste0(path_code, "Simulations/EM_2log_CPSR.R"))
-# source(paste0(path_code, "Simulations/sim_matching.R"))
-# source(paste0(path_code, "Simulations/sim_post_matching_analysis.R"))
-# source(paste0(path_code, "Simulations/sim_regression_estimators.R"))
-# source(paste0(path_code, "Simulations/summaries_newWF.R"))
-
-source("Simulations/sim_set_parameters.R")
-source("Simulations/sim_check_pis_and_covariates.R") 
-source("Simulations/DGM_CPSR.R")
-source("Simulations/naive_estimation.R")
-#source("Simulations/PS_M_weighting.R")  # EM with one multinomial regression 
-source("Simulations/EM_2log_CPSR.R") 
-source("Simulations/sim_matching.R")
-source("Simulations/sim_post_matching_analysis.R")
-source("Simulations/sim_regression_estimators.R")
-source("Simulations/summaries_newWF.R")
+source(paste0(path_code, "Simulations/sim_set_parameters.R"))
+source(paste0(path_code, "Simulations/sim_check_pis_and_covariates.R"))
+source(paste0(path_code, "Simulations/DGM_CPSR.R"))
+source(paste0(path_code, "Simulations/naive_estimation.R"))
+#source(paste0(path_code, "Simulations/PS_M_weighting.R")) # EM with one multinomial regression
+source(paste0(path_code, "Simulations/EM_2log_CPSR.R"))
+source(paste0(path_code, "Simulations/sim_matching.R"))
+source(paste0(path_code, "Simulations/sim_post_matching_analysis.R"))
+source(paste0(path_code, "Simulations/sim_regression_estimators.R"))
+source(paste0(path_code, "Simulations/summaries_newWF.R"))
 #############################################################################################
 
 
@@ -84,8 +74,9 @@ rho_GPI_PO = 0.4
 # scenario is determined according to mat_gamma (and its row, k) and betas_GPI
 
 #TODO Large_pi_pro = T/F, AX_interactions = T/F
-Large_pi_pro = TRUE
-beta_and_gamma = set_parameters_func(dim_x=dim_x, high_pi_pro = Large_pi_pro, AX_interactions = T) 
+Large_pi_pro = FALSE
+AX_interactions = TRUE
+beta_and_gamma = set_parameters_func(dim_x=dim_x, high_pi_pro=Large_pi_pro, AX_interactions=AX_interactions) 
 # beta
 betas_GPI = beta_and_gamma$betas_GPI
 # gamma
@@ -258,8 +249,6 @@ if(job_id >=0 & job_id <=3){
         matching_all_measures_func(m_data=m_data, match_on=match_on, X_sub_cols=X_sub_cols, 
                                    M=1, replace=replace_vec[j], estimand="ATC", mahal_match=2, caliper=caliper)
     }
-    #dim(matching_datasets_lst[[2]]$only_ps_lst$matched_data)
-    #length(unique(matching_datasets_lst[[2]]$only_ps_lst$matched_data$id))
     
     # post-matching analysis for 2 (wout/with replacement) datasets
     matching_measures = c("PS", "maha", "maha_cal", "BC", "BC_cal", "wilcox")
@@ -349,18 +338,24 @@ if(job_id >=0 & job_id <=3){
   ########################################################################
   # save ####
   path_data = paste0(main_path, "Data/") 
-  path = paste0(path_data, "N=", param_n, "/True_outcome_with_interactions/",
+  path = paste0(path_data, "N=", param_n, 
+                ifelse(AX_interactions==T, "/True_outcome_with_interactions/", "/True_outcome_wout_interactions/"),
                 ifelse(misspec_outcome==0, "Correct_spec_outcome/", "Mis_spec_outcome/"),
                 ifelse(misspec_PS==0, "Correct_spec_PS/", "Mis_spec_PS/"), paste0(cont_x, "X/"),
-                ifelse(Large_pi_pro, "Large_pi_pro/", "Low_pi_pro/"), "xi = ", xi, "/")
+                ifelse(Large_pi_pro, "Large_pi_pro/", "Low_pi_pro/"), 
+                ifelse(k==1, "pi_as_0.5/", "pi_as_0.75/"),
+                "xi = ", xi, "/")
   
   save(results_table, file = paste0(path, 'results_table_',job_id,'.Rdata'))
   save(BC_ties_multiple_treated_sum, file = paste0(path, 'BC_ties_multiple_treated_sum_',job_id,'.Rdata'))
   save(pis_pis_est_obs_sum, file = paste0(path, 'pis_pis_est_obs_sum_',job_id,'.Rdata'))
+  save(mat_pis_per_gamma, file = paste0(path, 'mat_pis_per_gamma_',job_id,'.Rdata'))
+  save(mat_pis_per_gamma_mis_PS, file = paste0(path, 'mat_pis_per_gamma_mis_PS_',job_id,'.Rdata'))
   save(EM_coeffs_sum, file = paste0(path, 'EM_coeffs_sum_',job_id,'.Rdata'))
   save(mean_list_by_g_sum, file = paste0(path, 'mean_list_by_g_sum_',job_id,'.Rdata'))
   save(balance_lst, file = paste0(path, 'balance_lst_',job_id,'.Rdata'))
   save(num_iterations_EM_not_conv, file = paste0(path, 'num_iterations_EM_not_conv_',job_id,'.Rdata'))
+  save(scen_parameter_lst, file = paste0(path, 'scen_parameter_lst_',job_id,'.Rdata'))
   ########################################################################
   
 }else{

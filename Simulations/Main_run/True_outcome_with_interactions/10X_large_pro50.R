@@ -17,6 +17,7 @@ main_path = paste0("/a/home/cc/stud_math/tamirzehavi/MatchingSACE/Simulation_stu
 path_code = paste0(main_path, "Code/Scripts/") 
 
 source(paste0(path_code, "Simulations/sim_set_parameters.R"))
+source(paste0(path_code, "Simulations/sim_check_pis_and_covariates.R"))
 source(paste0(path_code, "Simulations/DGM_CPSR.R"))
 source(paste0(path_code, "Simulations/naive_estimation.R"))
 #source(paste0(path_code, "Simulations/PS_M_weighting.R")) # EM with one multinomial regression
@@ -35,7 +36,7 @@ prob_A = 0.5
 # parameters for simulating X
 # @@@@@@@@@@@@ dim_x includes an intercept @@@@@@@@@@@@@@@
 #TODO dim_x
-dim_x = 6; cont_x = dim_x - 1
+dim_x = 11; cont_x = dim_x - 1
 mean_x = rep(0.5, cont_x); var_x = rep(1, cont_x)
 X_sub_cols = paste0("X", c(1:(dim_x)))
 #############################################################################################
@@ -74,7 +75,7 @@ rho_GPI_PO = 0.4
 
 #TODO Large_pi_pro = T/F, AX_interactions = T/F
 Large_pi_pro = TRUE
-AX_interactions = FALSE
+AX_interactions = TRUE
 beta_and_gamma = set_parameters_func(dim_x=dim_x, high_pi_pro=Large_pi_pro, AX_interactions=AX_interactions) 
 # beta
 betas_GPI = beta_and_gamma$betas_GPI
@@ -248,8 +249,6 @@ if(job_id >=0 & job_id <=3){
         matching_all_measures_func(m_data=m_data, match_on=match_on, X_sub_cols=X_sub_cols, 
                                    M=1, replace=replace_vec[j], estimand="ATC", mahal_match=2, caliper=caliper)
     }
-    #dim(matching_datasets_lst[[2]]$only_ps_lst$matched_data)
-    #length(unique(matching_datasets_lst[[2]]$only_ps_lst$matched_data$id))
     
     # post-matching analysis for 2 (wout/with replacement) datasets
     matching_measures = c("PS", "maha", "maha_cal", "BC", "BC_cal", "wilcox")
@@ -343,7 +342,9 @@ if(job_id >=0 & job_id <=3){
                 ifelse(AX_interactions==T, "/True_outcome_with_interactions/", "/True_outcome_wout_interactions/"),
                 ifelse(misspec_outcome==0, "Correct_spec_outcome/", "Mis_spec_outcome/"),
                 ifelse(misspec_PS==0, "Correct_spec_PS/", "Mis_spec_PS/"), paste0(cont_x, "X/"),
-                ifelse(Large_pi_pro, "Large_pi_pro/", "Low_pi_pro/"), "xi = ", xi, "/")
+                ifelse(Large_pi_pro, "Large_pi_pro/", "Low_pi_pro/"), 
+                ifelse(k==1, "pi_as_0.5/", "pi_as_0.75/"),
+                "xi = ", xi, "/")
   
   save(results_table, file = paste0(path, 'results_table_',job_id,'.Rdata'))
   save(BC_ties_multiple_treated_sum, file = paste0(path, 'BC_ties_multiple_treated_sum_',job_id,'.Rdata'))
@@ -354,6 +355,7 @@ if(job_id >=0 & job_id <=3){
   save(mean_list_by_g_sum, file = paste0(path, 'mean_list_by_g_sum_',job_id,'.Rdata'))
   save(balance_lst, file = paste0(path, 'balance_lst_',job_id,'.Rdata'))
   save(num_iterations_EM_not_conv, file = paste0(path, 'num_iterations_EM_not_conv_',job_id,'.Rdata'))
+  save(scen_parameter_lst, file = paste0(path, 'scen_parameter_lst_',job_id,'.Rdata'))
   ########################################################################
   
 }else{
