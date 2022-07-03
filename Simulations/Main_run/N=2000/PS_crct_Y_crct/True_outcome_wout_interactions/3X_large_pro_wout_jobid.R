@@ -17,7 +17,6 @@ main_path = paste0("/a/home/cc/stud_math/tamirzehavi/MatchingSACE/Simulation_stu
 path_code = paste0(main_path, "Code/Scripts/") 
 
 source(paste0(path_code, "Simulations/sim_set_parameters.R"))
-source(paste0(path_code, "Simulations/sim_check_pis_and_covariates.R"))
 source(paste0(path_code, "Simulations/DGM_CPSR.R"))
 source(paste0(path_code, "Simulations/naive_estimation.R"))
 #source(paste0(path_code, "Simulations/PS_M_weighting.R")) # EM with one multinomial regression
@@ -77,8 +76,7 @@ rho_GPI_PO = 0.4
 # scenario is determined according to mat_gamma (and its row, k) and betas_GPI
 
 #TODO Large_pi_pro = T/F, AX_interactions = T/F
-Large_pi_pro = 
-  TRUE
+Large_pi_pro = TRUE
 AX_interactions = FALSE
 beta_and_gamma = set_parameters_func(dim_x=dim_x, high_pi_pro=Large_pi_pro, AX_interactions=AX_interactions) 
 # beta
