@@ -16,10 +16,10 @@ source("NSW_data_analysis/data_matching/data_matching_multiple.R")
 source("NSW_data_analysis/data_post_matching_analysis/data_regression_estimators.R")
 source("NSW_data_analysis/data_post_matching_analysis/data_aligned_ranktest.R")
 source("NSW_data_analysis/data_sensitivity_analyses/data_SA_regression_funcs.R")
-source("Ding_Lu/PS_M_weighting.R")
-#source("Ding_Lu/PS_M_weighting_SA.R")
-source("Ding_Lu/PS_M_weighting_SA_CPSR")
-source("Ding_Lu/DL_SE_boot.R")
+source("Ding_Lu_EM/PS_M_weighting.R")
+#source("Ding_Lu_EM/Sequencial_logistic_regressions/EM_2log_CPSR.R")
+source("Ding_Lu_EM/PS_M_weighting_SA_CPSR")
+source("Ding_Lu_EM/DL_SE_boot.R")
 ########################################################################
 
 # data files

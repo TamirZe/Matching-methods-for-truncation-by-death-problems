@@ -1,5 +1,22 @@
 library(cowplot); library(ggpubr); library(textclean)
 
+##############################################################
+# path to tables from cluster ####
+param_n=2000
+xi_values = c(0, 0.05, 0.1, 0.2)
+ind = 0
+xi = xi_values[ind+1] 
+AX_interactions = F
+misspec_outcome = 0 # no misspec (misspec_PS=0) # Func Form misspec (misspec_PS=2)
+misspec_PS = 0 # no misspec (misspec_PS=0) # Func Form misspec (misspec_PS=2)
+##############################################################
+
+##############################################################
+setwd("~/A matching framework for truncation by death problems")
+source("Simulations/Figures/plot_path.R")
+##############################################################
+
+##################################################################################################
 # estimators_vec: vec of estimators name
 # legend_levels: the factor level argument for the legend of the ggplot
 add_bias_tables = function(res_tab, 
@@ -50,7 +67,10 @@ table_small_pro_small_as_10 = get(load(paste0(small_pro_small_as_path10, "result
 table_small_pro_large_as_10 = get(load(paste0(small_pro_large_as_path10, "results_table_", ind,".RData"))) 
 table_large_pro_small_as_10 = get(load(paste0(large_pro_small_as_path10, "results_table_", ind,".RData"))) 
 table_large_pro_large_as_10 = get(load(paste0(large_pro_large_as_path10, "results_table_", ind,".RData")))
+##################################################################################################
 
+##################################################################################################
+# create a combined table for the figure ####
 
 #estimators_vec = c("Crude Wout", "OLS inter Wout", "Crude With", "WLS inter With", "BC caliper With","DingLu MA")
 estimators_vec = c("maha_cal_rep_FALSE", "OLS_int", "maha_cal_rep_TRUE", "WLS_int", "BC_cal_rep_TRUE", "DL_MA_est")

@@ -1,13 +1,7 @@
-# path to tables from cluster, for JRSS R1 version ####
-param_n=2000
-xi_values = c(0, 0.05, 0.1, 0.2)
-ind = 3
-xi = xi_values[ind+1] 
-AX_interactions = F
-misspec_outcome = 2 # no misspec (misspec_PS=0) # Func Form misspec (misspec_PS=2)
-misspec_PS = 2 # no misspec (misspec_PS=0) # Func Form misspec (misspec_PS=2)
+##############################################################
+# path to results_tables ####
 
-# Cluster
+# Cluster/GH
 #main_path = "/a/home/cc/stud_math/tamirzehavi/MatchingSACE/Simulation_studies/"
 #path_data = paste0(main_path, "Data/")
 
@@ -19,7 +13,8 @@ path = paste0(path_data, "N=", param_n,
        ifelse(AX_interactions==T, "/True_outcome_with_interactions/", "/True_outcome_wout_interactions/"),
        ifelse(misspec_outcome==0, "Correct_spec_outcome/", "Mis_spec_outcome/"),
        ifelse(misspec_PS==0, "Correct_spec_PS/", "Mis_spec_PS/"))
-       
+##############################################################
+
 
 # 3X
 small_pro_small_as_path3 = paste0(path, "3X/Low_pi_pro/pi_as_0.5/", "xi = ", xi, "/")
