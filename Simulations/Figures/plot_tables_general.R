@@ -1,21 +1,5 @@
 library(cowplot); library(ggpubr); library(textclean)
 
-##############################################################
-# path to tables from cluster ####
-param_n=2000
-xi_values = c(0, 0.05, 0.1, 0.2)
-ind = 0
-xi = xi_values[ind+1] 
-AX_interactions = F
-misspec_outcome = 0 # no misspec (misspec_PS=0) # Func Form misspec (misspec_PS=2)
-misspec_PS = 0 # no misspec (misspec_PS=0) # Func Form misspec (misspec_PS=2)
-##############################################################
-
-##############################################################
-setwd("~/A matching framework for truncation by death problems")
-source("Simulations/Figures/plot_path.R")
-##############################################################
-
 ##################################################################################################
 # estimators_vec: vec of estimators name
 # legend_levels: the factor level argument for the legend of the ggplot
@@ -28,11 +12,11 @@ add_bias_tables = function(res_tab,
   if(!"dim_x" %in% colnames(res_tab)) { res_tab$dim_x = num_of_x }
   res_tab$true_SACE = res_tab$mean[res_tab$Estimator == "true_SACE"] 
   res_tab = data.frame("true_SACE" = res_tab$true_SACE, N = res_tab$N, dim_x = res_tab$dim_x,  l = res_tab$l, pi_as = res_tab$pi_as,
-                   subset(res_tab, select = !colnames(res_tab) %in% c("true_SACE", "N", "l", "dim_x", "pi_as")) )
+                       subset(res_tab, select = !colnames(res_tab) %in% c("true_SACE", "N", "l", "dim_x", "pi_as")) )
   res_tab$Bias = res_tab$mean - as.numeric(res_tab$true_SACE)  
   res_tab$Rel_bias = res_tab$Bias / as.numeric(res_tab$true_SACE) 
   res_tab$true_SACE = round(res_tab$true_SACE, 4)
-
+  
   # tmp$EstCombi = paste0(tmp$Estimator, " ", tmp$Replacements)
   # tmp$EstCombi[tmp$EstCombi == "DingLu MA "] = "DingLu MA"
   if(!is.null(estimators_vec)){
@@ -44,6 +28,21 @@ add_bias_tables = function(res_tab,
   return(res_tab)
 }
 ##################################################################################################
+
+##############################################################
+param_n=2000
+xi_values = c(0, 0.05, 0.1, 0.2)
+ind = 0
+xi = xi_values[ind+1] 
+AX_interactions = T
+misspec_outcome = 0 # no misspec (misspec_PS=0) # Func Form misspec (misspec_PS=2)
+misspec_PS = 0 # no misspec (misspec_PS=0) # Func Form misspec (misspec_PS=2)
+##############################################################
+
+##############################################################
+setwd("~/A matching framework for truncation by death problems")
+source("Simulations/Figures/plot_path.R")
+##############################################################
 
 # ind from plot_path, the index of xi in c(0,0.05,0.1,0.2) 
 ##################################################################################################
@@ -113,6 +112,7 @@ large_pro = rbind(
 )
 large_pro$protected = "High"
 
+# combine small_pro and large_pro
 small_large_pro = rbind(small_pro, large_pro)
 small_large_pro = data.frame(subset(small_large_pro, select = c("true_SACE", "N", "l", "dim_x", "pi_as", "protected", "Estimator", "EstCombi")),
            subset(small_large_pro, select = !colnames(res_tab) %in% c("true_SACE", "N", "l", "dim_x", "pi_as", "protected", "Estimator", "EstCombi")) )
@@ -129,7 +129,7 @@ small_large_pro$label = paste0("SACE: ", apply(temp, 1, function(x) paste(x, col
 # http://www.cookbook-r.com/Graphs/Facets_(ggplot2)/ # https://www.datanovia.com/en/blog/ggplot-legend-title-position-and-labels # http://r-statistics.co/Complete-Ggplot2-Tutorial-Part2-Customizing-Theme-With-R-Code.html
 
 #small_large_pro$Rel_bias[1:6] = 0
-plot_general <- ggplot(small_large_pro, aes(x=l, y=Bias)) + # Rel_bias
+plot_general <- ggplot(small_large_pro, aes(x=l, y=Rel_bias)) + # Bias # Rel_bias 
   geom_point(aes(col = EstCombi, size = 7)) + # shape = EstCombi
   xlim("3", "5", "10") +
   labs(colour = "Estimator"
@@ -140,8 +140,6 @@ plot_general <- ggplot(small_large_pro, aes(x=l, y=Bias)) + # Rel_bias
   ) + 
   geom_hline(yintercept = 0 )
 
-#colors = c("forestgreen", "dodgerblue3", "yellow1", "firebrick3", "palevioletred3", "black")
-#paste(paste0(legend_levels, " = ", colors), collapse = ", ") 
 plot_general = plot_general + scale_color_manual(name="Estimator", 
    labels = legend_levels, 
     values = c("Crude Wout" = "forestgreen", "OLS inter" = "dodgerblue3",

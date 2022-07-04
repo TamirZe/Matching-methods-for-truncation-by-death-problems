@@ -93,7 +93,7 @@ summary_func = function(true_SACE, param_n_sim, matching_estimators_mat, matchin
                      balance_maha_cal_wout_rep_sum=balance_maha_cal_wout_rep_sum, balance_maha_cal_with_rep_sum=balance_maha_cal_with_rep_sum)
   
   # SD over all simulation iterations
-  dims_bal = dim(balance_PS_wout_rep_lst[[1]]) # 5 * 3*cont_x
+  dims_bal = dim(Filter(Negate(function(x) is.null(unlist(x))), balance_PS_wout_rep_lst)[[1]]) # 5 * 3*cont_x
   balance_PS_wout_rep_sd = apply(array(unlist(balance_PS_wout_rep_lst), c(dims_bal[1], dims_bal[2], param_n_sim)), c(1,2), sd)
   balance_PS_with_rep_sd = apply(array(unlist(balance_PS_with_rep_lst), c(dims_bal[1], dims_bal[2], param_n_sim)), c(1,2), sd)
   balance_maha_wout_rep_sd = apply(array(unlist(balance_maha_wout_rep_lst), c(dims_bal[1], dims_bal[2], param_n_sim)), c(1,2), sd)
