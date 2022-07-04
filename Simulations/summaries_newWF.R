@@ -110,6 +110,9 @@ summary_func = function(true_SACE, param_n_sim, matching_estimators_mat, matchin
   results_table = results_table[!(row.names(results_table) %in% c("BC_rep_FALSE", "BC_cal_rep_FALSE")),] 
   # Reduce(function(x, y) merge(x, y, by=0),
   #        list(t(matching_estimators_sum), t(matching_estimators_SE_sum), t(coverage)))
+  
+  results_table$N = param_n
+  results_table$dim_x = cont_x
   #############################################################################################
 
   return(list(results_table=results_table, BC_ties_multiple_treated_sum=BC_ties_multiple_treated_sum, pis_pis_est_obs_sum=pis_pis_est_obs_sum,

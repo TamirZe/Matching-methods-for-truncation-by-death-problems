@@ -1,51 +1,30 @@
-library(cowplot); library(ggpubr)
-##################################################################################################
-# TODO A func that add bias for a FIXED number of N ####
-# lst:  final_tables_general or final_tables_crude, CAN BE ONLY 1 data frame (e.g. S1)
-# estimators_vec: vec of estimators name, repl and estimator together. If NULL, keep all estimators
+library(cowplot); library(ggpubr); library(textclean)
+
+# estimators_vec: vec of estimators name
 # legend_levels: the factor level argument for the legend of the ggplot
+add_bias_tables = function(res_tab, 
+                           estimators_vec=NULL, legend_levels = c("Crude Wout", "OLS", "Crude With", "WLS", "BC With","DingLu MA"),
+                           N, num_of_x){
+  res_tab = data.frame(Estimator = rownames(res_tab), res_tab)
+  #res_tab$Estimator = mgsub(res_tab$Estimator, "maha", "Mahal")
+  if(!"N" %in% colnames(res_tab)) { res_tab$N = N }
+  if(!"dim_x" %in% colnames(res_tab)) { res_tab$dim_x = num_of_x }
+  res_tab$true_SACE = res_tab$mean[res_tab$Estimator == "true_SACE"] 
+  res_tab = data.frame("true_SACE" = res_tab$true_SACE, N = res_tab$N, dim_x = res_tab$dim_x,  l = res_tab$l, pi_as = res_tab$pi_as,
+                   subset(res_tab, select = !colnames(res_tab) %in% c("true_SACE", "N", "l", "dim_x", "pi_as")) )
+  res_tab$Bias = res_tab$mean - as.numeric(res_tab$true_SACE)  
+  res_tab$Rel_bias = res_tab$Bias / as.numeric(res_tab$true_SACE) 
+  res_tab$true_SACE = round(res_tab$true_SACE, 4)
 
-func_add_AND_remove_COLS = function(fin_tab, N, num_of_x){
-  fin_tab$Estimator = mgsub(fin_tab$Estimator, "mahal", "Mahal")
-  fin_tab$Replacements = mgsub(fin_tab$Replacements, c("Yes", "No"), c("With", "Wout"))
-  if(!"N" %in% colnames(fin_tab)) { fin_tab$N = N }
-  if(!"dim_x" %in% colnames(fin_tab)) { fin_tab$dim_x = num_of_x }
-  #if(!"k" %in% colnames(fin_tab)) { fin_tab = fin_tab%>%select(-k) }
-  return(fin_tab)
-}
-
-add_bias_tables = function(lst, estimators_vec=NULL, N_obs, num_of_x,
-                           legend_levels = c("Crude Wout", "OLS", "Crude With", "WLS", "BC With","DingLu MA")){
-  new_lst = list()
-  for(i in 1:length(lst)){
-    tmp = lst[[i]]
-    tmp = func_add_AND_remove_COLS(tmp, N = N_obs, num_of_x = num_of_x)
-    colnames(tmp)[grep("parameter", colnames(tmp))] = "Set_and_parameter"
-    tmp = data.frame("Set_and_parameter" = tmp[,1], N = tmp$N, dim_x = tmp$dim_x, 
-                     subset(tmp, select = !colnames(tmp) %in% c("Set_and_parameter", "N", "dim_x")) )
-    # tmp[,1] IS tmp$`Set & parameter`
-    tmp$Bias = tmp$Mean - as.numeric(substr(tmp[,1],3,10))  
-    tmp = data.frame(Scenario = substr(tmp[,1],1,1), SACE = as.numeric(substr(tmp[,1],3,10)) %>% round(10), tmp)
-    tmp$EstCombi = paste0(tmp$Estimator, " ", tmp$Replacements)
-    tmp$EstCombi[tmp$EstCombi == "DingLu MA "] = "DingLu MA"
-    if(length(unique(tmp$Scenario)) == 3){ # unique(tmp$Scenario) == c("A", "B", "C")
-      tmp = tmp[tmp$Scenario!="A" ,]
-      tmp$Scenario = mgsub(tmp$Scenario, c("B", "C"), c("A", "B"))
-    }
-    if(!is.null(estimators_vec)){
-      tmp = filter(tmp, EstCombi %in% estimators_vec)
-      # TODO make this levels more general, so we could consider all estimators,
-      # probably the level should be an argument
-      tmp$EstCombi = mgsub(tmp$EstCombi, c("OLS Wout", "OLS inter Wout", "WLS With", "WLS inter With", "BC caliper With"),
-                           c("OLS", "OLS inter", "WLS", "WLS inter", "BC With"))
-      tmp$EstCombi = factor(tmp$EstCombi, levels = legend_levels)
-      #TODO order the cols as we want them
-    }
-    new_lst[[i]] = tmp
+  # tmp$EstCombi = paste0(tmp$Estimator, " ", tmp$Replacements)
+  # tmp$EstCombi[tmp$EstCombi == "DingLu MA "] = "DingLu MA"
+  if(!is.null(estimators_vec)){
+    res_tab = filter(res_tab, Estimator %in% estimators_vec)
+    res_tab$EstCombi = mgsub(res_tab$Estimator, estimators_vec, legend_levels)
+    res_tab$EstCombi = factor(res_tab$EstCombi, levels = legend_levels)
   }
-  names(new_lst) = names(lst)
-  if(length(new_lst)==1) new_lst = new_lst[[1]]
-  return(new_lst)
+  
+  return(res_tab)
 }
 ##################################################################################################
 
@@ -55,55 +34,72 @@ add_bias_tables = function(lst, estimators_vec=NULL, N_obs, num_of_x,
 # read data: matching on mahalanobis with PS caliper - several estimators (final_tables_general)
 
 # 3X
-table_small_pro_small_as_3 = paste0(path, "3X/Low_pi_pro/pi_as_0.5/", "xi = ", xi, "/")
-table_small_pro_small_as_3 = paste0(path, "3X/Low_pi_pro/pi_as_0.75/", "xi = ", xi, "/")
-table_large_pro_small_as_3 = paste0(path, "3X/Large_pi_pro/pi_as_0.5/", "xi = ", xi, "/")
-table_large_pro_large_as_3 = paste0(path, "3X/Large_pi_pro/pi_as_0.75/", "xi = ", xi, "/")
+table_small_pro_small_as_3 = get(load(paste0(small_pro_small_as_path3, "results_table_", ind,".RData"))) 
+table_small_pro_large_as_3 = get(load(paste0(small_pro_large_as_path3, "results_table_", ind,".RData"))) 
+table_large_pro_small_as_3 = get(load(paste0(large_pro_small_as_path3, "results_table_", ind,".RData"))) 
+table_large_pro_large_as_3 = get(load(paste0(large_pro_large_as_path3, "results_table_", ind,".RData"))) 
 
 # 5X
-table_small_pro_small_as_5 = paste0(path, "5X/Low_pi_pro/pi_as_0.5/", "xi = ", xi, "/")
-table_small_pro_small_as_5 = paste0(path, "5X/Low_pi_pro/pi_as_0.75/", "xi = ", xi, "/")
-table_large_pro_small_as_5 = paste0(path, "5X/Large_pi_pro/pi_as_0.5/", "xi = ", xi, "/")
-table_large_pro_large_as_5 = paste0(path, "5X/Large_pi_pro/pi_as_0.75/", "xi = ", xi, "/")
+table_small_pro_small_as_5 = get(load(paste0(small_pro_small_as_path5, "results_table_", ind,".RData"))) 
+table_small_pro_large_as_5 = get(load(paste0(small_pro_large_as_path5, "results_table_", ind,".RData"))) 
+table_large_pro_small_as_5 = get(load(paste0(large_pro_small_as_path5, "results_table_", ind,".RData"))) 
+table_large_pro_large_as_5 = get(load(paste0(large_pro_large_as_path5, "results_table_", ind,".RData")))
 
 # 10X
-table_small_pro_small_as_10 = paste0(path, "10X/Low_pi_pro/pi_as_0.5/", "xi = ", xi, "/")
-table_small_pro_small_as_10 = paste0(path, "10X/Low_pi_pro/pi_as_0.75/", "xi = ", xi, "/")
-table_large_pro_small_as_10 = paste0(path, "10X/Large_pi_pro/pi_as_0.5/", "xi = ", xi, "/")
-table_large_pro_large_as_10 = paste0(path, "10X/Large_pi_pro/pi_as_0.75/", "xi = ", xi, "/")
+table_small_pro_small_as_10 = get(load(paste0(small_pro_small_as_path10, "results_table_", ind,".RData"))) 
+table_small_pro_large_as_10 = get(load(paste0(small_pro_large_as_path10, "results_table_", ind,".RData"))) 
+table_large_pro_small_as_10 = get(load(paste0(large_pro_small_as_path10, "results_table_", ind,".RData"))) 
+table_large_pro_large_as_10 = get(load(paste0(large_pro_large_as_path10, "results_table_", ind,".RData")))
 
 
+#estimators_vec = c("Crude Wout", "OLS inter Wout", "Crude With", "WLS inter With", "BC caliper With","DingLu MA")
+estimators_vec = c("maha_cal_rep_FALSE", "OLS_int", "maha_cal_rep_TRUE", "WLS_int", "BC_cal_rep_TRUE", "DL_MA_est")
+legend_levels = c("Crude Wout", "OLS inter", "Crude With", "WLS inter", "BC With", "DingLu MA")  
 
-legend_levels = c("Crude Wout", "OLS inter", "Crude With", "WLS inter", "BC With", "DingLu MA")  # WLS or WLS inter
-estimators_vec = c("Crude Wout", "OLS inter Wout", "Crude With", "WLS inter With", "BC caliper With","DingLu MA")
 
-# data.frame(tables_small_pro3$`_S1`%>%select(-k) , k = 1)
 small_pro = rbind(
-  add_bias_tables(list( data.frame(tables_small_pro3$`_S1`, k = 1) ), 
-    estimators_vec = estimators_vec, N_obs = param_n, num_of_x = 3, legend_levels=legend_levels),
-  add_bias_tables(list( data.frame(tables_small_pro5$`_S1`, k = 2) ), 
-    estimators_vec = estimators_vec, N_obs = param_n, num_of_x = 5, legend_levels=legend_levels),
-  add_bias_tables(list( data.frame(tables_small_pro10$`_S1`, k = 3) ), 
-    estimators_vec = estimators_vec, N_obs = param_n, num_of_x = 10, legend_levels=legend_levels)
+  add_bias_tables(res_tab = data.frame(table_small_pro_small_as_3, pi_as=0.5, l = 1), 
+                  estimators_vec = estimators_vec, legend_levels=legend_levels, N = param_n, num_of_x = 3),
+  add_bias_tables(res_tab = data.frame(table_small_pro_large_as_3, pi_as=0.75, l = 1), 
+                  estimators_vec = estimators_vec, legend_levels=legend_levels, N = param_n, num_of_x = 3),
+  
+  add_bias_tables(res_tab = data.frame(table_small_pro_small_as_5, pi_as=0.5, l = 2), 
+                  estimators_vec = estimators_vec, legend_levels=legend_levels, N = param_n, num_of_x = 5),
+  add_bias_tables(res_tab = data.frame(table_small_pro_large_as_5, pi_as=0.75, l = 2), 
+                  estimators_vec = estimators_vec, legend_levels=legend_levels, N = param_n, num_of_x = 5),
+  
+  add_bias_tables(res_tab = data.frame(table_small_pro_small_as_10, pi_as=0.5, l = 3), 
+                  estimators_vec = estimators_vec, legend_levels=legend_levels, N = param_n, num_of_x = 10),
+  add_bias_tables(res_tab = data.frame(table_small_pro_large_as_10, pi_as=0.75, l = 3), 
+                  estimators_vec = estimators_vec, legend_levels=legend_levels, N = param_n, num_of_x = 10)
 )
 small_pro$protected = "Low"
 
 large_pro = rbind(
-  add_bias_tables(list( data.frame(tables_large_pro3$`_S1`, k = 1) ), 
-    estimators_vec = estimators_vec, N_obs = param_n, num_of_x = 3, legend_levels=legend_levels),
-  add_bias_tables(list( data.frame(tables_large_pro5$`_S1`,  k = 2) ), 
-    estimators_vec = estimators_vec, N_obs = param_n, num_of_x = 5, legend_levels=legend_levels),
-  add_bias_tables(list( data.frame(tables_large_pro10$`_S1`, k = 3) ), 
-    estimators_vec = estimators_vec, N_obs = param_n, num_of_x = 10, legend_levels=legend_levels)
+  add_bias_tables(res_tab = data.frame(table_large_pro_small_as_3, pi_as=0.5, l = 1), 
+                  estimators_vec = estimators_vec, legend_levels=legend_levels, N = param_n, num_of_x = 3),
+  add_bias_tables(res_tab = data.frame(table_large_pro_large_as_3, pi_as=0.75, l = 1), 
+                  estimators_vec = estimators_vec, legend_levels=legend_levels, N = param_n, num_of_x = 3),
+  
+  add_bias_tables(res_tab = data.frame(table_large_pro_small_as_5, pi_as=0.5, l = 2), 
+                  estimators_vec = estimators_vec, legend_levels=legend_levels, N = param_n, num_of_x = 5),
+  add_bias_tables(res_tab = data.frame(table_large_pro_large_as_5, pi_as=0.75, l = 2), 
+                  estimators_vec = estimators_vec, legend_levels=legend_levels, N = param_n, num_of_x = 5),
+  
+  add_bias_tables(res_tab = data.frame(table_large_pro_small_as_10, pi_as=0.5, l = 3), 
+                  estimators_vec = estimators_vec, legend_levels=legend_levels, N = param_n, num_of_x = 10),
+  add_bias_tables(res_tab = data.frame(table_large_pro_large_as_10, pi_as=0.75, l = 3), 
+                  estimators_vec = estimators_vec, legend_levels=legend_levels, N = param_n, num_of_x = 10)
 )
 large_pro$protected = "High"
 
 small_large_pro = rbind(small_pro, large_pro)
-small_large_pro$Pi_as = mgsub(small_large_pro$Scenario, c("A", "B"), c("0.5", "0.75"))
-small_large_pro = data.table(arrange(small_large_pro, protected, Pi_as, k))
+small_large_pro = data.frame(subset(small_large_pro, select = c("true_SACE", "N", "l", "dim_x", "pi_as", "protected", "Estimator", "EstCombi")),
+           subset(small_large_pro, select = !colnames(res_tab) %in% c("true_SACE", "N", "l", "dim_x", "pi_as", "protected", "Estimator", "EstCombi")) )
+small_large_pro = data.table(arrange(small_large_pro, protected, pi_as, l))
 
 # add label for the SACE, for each facet plot
-small_large_pro[, label := paste0(unique(SACE), collapse=","), by = c("protected", "Pi_as")]
+small_large_pro[, label := paste0(unique(true_SACE), collapse=","), by = c("protected", "pi_as")]
 temp = apply(data.frame(list.rbind(strsplit(small_large_pro$label, ","))), 2 , as.numeric) %>% round(2)
 small_large_pro$label = paste0("SACE: ", apply(temp, 1, function(x) paste(x, collapse=", ")))
 ##################################################################################################
@@ -112,8 +108,8 @@ small_large_pro$label = paste0("SACE: ", apply(temp, 1, function(x) paste(x, col
 # plot ####
 # http://www.cookbook-r.com/Graphs/Facets_(ggplot2)/ # https://www.datanovia.com/en/blog/ggplot-legend-title-position-and-labels # http://r-statistics.co/Complete-Ggplot2-Tutorial-Part2-Customizing-Theme-With-R-Code.html
 
-# estimator by color, emp sd by size
-plot_general <- ggplot(small_large_pro, aes(x=k, y=Bias)) +
+#small_large_pro$Rel_bias[1:6] = 0
+plot_general <- ggplot(small_large_pro, aes(x=l, y=Bias)) + # Rel_bias
   geom_point(aes(col = EstCombi, size = 7)) + # shape = EstCombi
   xlim("3", "5", "10") +
   labs(colour = "Estimator"
@@ -124,11 +120,13 @@ plot_general <- ggplot(small_large_pro, aes(x=k, y=Bias)) +
   ) + 
   geom_hline(yintercept = 0 )
 
+#colors = c("forestgreen", "dodgerblue3", "yellow1", "firebrick3", "palevioletred3", "black")
+#paste(paste0(legend_levels, " = ", colors), collapse = ", ") 
 plot_general = plot_general + scale_color_manual(name="Estimator", 
    labels = legend_levels, 
     values = c("Crude Wout" = "forestgreen", "OLS inter" = "dodgerblue3",
-        "Crude With" = "yellow1", "WLS inter" = "firebrick3", "BC With" = "palevioletred3","DingLu MA" = "black"))  +
-  facet_grid(glue('pi[pro]*" : {protected}"') ~ glue('pi[as]*" = {Pi_as}"'), labeller = label_parsed) +
+        "Crude With" = "yellow1", "WLS inter" = "firebrick3", "BC With" = "palevioletred3", "DingLu MA" = "black"))  +
+  facet_grid(glue('pi[pro]*" : {protected}"') ~ glue('pi[as]*" = {pi_as}"'), labeller = label_parsed) +
   theme(
     strip.text.x = element_text(size=16, face="bold"),
     strip.text.y = element_text(size=16, face="bold"),
