@@ -1,6 +1,6 @@
 # m_data = data_with_PS[S==1]
 # caliper is in sd
-replace = T; estimand = "ATC"; change_id = TRUE; mahal_match = 2; M=1; caliper = 0.25
+#replace = T; estimand = "ATC"; change_id = TRUE; mahal_match = 2; M=1; caliper = 0.25
 
 matching_all_measures_func = function(m_data, match_on = NULL, X_sub_cols, 
                                      M=1, replace, estimand = "ATC", mahal_match = 2, caliper = 0.05){

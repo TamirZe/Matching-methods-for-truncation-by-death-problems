@@ -113,6 +113,7 @@ summary_func = function(true_SACE, param_n_sim, matching_estimators_mat, matchin
   
   results_table$N = param_n
   results_table$dim_x = cont_x
+  results_table[c("SACE", "true_SACE"), c("SE", "sd", "MSE", "Coverage")] = 0
   #############################################################################################
 
   return(list(results_table=results_table, BC_ties_multiple_treated_sum=BC_ties_multiple_treated_sum, pis_pis_est_obs_sum=pis_pis_est_obs_sum,

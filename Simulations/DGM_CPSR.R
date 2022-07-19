@@ -1,4 +1,4 @@
-simulate_data_func = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, 
+simulate_data_func = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, #dim_x
                               xi, two_log_models_DGM=TRUE, param_n, 
                               misspec_PS, misspec_outcome=0, transform_x=0,
                               funcform_factor1, funcform_factor2, 
@@ -90,6 +90,9 @@ simulate_data_func = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns,
     prob = data.frame(prob_har = prob_S0*(xi/(1+xi)), prob_as = prob_S0*(1/(1+xi)), 
                       prob_ns = (1-prob_S0)*(1-prob_S1), prob_pro = (1-prob_S0)*prob_S1)
   }else{ # single multinomial model for G
+    #TODO n DGM-MULTI, pro is the basic stratum
+    gamma_ns_adj = gamma_pro_adj
+    gamma_pro_adj = rep(0, dim_x)
     # vector of probabilities
     vProb = cbind(exp(x_PS%*%gamma_ah_adj), exp(x_PS%*%gamma_ns_adj), exp(x_PS%*%gamma_pro_adj)) 
     prob = vProb / apply(vProb, 1, sum) 

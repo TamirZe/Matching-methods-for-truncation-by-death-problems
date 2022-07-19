@@ -1,5 +1,5 @@
 library(data.table); library(plyr); library(dplyr); library(rlang); library(rlist)
-library(nnet); library(locfit); library(splitstackshape); library(ggplot2)
+library(nnet); library(locfit); library(splitstackshape); library(ggplot2); library(nnet)
 library(Matching); library(sandwich); library(clubSandwich); library(lmtest); library(mgsub)
 
 ########################################################################
@@ -9,8 +9,9 @@ source("Simulations/sim_set_parameters.R")
 source("Simulations/sim_check_pis_and_covariates.R")
 source("Simulations/DGM_CPSR.R")
 source("Simulations/naive_estimation.R")
-#source("Simulations/PS_M_weighting.R")  # EM with one multinomial regression 
-source("Simulations/EM_2log_CPSR.R") 
+source("Simulations/EM_seq.R") 
+#source("Simulations/PS_M_weighting.R")  # EM-multi
+#source("Simulations/PS_M_weighting_SA_CPSR.R")  # EM-multi, with xi possibly not zero 
 source("Simulations/sim_matching.R")
 source("Simulations/sim_post_matching_analysis.R")
 source("Simulations/sim_regression_estimators.R")
@@ -25,7 +26,7 @@ prob_A = 0.5
 
 # parameters for simulating X
 # @@@@@@@@@@@@ dim_x includes an intercept @@@@@@@@@@@@@@@
-dim_x = 11; cont_x = dim_x - 1
+dim_x = 6; cont_x = dim_x - 1
 mean_x = rep(0.5, cont_x); var_x = rep(1, cont_x)
 X_sub_cols = paste0("X", c(1:(dim_x)))
 #############################################################################################
@@ -34,7 +35,8 @@ X_sub_cols = paste0("X", c(1:(dim_x)))
 # CPSR parameter ####
 xi = 0
 xi_est = xi # xi
-two_log_models_DGM = TRUE # DGM includes sequential 2 logistic regressions
+#TODO change the name to DGM_seq_bool
+two_log_models_DGM = F # TRUE DGM-seq # FALSE:DGM-multi 
 #############################################################################################
 
 #############################################################################################
@@ -47,11 +49,11 @@ misspec_outcome = 2 # 0: no misspec of Y model # 2: Y functional form misspecifi
 
 #############################################################################################
 # EM  parameters ####
-# two_log_est_EM: S(0)=1, is estimated within A=0, with label according to S, before the EM process.
-# In both cases, sequencial logistic models are being estimated. For one multinational model, use PS_M_weighting (and seq_log_or_multinomial_EM=FALSE)
-two_log_est_EM = FALSE 
 iterations_EM = 200; epsilon_EM = 10^-6
-# seq_log_or_multinomial_EM = TRUE
+# EM_est_seq = TRUE/FALSE
+# two_log_est_EM=TRUE: S(0)=1, is estimated within A=0, with label according to S, before the EM process.
+# In both cases, sequencial logistic models (DGM-seq) are being estimated. For one multinational model, use PS_M_weighting (and maybe if Il'l decide, EM_est_seq=FALSE)
+two_log_est_EM = FALSE
 #############################################################################################
 
 ###############################################################################################
@@ -64,25 +66,30 @@ rho_GPI_PO = 0.4
 #################################################################################################################
 # beta_and_gamma ####
 # scenario is determined according to mat_gamma (and its row, k) and betas_GPI
-
-beta_and_gamma = set_parameters_func(dim_x=dim_x, high_pi_pro=T, AX_interactions=T) # high_pi_pro = T/F
+#TODO Large_pi_pro = T/F, AX_interactions = T/F
+Large_pi_pro = TRUE
+AX_interactions = TRUE
+beta_and_gamma = set_parameters_func(dim_x=dim_x, high_pi_pro=Large_pi_pro, AX_interactions=AX_interactions, two_log_models_DGM=two_log_models_DGM) # high_pi_pro = T/F
 # beta
 betas_GPI = beta_and_gamma$betas_GPI
 # gamma
 mat_gamma = beta_and_gamma$mat_gamma
 
-k=1 # k=1 (pi as = 0.5) # k=2 (pi as = 0.75)
+k=2 # k=1 (pi as = 0.5) # k=2 (pi as = 0.75)
 gamma_ns = rep(0, dim_x)
 gamma_ah = as.numeric(mat_gamma[k, c(1:dim_x)])
-gamma_pro =  as.numeric(mat_gamma[k, (dim_x+1): (2*dim_x)])  
+gamma_pro =  as.numeric(mat_gamma[k, (dim_x+1): (2*dim_x)]) 
+#In PSPS_M_weighting (DGM-multi with xi=0), we have gamma_as, gamma_ns
+#In xi_PSPS_M_weighting_SA (DGM-multi with xi), we have gamma_pro, gamma_ns
+
 ##################################################################################################################
 
 ##################################################################################################################
 # extract pis, wout and with PS misspecification ####
-extract_pis_lst = extract_pis_from_scenarios(nn=200000, mat_gamma=mat_gamma, xi=xi, misspec_PS=0, two_log_models_DGM=T)
+extract_pis_lst = extract_pis_from_scenarios(nn=200000, mat_gamma=mat_gamma, xi=xi, misspec_PS=0, two_log_models_DGM=two_log_models_DGM)
 mat_pis_per_gamma = extract_pis_lst$mat_pis
 mat_pis_per_gamma
-extract_pis_lst_mis_PS = extract_pis_from_scenarios(nn=200000, mat_gamma=mat_gamma, xi=xi, misspec_PS=2, two_log_models_DGM=T)
+extract_pis_lst_mis_PS = extract_pis_from_scenarios(nn=200000, mat_gamma=mat_gamma, xi=xi, misspec_PS=2, two_log_models_DGM=two_log_models_DGM)
 mat_pis_per_gamma_mis_PS = extract_pis_lst_mis_PS$mat_pis
 mat_pis_per_gamma_mis_PS
 ##################################################################################################################
@@ -96,7 +103,7 @@ caliper = 0.25; match_on = "O11_posterior_ratio"
 ###############################################################################################
 one_large_simulation = simulate_data_func(
   gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns,
-  xi=xi, two_log_models_DGM=two_log_models_DGM, param_n=100000, 
+  xi=xi, two_log_models_DGM=two_log_models_DGM, param_n=200000, 
   misspec_PS=misspec_PS, misspec_outcome=misspec_outcome, transform_x=transform_x,
   funcform_factor1=funcform_factor1, funcform_factor2=funcform_factor2,
   betas_GPI=betas_GPI, var_GPI=var_GPI, rho_GPI_PO=rho_GPI_PO)
@@ -105,7 +112,7 @@ rm(one_large_simulation)
 ###############################################################################################
 
 ###############################################################################################
-param_n = 2000; param_n_sim = 100 # param_n = 2000; param_n_sim = 1000
+param_n = 2000; param_n_sim = 25 # param_n = 2000; param_n_sim = 1000
 mu_x_fixed = FALSE
 ###############################################################################################
 
@@ -115,7 +122,7 @@ list_EM_not_conv <- list_mean_by_g <-
   balance_PS_wout_rep_lst <- balance_PS_with_rep_lst <- balance_maha_wout_rep_lst <- balance_maha_with_rep_lst <- 
   balance_maha_cal_wout_rep_lst <- balance_maha_cal_with_rep_lst <- list()
 pis_pis_est_obs_mat = NULL
-coeff_ah_mat <- coeff_pro_mat <- beta_S0_mat <-  matrix(nrow = param_n_sim, ncol = dim_x) 
+coeff_ah_mat <- coeff_pro_mat <- beta_S0_mat <-  coeff_ns_mat <- matrix(nrow = param_n_sim, ncol = dim_x) 
 matching_estimators_mat <- matrix(nrow = param_n_sim, ncol = 21)
 matching_estimators_SE_mat <- matrix(nrow = param_n_sim, ncol = 21)
 CI_mat <- matrix(nrow = param_n_sim, ncol = 21)
@@ -123,7 +130,7 @@ BC_ties_multiple_treated_mat <- matrix(nrow = param_n_sim, ncol = 12)
 OLS_NOint_mat<- OLS_YESint_mat <- matrix(nrow = param_n_sim, ncol =  3)
 WLS_NOint_mat <- WLS_YESint_mat <- matrix(nrow = param_n_sim, ncol =  5)
 scen_parameter_lst = list(true_SACE=true_SACE, param_n=param_n, param_n_sim=param_n_sim,
-    gamma_ah=gamma_ah, gamma_pro=gamma_pro,
+    mat_gamma, gamma_ah=gamma_ah, gamma_pro=gamma_pro, 
     xi=xi, xi_est=xi_est, two_log_models_DGM=two_log_models_DGM, 
     misspec_PS=misspec_PS, misspec_outcome=misspec_outcome, transform_x=transform_x,
     funcform_factor1=funcform_factor1, funcform_factor2=funcform_factor2,
@@ -165,26 +172,41 @@ for (i in 1:param_n_sim){
   naive_estimators_CI = naive_sace_estimation$CI_naive_before_matching
   
   # EM and PS estimation
-  # If beta_S0=NULL, employ two logistic regressions during the EM
-  if(two_log_est_EM == FALSE){
-    #S(0)=1: Logistic regression S(0)=1 on X, using S|A=0
-    fit_S0_in_A0 = glm(as.formula(paste0("S ~ ",paste(X_sub_cols[-1], collapse="+"))), data=filter(data_for_EM, A==0), family="binomial")
-    beta_S0 = fit_S0_in_A0$coefficients
-  }else{beta_S0=NULL}
   
-  # EM
-  start_timeDing <- Sys.time()
-  est_ding_lst = xi_2log_PSPS_M_weighting(Z=data_for_EM$A, D=data_for_EM$S,
-        X=as.matrix(subset(data_for_EM, select = 
-        grep(paste(paste0("^",X_sub_cols[-1], "$"), collapse="|"), colnames(data_for_EM)))),
-        Y=data_for_EM$Y, 
-        xi_est=xi_est, beta.S0=beta_S0, beta.ah=NULL, beta.c=NULL, 
-        iter.max=iterations_EM, error0=epsilon_EM)
-  end_timeDing <- Sys.time()
-  print(paste0("Ding EM lasts ", difftime(end_timeDing, start_timeDing)))
+  if(two_log_models_DGM==TRUE){ # we can create another argument, EM_est_seq, and then we have more flexibility to use when we use DGM-multi
+    # DGM-seq
+    #two_log_est_EM is an argument for the case we use DGM-seq, just specigy if we run Logistic regression S(0)=1 on X, using S|A=0 before the EM or using EM
+    if(two_log_est_EM == FALSE){
+      #S(0)=1: Logistic regression S(0)=1 on X, using S|A=0
+      fit_S0_in_A0 = glm(as.formula(paste0("S ~ ",paste(X_sub_cols[-1], collapse="+"))), data=filter(data_for_EM, A==0), family="binomial")
+      beta_S0 = fit_S0_in_A0$coefficients
+    }else{beta_S0=NULL} # If beta_S0=NULL, employ two logistic regressions during the EM
+    
+    start_timeDing <- Sys.time()
+    # EM
+    est_ding_lst = xi_2log_PSPS_M_weighting(Z=data_for_EM$A, D=data_for_EM$S,
+                                            X=as.matrix(subset(data_for_EM, select =
+                                                                 grep(paste(paste0("^",X_sub_cols[-1], "$"), collapse="|"), colnames(data_for_EM)))),
+                                            Y=data_for_EM$Y,
+                                            xi_est=xi_est, beta.S0=beta_S0, beta.ah=NULL, beta.c=NULL,
+                                            iter.max=iterations_EM, error0=epsilon_EM)
+    end_timeDing <- Sys.time()
+    print(paste0("Ding EM lasts ", difftime(end_timeDing, start_timeDing)))
+  }else{ # DGM-multi
+    # EM
+    # est_ding_lst = xi_PSPS_M_weighting_SA(Z=data_for_EM$A, D=data_for_EM$S,
+    #    X=as.matrix(subset(data_for_EM, select = grep(paste(paste0("^",X_sub_cols[-1], "$"), collapse="|"), colnames(data_for_EM)))),
+    #    Y=data_for_EM$Y, eta=xi_est, iter.max=iterations_EM, error0=epsilon_EM)  
+    est_ding_lst = PSPS_M_weighting(Z=data_for_EM$A, D=data_for_EM$S,
+                                    X=as.matrix(subset(data_for_EM, select =
+                                                         grep(paste(paste0("^",X_sub_cols[-1], "$"), collapse="|"), colnames(data_for_EM)))),
+                                    Y=data_for_EM$Y,
+                                    trc=TRUE, ep1=1, ep0=1, beta.a=NULL, beta.n=NULL,
+                                    iter.max=iterations_EM, error0=epsilon_EM)
+  }
   
   # EM coefficient estimators and PS estimators
-  PS_est = est_ding_lst$ps.score
+  iter = est_ding_lst$ps.score
   # add PS's to the data
   data_with_PS = data.table(data_for_EM, PS_est)
   
@@ -205,9 +227,10 @@ for (i in 1:param_n_sim){
   }
   
   # EM coefficient estimators and PS estimators
-  beta_S0_mat[i,] = beta_S0
-  coeff_ah_mat[i,] = est_ding_lst$beta.ah
-  coeff_pro_mat[i,] = est_ding_lst$beta.c
+  coeff_ah_mat[i,] =  ifelse(two_log_models_DGM==TRUE, est_ding_lst$beta.ah, est_ding_lst$beta.a) 
+  beta_S0_mat[i,] = ifelse(two_log_models_DGM==TRUE, beta_S0, rep(-101, dim_x)) 
+  coeff_pro_mat[i,] = ifelse(two_log_models_DGM==TRUE, est_ding_lst$beta.c, rep(-101, dim_x)) 
+  coeff_ns_mat[i,] = ifelse(two_log_models_DGM==TRUE, rep(-101, dim_x), est_ding_lst$beta.n) 
   
   # calculate weights: O11_prior_ratio, O11_posterior_ratio W_1_as, and W_1_as_true
   weights_lst = add_PS_weights_func(data_with_PS=data_with_PS, pis=pis, pis_est=pis_est)
@@ -303,21 +326,20 @@ for (i in 1:param_n_sim){
   print(difftime(end_time1, start_time1))
 } # out of for loop for all the iterations (param_n_sim iterations in total)
 
-#TODO summaries of all iterations of one scenario (according to mat_gamma and its row, k) from the simulations in summaries_newWF.R
-results_summary = summary_func(true_SACE, param_n_sim, matching_estimators_mat, matching_estimators_SE_mat, CI_mat, 
-                               BC_ties_multiple_treated_mat, pis_pis_est_obs_mat, 
-                               beta_S0_mat, coeff_ah_mat, coeff_pro_mat, list_mean_by_g,
-                               balance_PS_wout_rep_lst, balance_PS_with_rep_lst, 
-                               balance_maha_wout_rep_lst, balance_maha_with_rep_lst, 
-                               balance_maha_cal_wout_rep_lst, balance_maha_cal_with_rep_lst)
-print(results_summary$results_table)
-k; dim_x 
-results_summary$balance_lst$balance_PS_wout_rep_sum
-results_summary$balance_lst$balance_maha_cal_wout_rep_sum
-results_summary$balance_lst$balance_PS_with_rep_sum
-results_summary$balance_lst$balance_maha_cal_with_rep_sum
-#results_table10_50 = results_summary$results_table
-save(results_table10_50, file = paste0("results_table10_50.Rdata"))
+# summaries of all iterations of one scenario (according to mat_gamma and its row, k) from the simulations in summaries_newWF.R
+results_summary = summary_func(true_SACE=true_SACE, param_n_sim=param_n_sim, 
+       matching_estimators_mat=matching_estimators_mat, 
+       matching_estimators_SE_mat=matching_estimators_SE_mat, 
+       CI_mat=CI_mat, 
+       BC_ties_multiple_treated_mat=BC_ties_multiple_treated_mat,
+       pis_pis_est_obs_mat=pis_pis_est_obs_mat,
+       beta_S0_mat=beta_S0_mat, coeff_ah_mat=coeff_ah_mat, coeff_pro_mat=coeff_pro_mat, coeff_ns_mat=coeff_ns_mat,
+       list_mean_by_g=list_mean_by_g,
+       balance_PS_wout_rep_lst=balance_PS_wout_rep_lst, balance_PS_with_rep_lst=balance_PS_with_rep_lst, 
+       balance_maha_wout_rep_lst=balance_maha_wout_rep_lst, balance_maha_with_rep_lst=balance_maha_with_rep_lst, 
+       balance_maha_cal_wout_rep_lst=balance_maha_cal_wout_rep_lst, balance_maha_cal_with_rep_lst=balance_maha_cal_with_rep_lst)
+
+results_summary$results_table
 
 
 

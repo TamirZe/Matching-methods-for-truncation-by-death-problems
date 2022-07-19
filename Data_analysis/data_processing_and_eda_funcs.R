@@ -46,18 +46,28 @@ covarites_descriptive_table_cont_disc = function(dat, cov_descr, metric = "Full 
   variables_verical_cont = data.frame(Variable = c("N", rownames(trt)[-1]),
                                       untrt = paste0(round(untrt$mean, rnd), ' (', round(untrt$sd, rnd), ')'),
                                       trt = paste0(round(trt$mean, rnd), ' (', round(trt$sd, rnd), ')'))
-  variables_verical_cont$SMD = round( (untrt$mean - trt$mean) / untrt$sd, (rnd+1) )
+  variables_verical_cont$SMD = round( (trt$mean - untrt$mean) / untrt$sd, (rnd+1) )
+  variables_verical_cont$SDR = round( (trt$sd / untrt$sd), (rnd+1) )
   variables_verical_cont = filter(variables_verical_cont, !Variable %in% c("A", "age2")) 
   # discrete
   m_data_disc = subset(dat, select = c("A", disc_var))
   trt = data.frame(sapply(filter(m_data_disc, A==1), function(x) c(count = sum(x), prop = mean(x), sd = sd(x))) %>% t)
   untrt = data.frame(sapply(filter(m_data_disc, A==0), function(x) c(count = sum(x), prop = mean(x), sd = sd(x))) %>% t)
   variables_verical_disc = data.frame(Variable = rownames(trt),
-                                      untrt = paste0(round(untrt$count, (rnd+1)), ' (', 100 * round(untrt$prop, (rnd+1)), '%)'),
-                                      trt = paste0(round(trt$count, (rnd+1)), ' (', 100 * round(trt$prop, (rnd+1)), '%)'))
-  variables_verical_disc$SMD = round( (untrt$prop - trt$prop) / untrt$sd, (rnd+1) )
+              untrt = paste0(round(untrt$count, (rnd+1)), ' (', 100 * round(untrt$prop, (rnd+1)), '%)'),
+              trt = paste0(round(trt$count, (rnd+1)), ' (', 100 * round(trt$prop, (rnd+1)), '%)'))
+  variables_verical_disc$SMD = round( (trt$prop - untrt$prop) / untrt$sd, (rnd+1) )
+  variables_verical_disc$SDR = round( trt$sd / untrt$sd, (rnd+1) )
+  #variables_verical_disc$SDR2 = round( (sqrt((trt$prop)*(1-trt$prop))) / (sqrt((untrt$prop)*(1-untrt$prop))), (rnd+1) )
   variables_verical = rbind(c("Metric", rep(metric, 3)), variables_verical_cont[1,],
-                            c("N_match", rep("", 3)), c("N_unq", rep("", 3)), variables_verical_cont[-1,], variables_verical_disc)
+              c("N_match", rep("", 3)), c("N_unq", rep("", 3)), variables_verical_cont[-1,], variables_verical_disc)
+  variables_verical = rbind(c("Metric", rep(metric, (ncol(variables_verical_cont)-1))),
+                            variables_verical_cont[1,],
+                            c("N_match", rep("", ncol(variables_verical_cont)-1)),
+                            c("N_unq", rep("", ncol(variables_verical_cont)-1)),
+                            variables_verical_cont[-1,],
+                            variables_verical_disc)
+  
   variables_verical = filter(variables_verical, !Variable=="A")
   return(variables_verical)
 }

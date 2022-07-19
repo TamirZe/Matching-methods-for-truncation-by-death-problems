@@ -1,6 +1,6 @@
 #############################################################################################
 # extract strata proportion and mean covariates ####
-extract_pis_from_scenarios = function(nn=250000, mat_gamma=mat_gamma, xi=0, misspec_PS=0, two_log_models_DGM=TRUE){
+extract_pis_from_scenarios = function(nn=250000, mat_gamma=mat_gamma, xi=0, misspec_PS=0, two_log_models_DGM=two_log_models_DGM){
   big_lst = list(); mat_x_as <- mat_pis <- mat_x_by_g_A <- NULL
   for( k in c(1 : nrow(mat_gamma)) ){
     gamma_ah = as.numeric(mat_gamma[k, c(1:dim_x)])

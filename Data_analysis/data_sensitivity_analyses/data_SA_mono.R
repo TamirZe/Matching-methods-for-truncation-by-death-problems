@@ -1,3 +1,7 @@
+set.seed(101) 
+# EM parameters
+two_log_est_EM = FALSE
+iterations_EM = 400; epsilon_EM = 1e-06
 #########################################################################################
 # sensitivity parameters ####
 #bounds for xi
@@ -18,10 +22,19 @@ for (j in 1:length(xi_sensi_mono_names)) {
   tmp = data 
   # EM
   # calculate PS for the current xi
-  tmp$g = ifelse( tmp$A==0 & tmp$S==1, "as", ifelse( tmp$A==1 & tmp$S==0, "ns", ifelse(tmp$A==1 & tmp$S==1, "pro", "pro") )  )
-  # xi_2log_PSPS_M_weighting
-  est_ding_lst_SA_mono = xi_PSPS_M_weighting_SA(Z=tmp$A, D=tmp$S, X=as.matrix(subset(tmp, select = covariates_PS)),  
-                        Y=tmp$Y, eta=xi, beta.c = NULL, beta.n = NULL)
+  
+  if(two_log_est_EM == FALSE){
+    #S(0)=1: Logistic regression S(0)=1 on X, using S|A=0
+    fit_S0_in_A0 =
+      glm(as.formula(paste0("S ~ ",paste(covariates_PS, collapse="+"))), data=filter(data, A==0), family="binomial")
+    beta_S0 = fit_S0_in_A0$coefficients
+  }else{beta_S0=NULL}
+  est_ding_lst_SA_mono = xi_2log_PSPS_M_weighting(Z=tmp$A, D=tmp$S,
+                           X=as.matrix(subset(tmp, select = covariates_PS)), Y=tmp$Y,
+                           xi_est=xi, beta.S0=beta_S0, beta.ah=NULL, beta.c=NULL,
+                           iter.max=iterations_EM, error0=epsilon_EM)
+  # est_ding_lst_SA_mono = xi_PSPS_M_weighting_SA(Z=tmp$A, D=tmp$S, X=as.matrix(subset(tmp, select = covariates_PS)),  
+  #                       Y=tmp$Y, eta=xi, beta.c = NULL, beta.n = NULL)
   DING_model_assisted_sensi = est_ding_lst_SA_mono$AACE.reg
   # Ding order: c(prob.c, prob.d, prob.a, prob.n)
   PS_est_sensi_mono = est_ding_lst_SA_mono$ps.score
@@ -99,7 +112,7 @@ reg_sensi_mono$set = data_bool
 
 #########################################################################################
 # plot SA for monotonicity under PPI, as a function of xi and alpha_0 ####
-plot_sensi_mono <- ggplot(filter(reg_sensi_mono, measure == "Mahal_PS_cal" & Estimator %in% c("WLS")), 
+plot_SA_mono <- ggplot(filter(reg_sensi_mono, measure == "Mahal_PS_cal" & Estimator %in% c("WLS")), 
                           aes(x=alpha0_mono, y=Estimate)) + 
   geom_point(aes(col = Estimator, size = 7), size = 3) + theme_bw() + 
   scale_color_manual(values = c("Crude" = "green3", "WLS" = "orangered2", "WLS inter" = "cornflowerblue")) + 
@@ -108,6 +121,7 @@ plot_sensi_mono <- ggplot(filter(reg_sensi_mono, measure == "Mahal_PS_cal" & Est
   labs(colour = "Estimator"
        , size = 1) + 
   theme(plot.title = element_text(hjust = 0.5)) + 
+  ylim(-2600,4000) +
   ylab(label="Estimate") + xlab(label = bquote(alpha[0])) + 
   guides(colour = guide_legend(order = 1, override.aes = list(size=5))
          , size=FALSE
@@ -121,7 +135,7 @@ plot_sensi_mono <- ggplot(filter(reg_sensi_mono, measure == "Mahal_PS_cal" & Est
     ) + 
   geom_hline(yintercept = 0)
 
-plot_sensi_mono = plot_sensi_mono +
+plot_SA_mono = plot_SA_mono +
   facet_grid(~ glue('xi*" = {xi_mono}"'), labeller = label_parsed) +
   theme(
     strip.text.x = element_text(size=12, face="bold"), strip.text.y = element_text(size=12, face="bold"),
@@ -138,7 +152,7 @@ plot_sensi_mono = plot_sensi_mono +
 reg_sensi_mono$measure = mgsub(as.character(reg_sensi_mono$measure), "_", " ")
 reg_sensi_mono$measure = factor(reg_sensi_mono$measure, levels = c("Mahal", "Mahal PS cal", "PS"))
 
-plot_sens_by_metric <- reg_sensi_mono %>% filter(alpha0_mono==1 & !Estimator=="WLS inter") %>% ggplot(aes(x=xi_mono, y=Estimate)) +
+plot_SA_by_metric <- reg_sensi_mono %>% filter(alpha0_mono==1 & !Estimator=="WLS inter") %>% ggplot(aes(x=xi_mono, y=Estimate)) +
   geom_point(aes(col = Estimator, size = 7), size = 2) + 
   geom_line(aes(col = Estimator, size = 1.5), size=1.5) + 
   #xlim("0.25", "0.5", "0.75", "1", "1.25", "1.5", "1.75") +
@@ -152,7 +166,7 @@ plot_sens_by_metric <- reg_sensi_mono %>% filter(alpha0_mono==1 & !Estimator=="W
   ) + 
   geom_hline(yintercept = 0 )
 
-plot_sens_by_metric = plot_sens_by_metric + 
+plot_SA_by_metric = plot_SA_by_metric + 
   scale_color_manual(name="Estimator", 
                      labels = legend_levels, 
                      values = c("Crude" = "orangered2", "WLS" = "green3", "WLS inter" = "cornflowerblue"))  +
@@ -168,14 +182,14 @@ plot_sens_by_metric = plot_sens_by_metric +
     axis.text.y=element_text(size=10)
   ) 
 
-# plot_sensi_mono_byMetric = plot_sensi_mono + facet_wrap(~ Metric, ncol=3)
+# plot_SA_mono_byMetric = plot_SA_mono + facet_wrap(~ Metric, ncol=3)
 
 # EXTRACT LEGEND
 library(cowplot); library(ggpubr)
-lgnd_plt <- get_legend(plot_sens_by_metric) 
+lgnd_plt <- get_legend(plot_SA_by_metric) 
 # Convert to a ggplot and print
 as_ggplot(lgnd_plt)
-plot_sensi_woutLGND = plot_sens_byMetric + theme(legend.position = 'none') 
+plot_SA_woutLGND = plot_SA_by_metric + theme(legend.position = 'none') 
 #########################################################################################
 
 

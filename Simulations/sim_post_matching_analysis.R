@@ -11,22 +11,14 @@ post_matching_analysis_func = function(m_data, replace, all_measures_matched_lst
   # MAHALANOBIS WITHOUT PS CALIPER 
   crude_inference_maha_wout_cal_lst = 
     crude_estimator_inference(match_lst=all_measures_matched_lst$maha_wout_cal_lst, replace_bool=replace)
+  matched_data_maha_wout_cal = all_measures_matched_lst$maha_wout_cal_lst$matched_data
+  matched_pairs_maha_wout_cal = all_measures_matched_lst$maha_wout_cal_lst$matched_pairs
   
   # MAHALANOBIS WITH PS CALIPER
   crude_inference_maha_cal_lst = 
     crude_estimator_inference(match_lst=all_measures_matched_lst$maha_cal_lst, replace_bool=replace)
   matched_data_maha_cal = all_measures_matched_lst$maha_cal_lst$matched_data
   matched_pairs_maha_cal = all_measures_matched_lst$maha_cal_lst$matched_pairs
-  
-  mean(filter(matched_data_maha_cal, A==1)$Y)
-  mean(filter(matched_data_maha_cal, g=="as")$Y1)
-  mean(filter(matched_data_maha_cal, A==1&g=="as")$Y)
-  
-  mean(filter(matched_data_maha_cal, A==0)$Y)
-  mean(filter(matched_data_maha_cal, g=="as")$Y0)
-  
-  # dt_match_S1_pairs = merge(rbind(dt_match_S1[,1:(ncols-1)], dt_match_S1[,(ncols + 2) : (2 * ncols)], use.names=FALSE) %>% 
-  #     subset(select = c("id", "A", "Y")), matched_pairs_maha_cal, by="id") %>% arrange(pair)
   
   
   # AI bias-corrected estimator, consider only when replace==TRUE ####
@@ -58,7 +50,7 @@ post_matching_analysis_func = function(m_data, replace, all_measures_matched_lst
                                  interactions_bool=FALSE, LS=LS_bool, mu_x_fixed=F, x_as=x_as)
   reg_with_interactions_inference_lst =
     regression_adjusted_function(m_data=m_data, matched_data=matched_data_maha_cal, matched_pairs=matched_pairs_maha_cal,
-                                 covariates =X_sub_cols[-1], reg_covariates=X_sub_cols[-1],
+                                 covariates=X_sub_cols[-1], reg_covariates=X_sub_cols[-1],
                                  interactions_bool=TRUE, LS=LS_bool, mu_x_fixed=F, x_as=x_as)
   
   

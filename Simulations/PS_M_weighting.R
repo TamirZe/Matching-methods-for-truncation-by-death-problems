@@ -8,7 +8,7 @@
 
 ##propensity score method, with covariate adjustment and sensitivity analysis for GPI
 #the package used for multivariate logistic regression
-library(nnet)
+
 
 #Preliminary function: principal score calculation 
 #Z: randomization
@@ -105,7 +105,7 @@ PS_pred = function(Z, D, X,
     PROB[i,] = c(prob.c, prob.a, prob.n)/sum
   }
   
-  results = list(PROB=PROB, beta.a=beta.a, beta.n=beta.n, error=error)
+  results = list(PROB=PROB, beta.a=beta.a, beta.n=beta.n, error=error, iter=iter)
   return(results)
 }
 
@@ -133,7 +133,9 @@ PSPS_M_weighting = function(Z, D, X, Y,
   ps.score.fit = PS_pred(Z, D, X, beta.a = beta.a, beta.n = beta.n, iter.max = iter.max, error0 = error0)
   
   error = ps.score.fit$error
+  iter = ps.score.fit$iter
   ps.score     = ps.score.fit$PROB
+  colnames(ps.score) = c("EMest_p_pro", "EMest_p_as", "EMest_p_ns")
   pr.n = sum(Z*(1 - D))/sum(Z)
   pr.a = sum((1 - Z)*D)/sum(1-Z)
   pr.c = 1 - pr.n - pr.a
@@ -206,14 +208,15 @@ PSPS_M_weighting = function(Z, D, X, Y,
     ACE = list(CACE = CACE, CACE.reg = CACE.reg, 
                NACE = NACE, NACE.reg = NACE.reg, 
                AACE = AACE, AACE.reg = AACE.reg,
-               PROB = ps.score,  
-               beta.a = ps.score.fit$beta.a, beta.n = ps.score.fit$beta.n)
+               ps.score = ps.score, #PROB #ps.score
+               beta.a = ps.score.fit$beta.a, beta.n = ps.score.fit$beta.n, 
+               error=error, iter=iter)
   }
   else {
     ACE = list(AACE = AACE, AACE.reg = AACE.reg,
-               PROB = ps.score,  
-               beta.a = ps.score.fit$beta.a, beta.n = ps.score.fit$beta.n,
-               error=error)
+               ps.score = ps.score, #PROB #ps.score
+               beta.a = ps.score.fit$beta.a, beta.n = ps.score.fit$beta.n, 
+               error=error, iter=iter)
   }
   return(ACE)
   

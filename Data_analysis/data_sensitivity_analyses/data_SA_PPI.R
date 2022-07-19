@@ -64,7 +64,7 @@ reg_sensi_PPI$set = data_bool
 
 #########################################################################################
 #plot ####
-plot_sensi_PPI = a %>% filter(measure == "Mahal_PS_cal" & Estimator %in% c("WLS")) %>%
+plot_SA_PPI = reg_sensi_PPI %>% filter(measure == "Mahal_PS_cal" & Estimator %in% c("WLS")) %>%
 ggplot(aes(x=eps_PPI, y=Estimate)) + 
   geom_point(aes(col = Estimator, size = 7), size = 4) + theme_bw() + 
   scale_color_manual(values = c("Crude" = "green3", "WLS" = "orangered2", "WLS inter" = "cornflowerblue")) + 
@@ -75,7 +75,7 @@ ggplot(aes(x=eps_PPI, y=Estimate)) +
   labs(colour = "Estimator"
        , size = 1
   ) + 
-  ylim(-2100,4000) + 
+  ylim(-2600,4000) + 
   ylab(label="Estimate") +
   xlab(label = bquote(alpha[1])) + # epsilon[PPI]
   #labs( y="Estimate", x=glue('esp[PPI]*" : {protected}"')) +
