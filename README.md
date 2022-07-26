@@ -13,7 +13,6 @@ Information regarding the parameters we used in each of the Scenarios is given i
 
 2. Data analysis: analysis of the National Supported Work Demonstration (Figure 3 and Tables 3 and 4 in the main text, and Figures 3 and 3, and Tables 8,9,10 in the Supplementary).
 
-3. EM: 
 
 
 
@@ -26,5 +25,4 @@ The parameter misspec_PS equals zero/two for a correct specification/mis-specifi
 The data analysis can be ran through "data_main" file, except for the sensitivity analyses procedures.
 the sensitivity analyses procedures for Monotonicity and PPI, were performed through data_SA_mono and data_SA_PPI files, respectively.
 
-#### EM
 
