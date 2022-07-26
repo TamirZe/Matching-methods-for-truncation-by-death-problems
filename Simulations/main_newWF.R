@@ -171,8 +171,7 @@ for (i in 1:param_n_sim){
   naive_estimators_CI = naive_sace_estimation$CI_naive_before_matching
   
   # EM and PS estimation
-  if(EM_est_seq_bool==TRUE){ 
-    # DGM-seq
+  if(EM_est_seq_bool==TRUE){  # EM-seq
     #two_log_est_EM is an argument for the case we use DGM-seq, just specify if we run Logistic regression S(0)=1 on X, using S|A=0 before the EM or using EM
     if(two_log_est_EM == FALSE){
       #S(0)=1: Logistic regression S(0)=1 on X, using S|A=0
@@ -190,7 +189,7 @@ for (i in 1:param_n_sim){
               iter.max=iterations_EM, error0=epsilon_EM)
     end_timeDing <- Sys.time()
     print(paste0("Ding EM lasts ", difftime(end_timeDing, start_timeDing)))
-  }else{ # DGM-multi
+  }else{ # EM-multi
     # EM
     # est_ding_lst = xi_PSPS_M_weighting_SA(Z=data_for_EM$A, D=data_for_EM$S,
     #    X=as.matrix(subset(data_for_EM, select = grep(paste(paste0("^",X_sub_cols[-1], "$"), collapse="|"), colnames(data_for_EM)))),
@@ -242,8 +241,6 @@ for (i in 1:param_n_sim){
   # matching_datasets_lst[[1]] - wout replacement, matching_datasets_lst[[2]] - with replacement
   m_data=data_with_PS[S==1]
   m_data$id = c(1:nrow(m_data))
-  #Y1_as_mean = mean(filter(m_data, g=="as")$Y1); Y0_as_mean = mean(filter(m_data, g=="as")$Y0)
-  #SACE
   matching_datasets_lst = list()
   replace_vec = c(FALSE, TRUE)
   for(j in c(1:length(replace_vec))){
@@ -259,7 +256,9 @@ for (i in 1:param_n_sim){
   for(j in c(1:length(replace_vec))){
     replace=replace_vec[j]; all_measures_matched_lst=matching_datasets_lst[[j]] # j=1: wout replacement, j=2: with replacement
     post_matching_analysis_lst[[j]] =
-      post_matching_analysis_func(m_data=m_data, replace=replace, all_measures_matched_lst=all_measures_matched_lst)
+      post_matching_analysis_func(m_data=m_data, replace=replace, all_measures_matched_lst=all_measures_matched_lst,
+                                  X_sub_cols=X_sub_cols) #TODO 27.07 CHECK IF WORK WITH X_sub_cols=X_sub_cols
+    
     # extract estimators and SE + CI of crude/BC/HL matching estimators of all distance measures 
     for (l in 1:length(matching_measures)){
       # extract estimators, SE and CI of crude/BC/HL/regression matching estimators

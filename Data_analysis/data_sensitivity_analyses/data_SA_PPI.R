@@ -1,10 +1,10 @@
 # seed because otherwise, when xi=0 in SA for monotonicity results will not be similar to results when alpha_1=1 in SA for PPI (for mahalanobis measure)
 set.seed(101) 
 matching_lst = matching_func_multiple_data(match_on = match_on,
-       cont_cov_mahal = cont_cov_mahal,  reg_cov = reg_after_match, X_sub_cols = variables, 
-       reg_BC = reg_BC, m_data = data_with_PS[S==1], # data_with_PS from data_main (the same data set used for analysis)
-       w_mat_bool = "NON-INFO", M=1, replace=TRUE, estimand = "ATC", mahal_match = 2, caliper = caliper
-       , change_id=TRUE, boost_HL=FALSE, pass_tables_matched_units=FALSE, one_leraner_bool=TRUE)
+       cont_cov_mahal=cont_cov_mahal,  reg_cov=reg_after_match, X_sub_cols=variables, 
+       reg_BC=reg_BC, m_data=data_with_PS[S==1], # data_with_PS from data_main (the same data set used for analysis)
+       w_mat_bool="NON-INFO", M=1, replace=TRUE, estimand="ATC", mahal_match=2, caliper=caliper,
+       boost_HL=FALSE, one_leraner_bool=TRUE)
 
 #TODO matched_set_lst for all distance metrics
 matched_data_lst = matching_lst$matched_set_lst

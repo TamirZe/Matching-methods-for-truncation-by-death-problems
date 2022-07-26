@@ -1,13 +1,11 @@
-matching_func_multiple_data = function(match_on = NULL,
+matching_func_multiple_data = function(match_on=NULL,
            cont_cov_mahal, reg_cov, X_sub_cols, reg_BC, m_data, 
-           w_mat_bool = "NON-INFO", M=1, replace, estimand = "ATC", mahal_match = 2, caliper = 0.25
-           ,change_id=TRUE, boost_HL=FALSE, pass_tables_matched_units = FALSE, one_leraner_bool=FALSE, vertical_table = TRUE, rnd=1){
-  if(change_id == TRUE){
-    print("change id")
-    m_data$id = c(1:nrow(m_data))
-  }
+           w_mat_bool = "NON-INFO", M=1, replace, estimand="ATC", mahal_match=2, caliper=0.25,
+           boost_HL=FALSE, one_leraner_bool=FALSE, vertical_table=TRUE, rnd=1){
+
+   m_data$id = c(1:nrow(m_data))
   
-  # check balance before 
+   # check balance before 
   # cont and discrete
   disc_var = names(which(apply(subset(m_data, select = X_sub_cols[-1]), 2, function(x) { all(x %in% 0:1)})))
   cont_var = setdiff(X_sub_cols[-1], disc_var)
@@ -57,7 +55,7 @@ matching_func_multiple_data = function(match_on = NULL,
   set.seed(101)
   print(match_on)
   MATCH_PS_only  <- Match(Y=m_data[,Y], Tr=m_data[,A]
-                          , X = subset(m_data, select = match_on)
+                          ,X = subset(m_data, select = match_on)
                           ,ties=FALSE
                           ,M=M, replace = replace, estimand = estimand, Weight = mahal_match
   )
@@ -132,7 +130,7 @@ matching_func_multiple_data = function(match_on = NULL,
     weights = apply(data.frame(table(c(ind_ctr, ind_trt))), 2, as.numeric); 
     colnames(weights) = c("id", "w")
     matched_set = merge(weights, m_data, by = "id")
-    print(paste0("cunique weights for controla are really = ", unique(filter(matched_set, A==0)$w)))
+    print(paste0("unique weights for control are really = ", unique(filter(matched_set, A==0)$w)))
     return(matched_set=matched_set)
   }
   
@@ -276,15 +274,6 @@ matching_func_multiple_data = function(match_on = NULL,
     CI_by_SE_and_Z_val_BC = round(BCest + c(-1,1) * 1.96 * BCse, 3)
     CI_by_SE_and_Z_val_BC = paste(CI_by_SE_and_Z_val_BC, sep = ' ', collapse = " , ")
     
-    matchBC_inter <- Match(Y=m_data_inter[,Y], Tr=m_data_inter[,A], X = subset(m_data_inter, select = cont_cov_mahal), 
-                           Z = subset(m_data_inter, select = c(reg_BC, colnames(m_data_just_inter))), BiasAdjust=TRUE,
-                           ties=TRUE ,M=M, replace = replace, estimand = estimand, Weight = mahal_match
-    )
-    BCest_inter = round(as.numeric(matchBC_inter$est), 3)
-    BCse_inter = round(matchBC_inter$se, 3)
-    CI_by_SE_and_Z_val_BC_inter = round(BCest_inter + c(-1,1) * 1.96 * BCse_inter, 3)
-    CI_by_SE_and_Z_val_BC_inter = paste(CI_by_SE_and_Z_val_BC_inter, sep = ' ', collapse = " , ")
-    
     matchBC_clpr <- Match(Y=m_data[,Y], Tr=m_data[,A], X = subset(m_data, 
                                                                   select = c(cont_cov_mahal, match_on)), 
                           Z = subset(m_data, select = reg_BC), BiasAdjust=TRUE
@@ -297,6 +286,15 @@ matching_func_multiple_data = function(match_on = NULL,
     CI_by_SE_and_Z_val_BCclpr = round(BCest_clpr + c(-1,1) * 1.96 * BCse_clpr, 3)
     CI_by_SE_and_Z_val_BCclpr = paste(CI_by_SE_and_Z_val_BCclpr, sep = ' ', collapse = " , ")
 
+    matchBC_inter <- Match(Y=m_data_inter[,Y], Tr=m_data_inter[,A], X = subset(m_data_inter, select = cont_cov_mahal), 
+                           Z = subset(m_data_inter, select = c(reg_BC, colnames(m_data_just_inter))), BiasAdjust=TRUE,
+                           ties=TRUE ,M=M, replace = replace, estimand = estimand, Weight = mahal_match
+    )
+    BCest_inter = round(as.numeric(matchBC_inter$est), 3)
+    BCse_inter = round(matchBC_inter$se, 3)
+    CI_by_SE_and_Z_val_BC_inter = round(BCest_inter + c(-1,1) * 1.96 * BCse_inter, 3)
+    CI_by_SE_and_Z_val_BC_inter = paste(CI_by_SE_and_Z_val_BC_inter, sep = ' ', collapse = " , ")
+    
     matchBC_clpr_inter <- Match(Y=m_data_inter[,Y], Tr=m_data_inter[,A], X = subset(m_data_inter, 
                                                                   select = c(cont_cov_mahal, match_on)), 
                           Z = subset(m_data_inter, select = c(reg_BC, colnames(m_data_just_inter))), BiasAdjust=TRUE,
@@ -317,15 +315,15 @@ matching_func_multiple_data = function(match_on = NULL,
   
   #TODO summary of matching estimators
   summary_table = data.frame( Replacements = replace, Metric = c("PS", "Mahal", "Mahal PS caliper"),                   
-                             Crude_estimators = c(paste0(est_crude_only_ps %>% round(3), " (", se_crude_only_ps %>% round(3), ")"), 
-                             paste0(est_crude_maha_wout_cal %>% round(3), " (", se_crude_maha_wout_cal %>% round(3), ")"),
-                             paste0(SACE_matching_est %>% round(3), " (", SACE_matching_SE %>% round(3), ")")),
-                             Regression = regression_est_se,
-                             Regression_interactions = regression_inter_est_se,
-                             HL = c(paste0(HL_est_lst$only_ps[1] %>% round(3), " (", HL_est_lst$only_ps[2] %>% round(3), ")"), 
-                                    paste0(HL_est_lst$mala_wout_cal[1] %>% round(3), " (", HL_est_lst$mala_wout_cal[2] %>% round(3), ")"),
-                                    paste0(HL_est_lst$mala_cal[1] %>% round(3), " (", HL_est_lst$mala_cal[2] %>% round(3), ")"))
-                             )
+       Crude_estimators = c(paste0(est_crude_only_ps %>% round(3), " (", se_crude_only_ps %>% round(3), ")"), 
+       paste0(est_crude_maha_wout_cal %>% round(3), " (", se_crude_maha_wout_cal %>% round(3), ")"),
+       paste0(SACE_matching_est %>% round(3), " (", SACE_matching_SE %>% round(3), ")")),
+       Regression = regression_est_se,
+       Regression_interactions = regression_inter_est_se,
+       HL = c(paste0(HL_est_lst$only_ps[1] %>% round(3), " (", HL_est_lst$only_ps[2] %>% round(3), ")"), 
+              paste0(HL_est_lst$mala_wout_cal[1] %>% round(3), " (", HL_est_lst$mala_wout_cal[2] %>% round(3), ")"),
+              paste0(HL_est_lst$mala_cal[1] %>% round(3), " (", HL_est_lst$mala_cal[2] %>% round(3), ")"))
+       )
                              
   summary_table = rbind( summary_table, c(replace, "BC PS",  paste0(BCest_PS, " (", BCse_PS, ")"), rep("",3)),
                          c(replace, "BC",  paste0(BCest, " (", BCse, ")"), rep("",3)),
@@ -372,7 +370,7 @@ balance_after_matching = function(m_data, match_obj, dt_match, X_sub_cols, metri
     balance_match_disc$SMD = round( (trt$prop - untrt$prop) / untrt$sd, (rnd+1) )
     balance_match_disc$SDR = round( trt$sd / untrt$sd, (rnd+1) )
     #balance_match_disc$SDR2 = round( (sqrt((trt$prop)*(1-trt$prop))) / (sqrt((untrt$prop)*(1-untrt$prop))), (rnd+1) )
-    balance_match = rbind(c("Metric", rep(metric, (ncol(variables_verical_cont)-1))),
+    balance_match = rbind(c("Metric", rep(metric, (ncol(balance_match_cont)-1))),
                           balance_match_cont, balance_match_disc)
     balance_match = filter(balance_match, !Variable=="A")
   }

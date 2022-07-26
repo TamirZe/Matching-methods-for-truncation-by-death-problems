@@ -1,4 +1,4 @@
-post_matching_analysis_func = function(m_data, replace, all_measures_matched_lst){
+post_matching_analysis_func = function(m_data, replace, all_measures_matched_lst, X_sub_cols){
   
   # linear regressions, only for MAHALANOBIS WITH PS CALIPER
   LS_bool = ifelse(replace == F, "OLS", "WLS")

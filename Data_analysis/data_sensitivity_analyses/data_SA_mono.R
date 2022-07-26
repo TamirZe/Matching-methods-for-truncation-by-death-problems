@@ -54,10 +54,10 @@ for (j in 1:length(xi_sensi_mono_names)) {
   #TODO 22.02.22 even when we set.seed here matching on malanobis alone yields different results. Need to set.seed before every matching procedure for the same results
   set.seed(101) 
   matching_lst = matching_func_multiple_data(match_on = match_on
-           ,cont_cov_mahal = cont_cov_mahal,  reg_cov = reg_after_match, X_sub_cols = variables
+           ,cont_cov_mahal=cont_cov_mahal,  reg_cov=reg_after_match, X_sub_cols=variables
            ,reg_BC = reg_BC, m_data = tmp[S==1]
-           ,w_mat_bool = "NON-INFO", M=1, replace=TRUE, estimand = "ATC", mahal_match = 2, caliper = caliper
-           ,change_id=TRUE, boost_HL=FALSE, pass_tables_matched_units=FALSE, one_leraner_bool=TRUE)
+           ,w_mat_bool="NON-INFO", M=1, replace=TRUE, estimand="ATC", mahal_match=2, caliper=caliper,
+           boost_HL=FALSE, one_leraner_bool=TRUE)
  
   # matched_set_lst for all distance metrics
   matched_data_lst = matching_lst$matched_set_lst
