@@ -44,7 +44,7 @@ reg_BC =          c("age", "education", "black", "hispanic", "married", "re75")
 
 # parameters and variables for matching and regressions ####
 match_on = "e_1_as"  # "e_1_as" # EMest_p_as 
-caliper = 0.3
+caliper = 0.4 # 0.3 # 0.4
 ######################################################################## 
 
 ######################################################################## 
