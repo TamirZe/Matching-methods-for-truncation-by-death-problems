@@ -9,9 +9,9 @@ source("Simulations/sim_set_parameters.R")
 source("Simulations/sim_check_pis_and_covariates.R")
 source("Simulations/DGM_CPSR.R")
 source("Simulations/naive_estimation.R")
-source("Simulations/EM_seq.R") 
-#source("Simulations/PS_M_weighting.R")  # EM-multi
-#source("Simulations/PS_M_weighting_SA_CPSR.R")  # EM-multi, with xi possibly not zero 
+source("EM/EM_seq.R") 
+#source("EM/PS_M_weighting.R")  # EM-multi
+#source("EM/PS_M_weighting_SA_CPSR.R")  # EM-multi, with xi possibly not zero 
 source("Simulations/sim_matching.R")
 source("Simulations/sim_post_matching_analysis.R")
 source("Simulations/sim_regression_estimators.R")
@@ -34,9 +34,8 @@ X_sub_cols = paste0("X", c(1:(dim_x)))
 #############################################################################################
 # CPSR parameter ####
 xi = 0
-xi_est = xi # xi
-#TODO change the name to DGM_seq_bool
-two_log_models_DGM = F # TRUE DGM-seq # FALSE:DGM-multi 
+xi_assm = xi # xi
+DGM_seq_bool = TRUE # TRUE DGM-seq # FALSE:DGM-multi 
 #############################################################################################
 
 #############################################################################################
@@ -50,9 +49,9 @@ misspec_outcome = 2 # 0: no misspec of Y model # 2: Y functional form misspecifi
 #############################################################################################
 # EM  parameters ####
 iterations_EM = 200; epsilon_EM = 10^-6
-# EM_est_seq = TRUE/FALSE
-# two_log_est_EM=TRUE: S(0)=1, is estimated within A=0, with label according to S, before the EM process.
-# In both cases, sequencial logistic models (DGM-seq) are being estimated. For one multinational model, use PS_M_weighting (and maybe if Il'l decide, EM_est_seq=FALSE)
+EM_est_seq_bool = DGM_seq_bool # TRUE/FALSE # DGM_seq_bool
+# two_log_est_EM=FALSE: S(0)=1, is estimated within A=0, with label according to S, before the EM process.
+# In both cases (two_log_est_EM=TRUE/FALSE), sequential logistic models (DGM-seq) are being estimated. 
 two_log_est_EM = FALSE
 #############################################################################################
 
@@ -65,31 +64,29 @@ rho_GPI_PO = 0.4
 
 #################################################################################################################
 # beta_and_gamma ####
-# scenario is determined according to mat_gamma (and its row, k) and betas_GPI
+# scenario is determined according to mat_gamma (and its row, scen) and betas_GPI
 #TODO Large_pi_pro = T/F, AX_interactions = T/F
 Large_pi_pro = TRUE
 AX_interactions = TRUE
-beta_and_gamma = set_parameters_func(dim_x=dim_x, high_pi_pro=Large_pi_pro, AX_interactions=AX_interactions, two_log_models_DGM=two_log_models_DGM) # high_pi_pro = T/F
+beta_and_gamma = set_parameters_func(dim_x=dim_x, high_pi_pro=Large_pi_pro, AX_interactions=AX_interactions, DGM_seq_bool=DGM_seq_bool) # high_pi_pro = T/F
 # beta
 betas_GPI = beta_and_gamma$betas_GPI
 # gamma
 mat_gamma = beta_and_gamma$mat_gamma
 
-k=2 # k=1 (pi as = 0.5) # k=2 (pi as = 0.75)
+scen=2 # scen=1 (pi as = 0.5) # scen=2 (pi as = 0.75)
 gamma_ns = rep(0, dim_x)
-gamma_ah = as.numeric(mat_gamma[k, c(1:dim_x)])
-gamma_pro =  as.numeric(mat_gamma[k, (dim_x+1): (2*dim_x)]) 
-#In PSPS_M_weighting (DGM-multi with xi=0), we have gamma_as, gamma_ns
-#In xi_PSPS_M_weighting_SA (DGM-multi with xi), we have gamma_pro, gamma_ns
+gamma_ah = as.numeric(mat_gamma[scen, c(1:dim_x)])
+gamma_pro =  as.numeric(mat_gamma[scen, (dim_x+1): (2*dim_x)]) 
 
 ##################################################################################################################
 
 ##################################################################################################################
 # extract pis, wout and with PS misspecification ####
-extract_pis_lst = extract_pis_from_scenarios(nn=200000, mat_gamma=mat_gamma, xi=xi, misspec_PS=0, two_log_models_DGM=two_log_models_DGM)
+extract_pis_lst = extract_pis_from_scenarios(nn=200000, mat_gamma=mat_gamma, xi=xi, misspec_PS=0, DGM_seq_bool=DGM_seq_bool)
 mat_pis_per_gamma = extract_pis_lst$mat_pis
 mat_pis_per_gamma
-extract_pis_lst_mis_PS = extract_pis_from_scenarios(nn=200000, mat_gamma=mat_gamma, xi=xi, misspec_PS=2, two_log_models_DGM=two_log_models_DGM)
+extract_pis_lst_mis_PS = extract_pis_from_scenarios(nn=200000, mat_gamma=mat_gamma, xi=xi, misspec_PS=2, DGM_seq_bool=DGM_seq_bool)
 mat_pis_per_gamma_mis_PS = extract_pis_lst_mis_PS$mat_pis
 mat_pis_per_gamma_mis_PS
 ##################################################################################################################
@@ -103,7 +100,8 @@ caliper = 0.25; match_on = "O11_posterior_ratio"
 ###############################################################################################
 one_large_simulation = simulate_data_func(
   gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns,
-  xi=xi, two_log_models_DGM=two_log_models_DGM, param_n=200000, 
+  dim_x=dim_x, cont_x=cont_x, var_x=var_x,
+  xi=xi, DGM_seq_bool=DGM_seq_bool, param_n=200000, 
   misspec_PS=misspec_PS, misspec_outcome=misspec_outcome, transform_x=transform_x,
   funcform_factor1=funcform_factor1, funcform_factor2=funcform_factor2,
   betas_GPI=betas_GPI, var_GPI=var_GPI, rho_GPI_PO=rho_GPI_PO)
@@ -112,26 +110,26 @@ rm(one_large_simulation)
 ###############################################################################################
 
 ###############################################################################################
-param_n = 2000; param_n_sim = 25 # param_n = 2000; param_n_sim = 1000
+param_n = 2000; param_n_sim = 30 # param_n = 2000; param_n_sim = 1000
 mu_x_fixed = FALSE
 ###############################################################################################
 
 ###############################################################################################
 # matrices and lists to retain results from all iterations ####
 list_EM_not_conv <- list_mean_by_g <- 
-  balance_PS_wout_rep_lst <- balance_PS_with_rep_lst <- balance_maha_wout_rep_lst <- balance_maha_with_rep_lst <- 
-  balance_maha_cal_wout_rep_lst <- balance_maha_cal_with_rep_lst <- list()
+  balance_PS_wout_rep_lst <- balance_PS_with_rep_lst <- balance_mahal_wout_rep_lst <- balance_mahal_with_rep_lst <- 
+  balance_mahal_cal_wout_rep_lst <- balance_mahal_cal_with_rep_lst <- list()
 pis_pis_est_obs_mat = NULL
 coeff_ah_mat <- coeff_pro_mat <- beta_S0_mat <-  coeff_ns_mat <- matrix(nrow = param_n_sim, ncol = dim_x) 
-matching_estimators_mat <- matrix(nrow = param_n_sim, ncol = 21)
-matching_estimators_SE_mat <- matrix(nrow = param_n_sim, ncol = 21)
-CI_mat <- matrix(nrow = param_n_sim, ncol = 21)
-BC_ties_multiple_treated_mat <- matrix(nrow = param_n_sim, ncol = 12)
+matching_estimators_mat <- matrix(nrow = param_n_sim, ncol = 35)
+matching_estimators_SE_mat <- matrix(nrow = param_n_sim, ncol = 35)
+CI_mat <- matrix(nrow = param_n_sim, ncol = 35)
+BC_ties_multiple_treated_mat <- matrix(nrow = param_n_sim, ncol = 18)
 OLS_NOint_mat<- OLS_YESint_mat <- matrix(nrow = param_n_sim, ncol =  3)
 WLS_NOint_mat <- WLS_YESint_mat <- matrix(nrow = param_n_sim, ncol =  5)
 scen_parameter_lst = list(true_SACE=true_SACE, param_n=param_n, param_n_sim=param_n_sim,
     mat_gamma, gamma_ah=gamma_ah, gamma_pro=gamma_pro, 
-    xi=xi, xi_est=xi_est, two_log_models_DGM=two_log_models_DGM, 
+    xi=xi, xi_assm=xi_assm, DGM_seq_bool=DGM_seq_bool, EM_est_seq_bool=EM_est_seq_bool, two_log_est_EM=two_log_est_EM,
     misspec_PS=misspec_PS, misspec_outcome=misspec_outcome, transform_x=transform_x,
     funcform_factor1=funcform_factor1, funcform_factor2=funcform_factor2,
     betas_GPI=betas_GPI, var_GPI=var_GPI, rho_GPI_PO=rho_GPI_PO)
@@ -148,7 +146,8 @@ for (i in 1:param_n_sim){
   # DGM: simulate data
   list_data_DGM = simulate_data_func(seed_num=NULL, 
       gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns, 
-      xi=xi, two_log_models_DGM=two_log_models_DGM, param_n=param_n,
+      dim_x=dim_x, cont_x=cont_x, var_x=var_x,
+      xi=xi, DGM_seq_bool=DGM_seq_bool, param_n=param_n,
       misspec_PS=misspec_PS, misspec_outcome=misspec_outcome, transform_x=transform_x,
       funcform_factor1=funcform_factor1, funcform_factor2=funcform_factor2,
       betas_GPI=betas_GPI, var_GPI=var_GPI, rho_GPI_PO=rho_GPI_PO)
@@ -161,7 +160,7 @@ for (i in 1:param_n_sim){
   vec_OBS_table = list_data_DGM$vec_OBS_table 
   # "real" SACE parameter from current iteration
   SACE = list_data_DGM$true_SACE
-  pis_est = pis_est_func(data_for_EM=data_for_EM, xi_est=xi_est)
+  pis_est = pis_est_func(data_for_EM=data_for_EM, xi_est=xi_assm)
   pis_pis_est_obs_mat = rbind(pis_pis_est_obs_mat, c(pis, t(pis_est), vec_OBS_table))
   colnames(pis_pis_est_obs_mat) = c(colnames(pis), names(pis_est), colnames(vec_OBS_table))
   
@@ -172,10 +171,9 @@ for (i in 1:param_n_sim){
   naive_estimators_CI = naive_sace_estimation$CI_naive_before_matching
   
   # EM and PS estimation
-  
-  if(two_log_models_DGM==TRUE){ # we can create another argument, EM_est_seq, and then we have more flexibility to use when we use DGM-multi
+  if(EM_est_seq_bool==TRUE){ 
     # DGM-seq
-    #two_log_est_EM is an argument for the case we use DGM-seq, just specigy if we run Logistic regression S(0)=1 on X, using S|A=0 before the EM or using EM
+    #two_log_est_EM is an argument for the case we use DGM-seq, just specify if we run Logistic regression S(0)=1 on X, using S|A=0 before the EM or using EM
     if(two_log_est_EM == FALSE){
       #S(0)=1: Logistic regression S(0)=1 on X, using S|A=0
       fit_S0_in_A0 = glm(as.formula(paste0("S ~ ",paste(X_sub_cols[-1], collapse="+"))), data=filter(data_for_EM, A==0), family="binomial")
@@ -185,18 +183,18 @@ for (i in 1:param_n_sim){
     start_timeDing <- Sys.time()
     # EM
     est_ding_lst = xi_2log_PSPS_M_weighting(Z=data_for_EM$A, D=data_for_EM$S,
-                                            X=as.matrix(subset(data_for_EM, select =
-                                                                 grep(paste(paste0("^",X_sub_cols[-1], "$"), collapse="|"), colnames(data_for_EM)))),
-                                            Y=data_for_EM$Y,
-                                            xi_est=xi_est, beta.S0=beta_S0, beta.ah=NULL, beta.c=NULL,
-                                            iter.max=iterations_EM, error0=epsilon_EM)
+              X=as.matrix(subset(data_for_EM, select =
+              grep(paste(paste0("^",X_sub_cols[-1], "$"), collapse="|"), colnames(data_for_EM)))),
+              Y=data_for_EM$Y,
+              xi_est=xi_assm, beta.S0=beta_S0, beta.ah=NULL, beta.c=NULL,
+              iter.max=iterations_EM, error0=epsilon_EM)
     end_timeDing <- Sys.time()
     print(paste0("Ding EM lasts ", difftime(end_timeDing, start_timeDing)))
   }else{ # DGM-multi
     # EM
     # est_ding_lst = xi_PSPS_M_weighting_SA(Z=data_for_EM$A, D=data_for_EM$S,
     #    X=as.matrix(subset(data_for_EM, select = grep(paste(paste0("^",X_sub_cols[-1], "$"), collapse="|"), colnames(data_for_EM)))),
-    #    Y=data_for_EM$Y, eta=xi_est, iter.max=iterations_EM, error0=epsilon_EM)  
+    #    Y=data_for_EM$Y, eta=xi_assm, iter.max=iterations_EM, error0=epsilon_EM)  
     est_ding_lst = PSPS_M_weighting(Z=data_for_EM$A, D=data_for_EM$S,
                                     X=as.matrix(subset(data_for_EM, select =
                                                          grep(paste(paste0("^",X_sub_cols[-1], "$"), collapse="|"), colnames(data_for_EM)))),
@@ -208,6 +206,7 @@ for (i in 1:param_n_sim){
   # EM coefficient estimators and PS estimators
   iter = est_ding_lst$ps.score
   # add PS's to the data
+  PS_est = est_ding_lst$ps.score
   data_with_PS = data.table(data_for_EM, PS_est)
   
   # Ding and Lu's estimator: DL's plain estimator and DL's model assisted estimator
@@ -227,10 +226,10 @@ for (i in 1:param_n_sim){
   }
   
   # EM coefficient estimators and PS estimators
-  coeff_ah_mat[i,] =  ifelse(two_log_models_DGM==TRUE, est_ding_lst$beta.ah, est_ding_lst$beta.a) 
-  beta_S0_mat[i,] = ifelse(two_log_models_DGM==TRUE, beta_S0, rep(-101, dim_x)) 
-  coeff_pro_mat[i,] = ifelse(two_log_models_DGM==TRUE, est_ding_lst$beta.c, rep(-101, dim_x)) 
-  coeff_ns_mat[i,] = ifelse(two_log_models_DGM==TRUE, rep(-101, dim_x), est_ding_lst$beta.n) 
+  coeff_ah_mat[i,] =  ifelse(EM_est_seq_bool==TRUE, est_ding_lst$beta.ah, est_ding_lst$beta.a) 
+  beta_S0_mat[i,] = ifelse(EM_est_seq_bool==TRUE, beta_S0, rep(-101, dim_x)) 
+  coeff_pro_mat[i,] = ifelse(EM_est_seq_bool==TRUE, est_ding_lst$beta.c, rep(-101, dim_x)) 
+  coeff_ns_mat[i,] = ifelse(EM_est_seq_bool==TRUE, rep(-101, dim_x), est_ding_lst$beta.n) 
   
   # calculate weights: O11_prior_ratio, O11_posterior_ratio W_1_as, and W_1_as_true
   weights_lst = add_PS_weights_func(data_with_PS=data_with_PS, pis=pis, pis_est=pis_est)
@@ -252,74 +251,63 @@ for (i in 1:param_n_sim){
         matching_all_measures_func(m_data=m_data, match_on=match_on, X_sub_cols=X_sub_cols, 
          M=1, replace=replace_vec[j], estimand="ATC", mahal_match=2, caliper=caliper)
   }
-  #dim(matching_datasets_lst[[2]]$only_ps_lst$matched_data)
-  #length(unique(matching_datasets_lst[[2]]$only_ps_lst$matched_data$id))
   
   # post-matching analysis for 2 (wout/with replacement) datasets
-  matching_measures = c("PS", "maha", "maha_cal", "BC", "BC_cal", "wilcox")
+  matching_measures = c("PS", "mahal", "mahal_cal")
   post_matching_analysis_lst = list()
   matching_estimators = matching_estimators_SE = matching_estimators_CI = c()
   for(j in c(1:length(replace_vec))){
+    replace=replace_vec[j]; all_measures_matched_lst=matching_datasets_lst[[j]] # j=1: wout replacement, j=2: with replacement
     post_matching_analysis_lst[[j]] =
-      post_matching_analysis_func(m_data=m_data, replace=replace_vec[j], all_measures_matched_lst=matching_datasets_lst[[j]])
-    # extract estimators and SE + CI of crude/BC/HL matching estimators of all distance measures (for crude)
+      post_matching_analysis_func(m_data=m_data, replace=replace, all_measures_matched_lst=all_measures_matched_lst)
+    # extract estimators and SE + CI of crude/BC/HL matching estimators of all distance measures 
     for (l in 1:length(matching_measures)){
-      # extract estimators, SE and CI of crude/BC/HL matching estimators
-    
-      est_tmp = post_matching_analysis_lst[[j]][[l]]$SACE_matching_est
-      SE_tmp = post_matching_analysis_lst[[j]][[l]]$SACE_matching_SE
-      CI_tmp = post_matching_analysis_lst[[j]][[l]]$CI         
-      names(est_tmp) = names(SE_tmp) = names(CI_tmp) = paste0(matching_measures[l], "_rep_", replace_vec[j])
-      matching_estimators = c(matching_estimators, est_tmp)
-      matching_estimators_SE = c(matching_estimators_SE, SE_tmp)
-      matching_estimators_CI = c(matching_estimators_CI, CI_tmp)
-    }
+      # extract estimators, SE and CI of crude/BC/HL/regression matching estimators
+      est_tmp = unlist(lapply(post_matching_analysis_lst[[j]][[l]][1:3], "[[", "SACE_matching_est"))
+      SE_tmp = unlist(lapply(post_matching_analysis_lst[[j]][[l]][1:3], "[[", "SACE_matching_SE"))
+      CI_tmp = unlist(lapply(post_matching_analysis_lst[[j]][[l]][1:3], "[[", "CI"))       
+      names(est_tmp) = names(SE_tmp) = names(CI_tmp) = 
+        paste0(matching_measures[l], c("_crude", "_BC", "_wilcox"), c("_No", "_Yes")[j], "_rep") # replace_vec[j]
+      
+      reg_estimator_tmp_lst = reg_estimator_per_measure(lst_one_measure=post_matching_analysis_lst[[j]][[l]], 
+                                                    measure_name=matching_measures[l], replace=replace)
+      
+      matching_estimators = c(matching_estimators, est_tmp, reg_estimator_tmp_lst$reg_matching_estimators)
+      matching_estimators_SE = c(matching_estimators_SE, SE_tmp, reg_estimator_tmp_lst$reg_matching_estimators_SE)
+      matching_estimators_CI = c(matching_estimators_CI, CI_tmp, reg_estimator_tmp_lst$reg_matching_estimators_CI)
+      }
   }
   
   # check ties in BC caliper (only after matching with replacement [[2]])
-  BC_ties = c(BC = unlist(post_matching_analysis_lst[[2]]$BC_inference_lst$BC_ties_multiple_treated),
-    BC_cal = unlist(post_matching_analysis_lst[[2]]$BC_cal_inference_lst$BC_ties_multiple_treated))
+  #unlist(lapply(lapply(post_matching_analysis_lst[[2]], "[[", "BC_inference_lst"), "[[", "BC_ties_multiple_treated"))
+  BC_ties = c(unlist(post_matching_analysis_lst[[2]]$ps_estimators$BC_inference_lst$BC_ties_multiple_treated), 
+              unlist(post_matching_analysis_lst[[2]]$mahal_estimators$BC_inference_lst$BC_ties_multiple_treated),
+              unlist(post_matching_analysis_lst[[2]]$mahal_cal_estimators$BC_inference_lst$BC_ties_multiple_treated))
   BC_ties_multiple_treated_mat[i,] = BC_ties
   colnames(BC_ties_multiple_treated_mat) = names(BC_ties)
-  
-  # regression estimators after matching on mahalanobis + PS caliper
-  # est and SE
-  OLS_NOint_mat  = c(unlist(post_matching_analysis_lst[[1]]$reg_wout_interactions_inference_lst$estimator_and_se))
-  OLS_YESint_mat = c(unlist(post_matching_analysis_lst[[1]]$reg_with_interactions_inference_lst$estimator_and_se))
-  WLS_NOint_mat  = c(unlist(post_matching_analysis_lst[[2]]$reg_wout_interactions_inference_lst$estimator_and_se))
-  WLS_YESint_mat = c(unlist(post_matching_analysis_lst[[2]]$reg_with_interactions_inference_lst$estimator_and_se))
-  regression_matching_estimators = c(OLS_NOint_mat[1], OLS_YESint_mat[1], WLS_NOint_mat[1], WLS_YESint_mat[1])
-  regression_matching_estimators_SE = c(OLS_NOint_mat["OLS_se"], OLS_YESint_mat["OLS_se"], WLS_NOint_mat["WLS_clstr_se"], WLS_YESint_mat["WLS_clstr_se"])
-  names(regression_matching_estimators) = names(regression_matching_estimators_SE) = c("OLS", "OLS_int", "WLS", "WLS_int")
-  # CI of regression estimators
-  regression_matching_estimators_CI = c(OLS = unlist(post_matching_analysis_lst[[1]]$reg_wout_interactions_inference_lst$CI_LS)
-  ,OLS_int = unlist(post_matching_analysis_lst[[1]]$reg_with_interactions_inference_lst$CI_LS)
-  ,WLS = unlist(post_matching_analysis_lst[[2]]$reg_wout_interactions_inference_lst$CI_LS)
-  ,WLS_int = unlist(post_matching_analysis_lst[[2]]$reg_with_interactions_inference_lst$CI_LS))
-  
-  
+
   # add the current iteration (i.e. in param_n_sim) to the big matrices that contain info re all iterations
-  estimators = c(SACE=SACE, naive_estimators, DL_est, matching_estimators, regression_matching_estimators)
+  estimators = c(SACE=SACE, naive_estimators, DL_est, matching_estimators)
   matching_estimators_mat[i,] = estimators
   colnames(matching_estimators_mat) = names(estimators)
   
   DL_na = -101 # DL estimators do not include SE and CI
-  SE = c(SACE=SACE, naive_estimators_SE, c(DL_est=DL_na, DL_MA_est=DL_na), matching_estimators_SE, regression_matching_estimators_SE)
+  SE = c(SACE=SACE, naive_estimators_SE, c(DL_est=DL_na, DL_MA_est=DL_na), matching_estimators_SE)
   matching_estimators_SE_mat[i,] = SE
   colnames(matching_estimators_SE_mat) = names(SE)
   
   # CI of matching crude, BC and regression estimators after matching
-  CI_mat[i,] = c(SACE=SACE, unlist(naive_estimators_CI), c(DL_est=DL_na, DL_MA_est=DL_na), matching_estimators_CI, regression_matching_estimators_CI)
+  CI_mat[i,] = c(SACE=SACE, unlist(naive_estimators_CI), c(DL_est=DL_na, DL_MA_est=DL_na), matching_estimators_CI)
   colnames(CI_mat) = c("SACE", names(unlist(naive_estimators_CI)), names(DL_est),
-                       names(matching_estimators_CI), names(regression_matching_estimators_CI))
+                       names(matching_estimators_CI))
   
   # balance (mean_by_subset) of x_obs (original covariates) and PS+Y transformations
-  balance_PS_wout_rep_lst[[i]] = matching_datasets_lst[[1]]$balance_all_measures$mean_by_subset_only_ps
-  balance_PS_with_rep_lst[[i]] = matching_datasets_lst[[2]]$balance_all_measures$mean_by_subset_only_ps
-  balance_maha_wout_rep_lst[[i]] = matching_datasets_lst[[1]]$balance_all_measures$mean_by_subset_maha_wout_cal
-  balance_maha_with_rep_lst[[i]] = matching_datasets_lst[[2]]$balance_all_measures$mean_by_subset_maha_wout_cal
-  balance_maha_cal_wout_rep_lst[[i]] = matching_datasets_lst[[1]]$balance_all_measures$mean_by_subset_maha_cal
-  balance_maha_cal_with_rep_lst[[i]] = matching_datasets_lst[[2]]$balance_all_measures$mean_by_subset_maha_cal
+  balance_PS_wout_rep_lst[[i]] = matching_datasets_lst[[1]]$balance_all_measures$mean_by_subset_ps
+  balance_PS_with_rep_lst[[i]] = matching_datasets_lst[[2]]$balance_all_measures$mean_by_subset_ps
+  balance_mahal_wout_rep_lst[[i]] = matching_datasets_lst[[1]]$balance_all_measures$mean_by_subset_mahal
+  balance_mahal_with_rep_lst[[i]] = matching_datasets_lst[[2]]$balance_all_measures$mean_by_subset_mahal
+  balance_mahal_cal_wout_rep_lst[[i]] = matching_datasets_lst[[1]]$balance_all_measures$mean_by_subset_mahal_cal
+  balance_mahal_cal_with_rep_lst[[i]] = matching_datasets_lst[[2]]$balance_all_measures$mean_by_subset_mahal_cal
   
   end_time1 <- Sys.time()
   print(paste0("one iteration lasts ", difftime(end_time1, start_time1)))
@@ -327,7 +315,8 @@ for (i in 1:param_n_sim){
 } # out of for loop for all the iterations (param_n_sim iterations in total)
 
 # summaries of all iterations of one scenario (according to mat_gamma and its row, k) from the simulations in summaries_newWF.R
-results_summary = summary_func(true_SACE=true_SACE, param_n_sim=param_n_sim, 
+results_summary = summary_func(true_SACE=true_SACE, 
+       param_n_sim=param_n_sim, param_n=param_n, cont_x=cont_x, xi=xi, xi_assm=xi_assm,
        matching_estimators_mat=matching_estimators_mat, 
        matching_estimators_SE_mat=matching_estimators_SE_mat, 
        CI_mat=CI_mat, 
@@ -336,10 +325,15 @@ results_summary = summary_func(true_SACE=true_SACE, param_n_sim=param_n_sim,
        beta_S0_mat=beta_S0_mat, coeff_ah_mat=coeff_ah_mat, coeff_pro_mat=coeff_pro_mat, coeff_ns_mat=coeff_ns_mat,
        list_mean_by_g=list_mean_by_g,
        balance_PS_wout_rep_lst=balance_PS_wout_rep_lst, balance_PS_with_rep_lst=balance_PS_with_rep_lst, 
-       balance_maha_wout_rep_lst=balance_maha_wout_rep_lst, balance_maha_with_rep_lst=balance_maha_with_rep_lst, 
-       balance_maha_cal_wout_rep_lst=balance_maha_cal_wout_rep_lst, balance_maha_cal_with_rep_lst=balance_maha_cal_with_rep_lst)
+       balance_mahal_wout_rep_lst=balance_mahal_wout_rep_lst, balance_mahal_with_rep_lst=balance_mahal_with_rep_lst, 
+       balance_mahal_cal_wout_rep_lst=balance_mahal_cal_wout_rep_lst, balance_mahal_cal_with_rep_lst=balance_mahal_cal_with_rep_lst)
 
 results_summary$results_table
+
+
+
+
+
 
 
 

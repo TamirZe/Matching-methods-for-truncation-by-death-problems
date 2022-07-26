@@ -13,7 +13,7 @@ calculate_mean_elements_lst_of_lsts = function(list_of_lists){
 #############################################################################################
 
 #############################################################################################
-calculate_coverage = function(CI_mat){
+calculate_coverage = function(CI_mat, true_SACE){
   bool_CI_contains_SACE = function(x, true_SACE){
     lower_bound =  as.numeric(sub(",.*", "", x)) #as.numeric(sapply(strsplit(as.character(x), ","), "[", 1)) 
     upper_bound = as.numeric(sub(".*,", "", x))
@@ -28,12 +28,13 @@ calculate_coverage = function(CI_mat){
 }
 #############################################################################################
 
-summary_func = function(true_SACE, param_n_sim, matching_estimators_mat, matching_estimators_SE_mat, CI_mat,
-                       BC_ties_multiple_treated_mat, pis_pis_est_obs_mat,
-                       beta_S0_mat, coeff_ah_mat, coeff_pro_mat, list_mean_by_g,
+summary_func = function(true_SACE, param_n_sim, param_n, cont_x, xi, xi_assm, 
+                        matching_estimators_mat, matching_estimators_SE_mat, CI_mat,
+                        BC_ties_multiple_treated_mat, pis_pis_est_obs_mat,
+                        beta_S0_mat, coeff_ah_mat, coeff_pro_mat, coeff_ns_mat, list_mean_by_g,
                         balance_PS_wout_rep_lst, balance_PS_with_rep_lst,
-                        balance_maha_wout_rep_lst, balance_maha_with_rep_lst,
-                        balance_maha_cal_wout_rep_lst, balance_maha_cal_with_rep_lst){
+                        balance_mahal_wout_rep_lst, balance_mahal_with_rep_lst,
+                        balance_mahal_cal_wout_rep_lst, balance_mahal_cal_with_rep_lst){
   
   #############################################################################################
   # summaries over all simulation iterations
@@ -58,7 +59,7 @@ summary_func = function(true_SACE, param_n_sim, matching_estimators_mat, matchin
   
   
   # summary of CI_mat ####
-  coverage_sum = calculate_coverage(CI_mat=na.omit(CI_mat))
+  coverage_sum = calculate_coverage(CI_mat=na.omit(CI_mat), true_SACE=true_SACE)
   coverage = data.frame(SACE = param_SACE, coverage_sum["Coverage",]) # SACE = true_SACE # SACE = param_SACE
   
   # check existence of ties when using the BC estimator ####
@@ -72,6 +73,7 @@ summary_func = function(true_SACE, param_n_sim, matching_estimators_mat, matchin
   beta_S0_sum = apply(na.omit(beta_S0_mat), 2, mean)     # na.omit(beta_S0_mat) # coeff_ah_mat[-beta_S0_mat,]
   coeff_ah_sum = apply(na.omit(coeff_ah_mat), 2, mean)   # na.omit(coeff_ah_mat) # coeff_ah_mat[-i_EM_not_conv,] 
   coeff_pro_sum = apply(na.omit(coeff_pro_mat), 2, mean) # na.omit(coeff_pro_mat) # coeff_pro_mat[-i_EM_not_conv,] 
+  coeff_ns_sum = apply(na.omit(coeff_ns_mat), 2, mean)
   EM_coeffs_sum = list(beta_S0_sum=beta_S0_sum, coeff_ah_sum=coeff_ah_sum, coeff_pro_sum=coeff_pro_sum)
   # summaries of x_obs (original covariates) ####
   
@@ -84,36 +86,35 @@ summary_func = function(true_SACE, param_n_sim, matching_estimators_mat, matchin
   # Filter(Negate... ) removes NULL lists (when EM has not converged) from the list_of_lists
   balance_PS_wout_rep_sum = calculate_mean_elements_lst_of_lsts(list_of_lists=Filter(Negate(function(x) is.null(unlist(x))), balance_PS_wout_rep_lst))
   balance_PS_with_rep_sum = calculate_mean_elements_lst_of_lsts(list_of_lists=Filter(Negate(function(x) is.null(unlist(x))), balance_PS_with_rep_lst))
-  balance_maha_wout_rep_sum = calculate_mean_elements_lst_of_lsts(list_of_lists=Filter(Negate(function(x) is.null(unlist(x))), balance_maha_wout_rep_lst))
-  balance_maha_with_rep_sum = calculate_mean_elements_lst_of_lsts(list_of_lists=Filter(Negate(function(x) is.null(unlist(x))), balance_maha_with_rep_lst))
-  balance_maha_cal_wout_rep_sum = calculate_mean_elements_lst_of_lsts(list_of_lists=Filter(Negate(function(x) is.null(unlist(x))), balance_maha_cal_wout_rep_lst))
-  balance_maha_cal_with_rep_sum = calculate_mean_elements_lst_of_lsts(list_of_lists=Filter(Negate(function(x) is.null(unlist(x))), balance_maha_cal_with_rep_lst))
+  balance_mahal_wout_rep_sum = calculate_mean_elements_lst_of_lsts(list_of_lists=Filter(Negate(function(x) is.null(unlist(x))), balance_mahal_wout_rep_lst))
+  balance_mahal_with_rep_sum = calculate_mean_elements_lst_of_lsts(list_of_lists=Filter(Negate(function(x) is.null(unlist(x))), balance_mahal_with_rep_lst))
+  balance_mahal_cal_wout_rep_sum = calculate_mean_elements_lst_of_lsts(list_of_lists=Filter(Negate(function(x) is.null(unlist(x))), balance_mahal_cal_wout_rep_lst))
+  balance_mahal_cal_with_rep_sum = calculate_mean_elements_lst_of_lsts(list_of_lists=Filter(Negate(function(x) is.null(unlist(x))), balance_mahal_cal_with_rep_lst))
   balance_lst = list(balance_PS_wout_rep_sum=balance_PS_wout_rep_sum, balance_PS_with_rep_sum=balance_PS_with_rep_sum, 
-                     balance_maha_wout_rep_sum=balance_maha_wout_rep_sum, balance_maha_with_rep_sum=balance_maha_with_rep_sum, 
-                     balance_maha_cal_wout_rep_sum=balance_maha_cal_wout_rep_sum, balance_maha_cal_with_rep_sum=balance_maha_cal_with_rep_sum)
+                     balance_mahal_wout_rep_sum=balance_mahal_wout_rep_sum, balance_mahal_with_rep_sum=balance_mahal_with_rep_sum, 
+                     balance_mahal_cal_wout_rep_sum=balance_mahal_cal_wout_rep_sum, balance_mahal_cal_with_rep_sum=balance_mahal_cal_with_rep_sum)
   
-  # SD over all simulation iterations
-  dims_bal = dim(Filter(Negate(function(x) is.null(unlist(x))), balance_PS_wout_rep_lst)[[1]]) # 5 * 3*cont_x
-  balance_PS_wout_rep_sd = apply(array(unlist(balance_PS_wout_rep_lst), c(dims_bal[1], dims_bal[2], param_n_sim)), c(1,2), sd)
-  balance_PS_with_rep_sd = apply(array(unlist(balance_PS_with_rep_lst), c(dims_bal[1], dims_bal[2], param_n_sim)), c(1,2), sd)
-  balance_maha_wout_rep_sd = apply(array(unlist(balance_maha_wout_rep_lst), c(dims_bal[1], dims_bal[2], param_n_sim)), c(1,2), sd)
-  balance_maha_with_rep_sd = apply(array(unlist(balance_maha_with_rep_lst), c(dims_bal[1], dims_bal[2], param_n_sim)), c(1,2), sd)
-  balance_maha_cal_wout_rep_sd = apply(array(unlist(balance_maha_cal_wout_rep_lst), c(dims_bal[1], dims_bal[2], param_n_sim)), c(1,2), sd)
-  balance_maha_cal_with_rep_sd = apply(array(unlist(balance_maha_cal_with_rep_lst), c(dims_bal[1], dims_bal[2], param_n_sim)), c(1,2), sd)
+  # SD over all simulation iterations 
+  #dims_bal = dim(Filter(Negate(function(x) is.null(unlist(x))), balance_PS_wout_rep_lst)[[1]]) # 5 * 3*cont_x
+  #balance_PS_wout_rep_sd = apply(array(unlist(balance_PS_wout_rep_lst), c(dims_bal[1], dims_bal[2], param_n_sim)), c(1,2), sd)
+  #balance_PS_with_rep_sd = apply(array(unlist(balance_PS_with_rep_lst), c(dims_bal[1], dims_bal[2], param_n_sim)), c(1,2), sd)
+  #balance_mahal_wout_rep_sd = apply(array(unlist(balance_mahal_wout_rep_lst), c(dims_bal[1], dims_bal[2], param_n_sim)), c(1,2), sd)
+  #balance_mahal_with_rep_sd = apply(array(unlist(balance_mahal_with_rep_lst), c(dims_bal[1], dims_bal[2], param_n_sim)), c(1,2), sd)
+  #balance_mahal_cal_wout_rep_sd = apply(array(unlist(balance_mahal_cal_wout_rep_lst), c(dims_bal[1], dims_bal[2], param_n_sim)), c(1,2), sd)
+  #balance_mahal_cal_with_rep_sd = apply(array(unlist(balance_mahal_cal_with_rep_lst), c(dims_bal[1], dims_bal[2], param_n_sim)), c(1,2), sd)
   #############################################################################################
   
   #############################################################################################
   # summary tables for LaTeX of the etimators
   results_table = data.frame(t(rbind(matching_estimators_sum, matching_estimators_SE_sum, coverage))) %>% round(3)
-  results_table = rbind(true_SACE = c(true_SACE, 0,0,0,0), results_table)
-  results_table = results_table[,c("mean", "SE", "sd", "MSE", "Coverage")]
-  results_table = results_table[!(row.names(results_table) %in% c("BC_rep_FALSE", "BC_cal_rep_FALSE")),] 
   # Reduce(function(x, y) merge(x, y, by=0),
   #        list(t(matching_estimators_sum), t(matching_estimators_SE_sum), t(coverage)))
-  
-  results_table$N = param_n
-  results_table$dim_x = cont_x
+  results_table = rbind(true_SACE = c(true_SACE, 0,0,0,0), results_table)
+  results_table = results_table[,c("mean", "sd", "SE", "MSE", "Coverage")]
+  results_table = results_table[-grep("BC_No_rep", row.names(results_table)),] 
   results_table[c("SACE", "true_SACE"), c("SE", "sd", "MSE", "Coverage")] = 0
+  results_table = data.frame(results_table, N = param_n, dim_x = cont_x, xi=xi, xi_assm=xi_assm)
+  
   #############################################################################################
 
   return(list(results_table=results_table, BC_ties_multiple_treated_sum=BC_ties_multiple_treated_sum, pis_pis_est_obs_sum=pis_pis_est_obs_sum,

@@ -7,72 +7,79 @@ matching_all_measures_func = function(m_data, match_on = NULL, X_sub_cols,
   #m_data$id = c(1:nrow(m_data))
   print(paste0("replace is ", replace, ". nrows is ", nrow(m_data), "."))
   # mahal_match for Weight = 2 for mahalanobis distance. 
-  vec_caliper = c(rep(1000, length(X_sub_cols[-1])), caliper)
+  vec_caliper = c(rep(10000, length(X_sub_cols[-1])), caliper)
   
   # TODO MATCHING ONLY ONLY on the weights, O11_posterior_ratio
   print("MATCHING ON PS")
-  ps_only_obj <- Match(Y=m_data[,Y], Tr=m_data[,A]
+  ps_obj <- Match(Y=m_data[,Y], Tr=m_data[,A]
                           ,X = subset(m_data, select = match_on)
                           ,ties=FALSE
                           ,M=M, replace = replace, estimand = estimand, Weight = mahal_match
   )
-  only_ps_lst = arrange_dataset_after_matching(match_obj=ps_only_obj, m_data=m_data, replace_bool=replace, X_sub_cols=X_sub_cols)
+  ps_lst = arrange_dataset_after_matching(match_obj=ps_obj, m_data=m_data, replace_bool=replace, X_sub_cols=X_sub_cols)
   
   # TODO MAHALANOBIS WITHOUT PS CALIPER
   print("MAHALANOBIS WITHOUT PS CALIPER")
-  maha_wout_cal_obj  <- Match(Y=m_data[,Y], Tr=m_data[,A]
+  mahal_obj  <- Match(Y=m_data[,Y], Tr=m_data[,A]
                                ,X = subset(m_data, select = c(X_sub_cols[-1]))
                                ,ties=FALSE
                                ,M=M, replace = replace, estimand = estimand, Weight = mahal_match
   ) 
-  maha_wout_cal_lst = arrange_dataset_after_matching(match_obj=maha_wout_cal_obj, m_data=m_data, replace_bool=replace, X_sub_cols=X_sub_cols)
+  mahal_lst = arrange_dataset_after_matching(match_obj=mahal_obj, m_data=m_data, replace_bool=replace, X_sub_cols=X_sub_cols)
   
   # TODO MAHALANOBIS WITH PS CALIPER
   print("MAHALANOBIS WITH PS CALIPER")
-  maha_with_cal_obj  <- Match(Y=m_data[,Y], Tr=m_data[,A]
+  mahal_cal_obj  <- Match(Y=m_data[,Y], Tr=m_data[,A]
                          ,X = subset(m_data, select = c(X_sub_cols[-1], match_on))
                          ,ties=FALSE
                          ,caliper = vec_caliper 
                          ,M=M, replace = replace, estimand = estimand, Weight = mahal_match
                          #,Weight.matrix = w_mat
   )
-  maha_cal_lst = arrange_dataset_after_matching(match_obj=maha_with_cal_obj, m_data=m_data, replace_bool=replace, X_sub_cols=X_sub_cols)
+  mahal_cal_lst = arrange_dataset_after_matching(match_obj=mahal_cal_obj, m_data=m_data, replace_bool=replace, X_sub_cols=X_sub_cols)
 
   # TODO AI bias-corrected estimator, consider only when replace==TRUE
   if(replace == TRUE){ 
     print("START BC")
     
-    matchBC <- Match(Y=m_data[,Y], Tr=m_data[,A], X = subset(m_data, select = c(X_sub_cols[-1])), 
+    matchBC_ps_obj <- Match(Y=m_data[,Y], Tr=m_data[,A], X = subset(m_data, select = match_on), 
+          Z = subset(m_data,select = X_sub_cols[-1]), BiasAdjust=TRUE,
+          ties=TRUE ,M=M, replace = replace, estimand = estimand, Weight = mahal_match
+    )
+    
+    matchBC_mahal_obj <- Match(Y=m_data[,Y], Tr=m_data[,A], X = subset(m_data, select = c(X_sub_cols[-1])), 
                      Z = subset(m_data,select = X_sub_cols[-1]), BiasAdjust=TRUE,
                      ties=TRUE ,M=M, replace = replace, estimand = estimand, Weight = mahal_match
     )
   
-    matchBC_clpr <- Match(Y=m_data[,Y], Tr=m_data[,A], X = subset(m_data, select = c(X_sub_cols[-1], match_on)), 
+    matchBC_mahal_cal_obj <- Match(Y=m_data[,Y], Tr=m_data[,A], X = subset(m_data, select = c(X_sub_cols[-1], match_on)), 
                           Z = subset(m_data,select = X_sub_cols[-1]), BiasAdjust=TRUE,
                           ties=TRUE ,M=M, replace = replace, estimand = estimand, Weight = mahal_match
                           ,caliper = vec_caliper
                           #, Weight.matrix = w_mat
     )
-
-    print("END BC")
     
   }else{
     NO_BC_WOUT_REP = -101
-    matchBC <- matchBC_clpr <- NO_BC_WOUT_REP 
-    }
+    matchBC_ps_obj <- matchBC_mahal_obj <- matchBC_mahal_cal_obj <- NO_BC_WOUT_REP 
+  }
+  
+  print("END BC")
   
   # distribution of the x's; before matching and after matching
-  mean_by_subset_only_ps = mean_x_summary(m_data=m_data, matched_data=only_ps_lst$matched_data)
-  mean_by_subset_maha_wout_cal = mean_x_summary(m_data=m_data, matched_data=maha_wout_cal_lst$matched_data)
-  mean_by_subset_maha_cal = mean_x_summary(m_data=m_data, matched_data=maha_cal_lst$matched_data)
-  balance_all_measures = list(mean_by_subset_only_ps=mean_by_subset_only_ps, mean_by_subset_maha_wout_cal=mean_by_subset_maha_wout_cal,
-                              mean_by_subset_maha_cal=mean_by_subset_maha_cal)
+  mean_by_subset_ps = mean_x_summary(m_data=m_data, matched_data=ps_lst$matched_data)
+  mean_by_subset_mahal = mean_x_summary(m_data=m_data, matched_data=mahal_lst$matched_data)
+  mean_by_subset_mahal_cal = mean_x_summary(m_data=m_data, matched_data=mahal_cal_lst$matched_data)
+  balance_all_measures = list(mean_by_subset_ps=mean_by_subset_ps,
+                              mean_by_subset_mahal=mean_by_subset_mahal,
+                              mean_by_subset_mahal_cal=mean_by_subset_mahal_cal)
   
-  return(list(only_ps_lst=only_ps_lst
-              ,maha_wout_cal_lst=maha_wout_cal_lst
-              ,maha_cal_lst=maha_cal_lst
-              ,matchBC_obj=matchBC
-              ,matchBC_clpr_obj=matchBC_clpr
+  return(list(ps_lst=ps_lst
+              ,mahal_lst=mahal_lst
+              ,mahal_cal_lst=mahal_cal_lst
+              ,matchBC_ps_obj=matchBC_ps_obj
+              ,matchBC_mahal_obj=matchBC_mahal_obj
+              ,matchBC_mahal_cal_obj=matchBC_mahal_cal_obj
               ,balance_all_measures = balance_all_measures
   ))
 }
@@ -118,7 +125,8 @@ arrange_dataset_after_matching = function(match_obj, m_data, replace_bool, X_sub
 # balance; before matching and after matching
 mean_x_summary = function(m_data, matched_data){
   # descriprive before matching
-  x_ind = which(grepl(paste(c(X_sub_cols[-1], "x_PS", "x_out"), collapse="|"), colnames(m_data)) & !grepl("X1$", colnames(m_data)))
+  x_ind = which(grepl(paste(c(X_sub_cols[-1], "x_PS", "x_out"), collapse="|"), colnames(m_data)) & 
+               !grepl("X1$", colnames(m_data)))
   x_cols = colnames(m_data)[x_ind] # colnames(m_data)[x_ind] # c("id", "A", "S", "g", X_sub_cols[-1])
   initial_data_x = subset(m_data, select = c("id", "A", "S", "g", x_cols)) 
   initial_data_x_as = filter(initial_data_x, g=="as")

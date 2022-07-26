@@ -1,5 +1,6 @@
-simulate_data_func = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, #dim_x
-                              xi, two_log_models_DGM=TRUE, param_n, 
+simulate_data_func = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, 
+                              dim_x, cont_x, var_x,
+                              xi, DGM_seq_bool=TRUE, param_n, 
                               misspec_PS, misspec_outcome=0, transform_x=0,
                               funcform_factor1, funcform_factor2, 
                               betas_GPI, var_GPI, rho_GPI_PO, only_mean_x_bool=FALSE){
@@ -35,6 +36,7 @@ simulate_data_func = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, #dim
   # x_PS: PS true model covariates
   if(misspec_PS == 2){
     x_PS = as.matrix( data.frame( x_obs[,-tail(1:dim_x, n=ncol(x_misspec))], x_misspec ) )
+    colnames(x_PS)[1] = "X1"
     gamma_ns_adj = gamma_ns
     if(cont_x<3){ # replace only one misspecified covariate
       gamma_ah_adj =  c(head(gamma_ah, (dim_x-1)), funcform_factor1*gamma_ah[2])
@@ -56,7 +58,7 @@ simulate_data_func = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, #dim
   
   # x are the true outcome's (Y) covariates 
   # if misspec_outcome == 0 (default), Y on original (obs) X # if misspec_outcome == 2, Y on the transformation of X, as in x_misspec in the PS misspec
-  if(misspec_outcome == 2){ #TODO change it so Y misspec is not necessarily the same as PS misspec 
+  if(misspec_outcome == 2){ 
     #x = as.matrix( data.frame( x_obs[,-tail(1:dim_x, n=ncol(x_misspec))], x_misspec ) )
     #betas_GPI_adj
     if(cont_x<3){
@@ -68,7 +70,7 @@ simulate_data_func = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns, #dim
     }
   } 
   
-  if(two_log_models_DGM==TRUE){ # two logistic models for s(0) and S(1) given S(0)=1
+  if(DGM_seq_bool==TRUE){ # two logistic models for s(0) and S(1) given S(0)=1
     #1) log reg of S(0)
     exp_S0 = exp(x_PS%*%gamma_ah_adj)
     prob_S0 = exp_S0 / ( 1 + exp_S0 )

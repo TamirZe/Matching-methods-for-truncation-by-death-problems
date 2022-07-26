@@ -1,13 +1,15 @@
 #############################################################################################
 # extract strata proportion and mean covariates ####
-extract_pis_from_scenarios = function(nn=250000, mat_gamma=mat_gamma, xi=0, misspec_PS=0, two_log_models_DGM=two_log_models_DGM){
+extract_pis_from_scenarios = function(nn=250000, mat_gamma=mat_gamma, xi=0, misspec_PS=0, DGM_seq_bool){
   big_lst = list(); mat_x_as <- mat_pis <- mat_x_by_g_A <- NULL
   for( k in c(1 : nrow(mat_gamma)) ){
+    print(k)
     gamma_ah = as.numeric(mat_gamma[k, c(1:dim_x)])
     gamma_pro =  as.numeric(mat_gamma[k, (dim_x+1): (2*dim_x)])
     gamma_ns = rep(0, times = dim_x)
     lst_mean_x_and_pi = simulate_data_func(gamma_ah=gamma_ah, gamma_pro=gamma_pro, gamma_ns=gamma_ns,
-                           xi=xi, two_log_models_DGM=two_log_models_DGM, param_n=nn, 
+                           dim_x=dim_x, cont_x=cont_x, var_x=var_x,
+                           xi=xi, DGM_seq_bool=DGM_seq_bool, param_n=nn, 
                            misspec_PS=misspec_PS, misspec_outcome=0, transform_x=0,
                            funcform_factor1=funcform_factor1, funcform_factor2=funcform_factor2,
                            betas_GPI=betas_GPI, var_GPI=var_GPI, rho_GPI_PO=rho_GPI_PO, only_mean_x_bool=TRUE)

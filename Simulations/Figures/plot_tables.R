@@ -11,42 +11,6 @@ misspec_outcome = 2 # no misspec (misspec_PS=0) # Func Form misspec (misspec_PS=
 xi_values = c(0, 0.05, 0.1, 0.2) # sort(unique(full_results_table$xi)) # c(0, 0.05, 0.1, 0.2)
 
 
-##################################################################################################
-# general ####
-# estimators_vec = c("maha_cal_rep_FALSE", "OLS_int", "maha_cal_rep_TRUE", "WLS_int", "BC_cal_rep_TRUE", "DL_MA_est")
-# #legend_levels = c("Crude Wout", "OLS inter", "Crude With", "WLS inter", "BC With", "DingLu MA")
-# full_results_table = combine_small_large_pro_func(param_n=param_n, xi_values=xi_values, mis_xi=mis_xi,
-#                                                   AX_interactions=AX_interactions, misspec_outcome=misspec_outcome, misspec_PS=misspec_PS, 
-#                                                   estimators_vec=estimators_vec
-#                                                   #,legend_levels=legend_levels
-#                                                   )
-# dimx_vec = unique(sort(full_results_table$dim_x))
-# 
-# #pdf(file= "~/A matching framework for truncation by death problems/Bias_plots.pdf" )
-# #TODO dimx=k on X axis
-# figures_xi_values_lst = list()
-# for (i in 1 : length(xi_values)){
-#   small_large_pro = full_results_table %>% filter(xi==xi_values[i])
-#   figure = plot_tables_func_by_dimx(small_large_pro=small_large_pro, param_n=param_n, mis_xi=mis_xi,
-#            AX_interactions=AX_interactions, misspec_outcome=misspec_outcome, misspec_PS=misspec_PS,  
-#            legend_levels=legend_levels, extract_legend_bool=FALSE) 
-#   figures_xi_values_lst[[i]] = figure
-# }
-# names(figures_xi_values_lst) = paste0("xi_", xi_values)
-# 
-# #TODO xi on X axis
-# figures_dimx_values_lst = list()
-# for (i in 1:length(dimx_vec)){
-#   small_large_pro = full_results_table %>% filter(dim_x==dimx_vec[i])
-#   figure = plot_tables_func_by_xi(small_large_pro=small_large_pro, param_n=param_n, mis_xi=mis_xi,
-#            AX_interactions=AX_interactions, misspec_outcome=misspec_outcome, misspec_PS=misspec_PS, 
-#            legend_levels=legend_levels, extract_legend_bool=FALSE) 
-#   figures_dimx_values_lst[[i]] = figure
-# }
-# names(figures_dimx_values_lst) = paste0("X", dimx_vec)
-# #dev.off()
-##################################################################################################
-
 figure_name = paste0(ifelse(mis_xi, "Mis_xi", "Crct_xi"), "_Yinteractions=", AX_interactions, "_misY=", misspec_outcome, "_misPS=", misspec_PS, "_N", param_n)
 ##################################################################################################
 # paperStyle GENERAL####

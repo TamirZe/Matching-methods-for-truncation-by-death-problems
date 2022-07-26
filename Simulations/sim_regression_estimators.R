@@ -1,45 +1,36 @@
-#TODO all_measures_matched_lst from main_newWF
-# dt_match_S1=all_measures_matched_lst$only_ps_lst$dt_match_S1; m_data=m_data
-# matched_data=all_measures_matched_lst$only_ps_lst$matched_data; matched_pairs=all_measures_matched_lst$only_ps_lst$matched_pairs
-# covariates=X_sub_cols[-1]; reg_covariates=X_sub_cols[-1]; interactions_bool=FALSE; LS=LS_bool; mu_x_fixed=F; x_as=x_as
-
-
-#TODO dont really need dt_match_S1 
-#TODO for now we use covariates. we don't use reg_covariates currently
 regression_adjusted_function = function(m_data, matched_data, matched_pairs,
-                                        covariates, reg_covariates, interactions_bool, LS, mu_x_fixed=FALSE, x_as){
-  estimation_with_interactions = function(lin_reg_fit_matched, coeffs_table, data_matched_reg, 
-                                          lin_reg_fit_wls_matched=NULL, coeffs_table_wls=NULL, # data_matched_reg_weights=NULL,
-                                          LS_for_estimation, x_as){
+                                        reg_covariates, interactions_bool, LS, mu_x_fixed=FALSE, x_as=NULL){
+  
+  estimation_with_interactions = function(lin_reg_fit_matched, coeffs_table, data_matched_reg,  
+                                          lin_reg_fit_wls_matched=NULL, coeffs_table_wls=NULL, 
+                                          LS_reg_name, reg_covariates, mu_x_fixed=FALSE, x_as=NULL){
     coeffs = coeffs_table[,1]
     names_coeffs_interactions = c("A", names(coeffs)[grep(":", names(coeffs))])
     coeffs_interactions = coeffs[names_coeffs_interactions]
-    var_mu_x = apply(subset(filter(data_matched_reg, A==0), select = covariates), 2, var) / 
+    var_mu_x = apply(subset(filter(data_matched_reg, A==0), select = reg_covariates), 2, var) / 
       nrow(filter(data_matched_reg, A==0))
     
-    x = subset(data_matched_reg, select = c("A", covariates))
+    x = subset(data_matched_reg, select = c("A", reg_covariates))
     # the 1 is for the add to intercerpt for the treated (which is the coeff of A)
-    x_check = subset(data_matched_reg, select = c("A", covariates))
-    mu_x_check = c(A = 1, apply(subset(filter(x_check, A==0), select = -A), 2, mean))
-
     if(mu_x_fixed == TRUE){mu_x_vec=x_as}else{
       mu_x_vec = c(A = 1, apply(subset(filter(x, A==0), select = -A), 2, mean))
     }
     beta_est = mu_x_vec %*% coeffs_interactions
     
-    if(LS_for_estimation=="OLS"){
+    if(LS_reg_name=="OLS"){
       cluster_coeffs = data.frame(coef_test(lin_reg_fit_matched, vcov = "CR1", cluster = data_matched_reg$pair))
       vcov_clstr_interactions = vcovCL(lin_reg_fit_matched, cluster = ~ pair)[names_coeffs_interactions, names_coeffs_interactions]
       vcov_clstr_interactions2 <- 
         vcovCR(lin_reg_fit_matched, cluster = data_matched_reg$pair, type = "CR1")[names_coeffs_interactions, names_coeffs_interactions] 
       se_beta_est_clstr <- 
         sqrt( matrix(mu_x_vec, nrow=1) %*% vcov_clstr_interactions %*% matrix(mu_x_vec, ncol=1) )
-      # DELTA METHOD for WLS
+      
+      # DELTA METHOD for OLS
       se_beta_est_clstr_DM = sqrt( se_beta_est_clstr^2 + sum( (coeffs_interactions[-1])^2 * var_mu_x ) )
       estimators = c(beta_est, se_beta_est_clstr_DM)
       }
     
-    if(LS_for_estimation=="WLS"){
+    if(LS_reg_name=="WLS"){
       se = coeffs_table[,2]
       se_interactions = se[names_coeffs_interactions]
       vcov = vcov(lin_reg_fit_wls_matched) 
@@ -71,16 +62,16 @@ regression_adjusted_function = function(m_data, matched_data, matched_pairs,
   # reg model's formula - wout and with A-X interaction
   if(interactions_bool == FALSE){
     print("NO interactions in model")
-    f = as.formula(paste0("Y ~ ", paste(c("A", covariates), collapse = " + ")))
+    f = as.formula(paste0("Y ~ ", paste(c("A", reg_covariates), collapse = " + ")))
   }else{
     print("interactions in model")
     # if only A in the model, there are actually no interactions
-    if(is.null(covariates)){
+    if(is.null(reg_covariates)){
       print("only A in the model, there are actually no interactions")
-      f = as.formula(paste0("Y ~ ", paste(c("A", covariates), collapse = " + "))) 
+      f = as.formula(paste0("Y ~ ", paste(c("A", reg_covariates), collapse = " + "))) 
     }else{
-      f = as.formula(paste0("Y ~ ", paste(c("A", covariates), collapse = " + "), " + ",
-                            paste("A *", covariates, collapse=" + "))) # rep("A*",length(covariates))
+      f = as.formula(paste0("Y ~ ", paste(c("A", reg_covariates), collapse = " + "), " + ",
+                            paste("A *", reg_covariates, collapse=" + "))) 
     }
   }
   
@@ -100,8 +91,9 @@ regression_adjusted_function = function(m_data, matched_data, matched_pairs,
     }
     # WITH INTERACTIONS
     if(interactions_bool == TRUE){
-      estimator_and_se = estimation_with_interactions(lin_reg_fit_matched=lin_reg_matched, coeffs_table= coeffs_table,
-                            LS_for_estimation="OLS", data_matched_reg=reg_data_matched, x_as=x_as)
+      estimator_and_se = estimation_with_interactions(
+        lin_reg_fit_matched=lin_reg_matched, coeffs_table=coeffs_table, data_matched_reg=reg_data_matched, 
+        LS_reg_name="OLS", reg_covariates=reg_covariates, mu_x_fixed=mu_x_fixed, x_as=x_as)
     }
     
     estimator_and_se = data.frame(t(estimator_and_se))
@@ -117,7 +109,6 @@ regression_adjusted_function = function(m_data, matched_data, matched_pairs,
     weights = data.frame(table(matched_pairs$id))
     colnames(weights) = c("id", "weight")
     weights = apply(weights, 2, as.numeric)
-    #reg_data_matched_weights = merge(weights, reg_data_matched_wout_pairs, by = "id") %>% arrange(id)
     reg_data_matched_weights = merge(weights, reg_data_matched, by = "id") %>% arrange(id)
     reg_data_matched_weights = subset(reg_data_matched_weights, !duplicated(reg_data_matched_weights$id))
     
@@ -140,12 +131,14 @@ regression_adjusted_function = function(m_data, matched_data, matched_pairs,
     if(interactions_bool == TRUE){
       # summary of WLS
       sum_matched = summary(lin_reg_matched)
-      sum_matched_wls = summary(lin_reg_matched_wls)
       coeffs_table = sum_matched$coefficients
+      sum_matched_wls = summary(lin_reg_matched_wls)
       coeffs_table_wls = sum_matched_wls$coefficients
-      estimator_and_se = estimation_with_interactions(lin_reg_fit_matched=lin_reg_matched, coeffs_table=coeffs_table, data_matched_reg=reg_data_matched,
-           lin_reg_fit_wls_matched=lin_reg_matched_wls, coeffs_table_wls=coeffs_table_wls,
-           LS_for_estimation="WLS", x_as=x_as) 
+      
+      estimator_and_se = estimation_with_interactions(
+        lin_reg_fit_matched=lin_reg_matched, coeffs_table=coeffs_table, data_matched_reg=reg_data_matched, 
+        lin_reg_fit_wls_matched=lin_reg_matched_wls, coeffs_table_wls=coeffs_table_wls,
+        LS_reg_name="WLS", reg_covariates=reg_covariates, mu_x_fixed=mu_x_fixed, x_as=x_as) 
     }
     estimator_and_se = data.frame(t(estimator_and_se))
     colnames(estimator_and_se) = paste0("WLS", "_", c("estimator", "naive_se", "sandwi_se", "clstr_se"))

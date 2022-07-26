@@ -15,9 +15,9 @@ figure_name = paste0(ifelse(mis_xi, "Mis_xi", "Crct_xi"), "_Yinteractions=", AX_
 ##################################################################################################
 # paperStyle GENERAL####
 estimators_vec_gnrl = c("maha_cal_rep_TRUE", "PS_rep_TRUE", "OLS_int", "WLS_int", "DL_MA_est")
-legend_labels_gnrl = c("Matching:Crude", "Matching:PS", "Matching:RegressionOLS",  "Matching:RegressionWLS", "Weighting")
-colors_arg_gnrl = c("palevioletred3", "yellow", "dodgerblue3", "red4", "forestgreen")
-shapes_arg_gnrl = c(15, 15, 16, 17, 18)
+legend_labels_gnrl = c("Matching:Crude", "Matching:PScrude", "Matching:RegressionOLS",  "Matching:RegressionWLS", "Weighting")
+colors_arg_gnrl = c("palevioletred3", "#330033", "dodgerblue3", "red4", "forestgreen")
+shapes_arg_gnrl = c(15, 0, 16, 17, 18)
 # COMPARE TO pdf
 # estimators_vec_gnrl = c("maha_cal_rep_FALSE", "OLS_int", "maha_cal_rep_TRUE", "WLS_int",  "BC_cal_rep_TRUE", "DL_MA_est")
 # legend_labels_gnrl = c("Crude Wout", "OLS inter", "Crude With", "WLS inter", "BC With", "DingLu MA")
@@ -45,8 +45,8 @@ figures_dimx_values_lst_paperStyle = list()
 for (i in 1:length(dimx_vec)){
   small_large_pro = full_results_table %>% filter(dim_x==dimx_vec[i])
   figure = plot_tables_func_by_xi_paperStyle(small_large_pro=small_large_pro, param_n=param_n, mis_xi=mis_xi
-                                             ,AX_interactions=AX_interactions, misspec_outcome=misspec_outcome, misspec_PS=misspec_PS
-                                             ,estimators_vec=estimators_vec_gnrl, legend_labels=legend_labels_gnrl, colors_arg=colors_arg_gnrl, shapes_arg=shapes_arg_gnrl)
+   ,AX_interactions=AX_interactions, misspec_outcome=misspec_outcome, misspec_PS=misspec_PS
+   ,estimators_vec=estimators_vec_gnrl, legend_labels=legend_labels_gnrl, colors_arg=colors_arg_gnrl, shapes_arg=shapes_arg_gnrl)
   figures_dimx_values_lst_paperStyle[[i]] = figure
 }
 names(figures_dimx_values_lst_paperStyle) = paste0("X", dimx_vec)
