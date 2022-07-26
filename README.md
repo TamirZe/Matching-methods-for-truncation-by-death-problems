@@ -15,6 +15,8 @@ Information regarding the parameters we used in each of the Scenarios is given i
 
 3. EM:
 
+4. Simulations_figures:
+
 
 ### Simulations
 The simulation can be ran through "sim_main" file, except for the files used for plotting the results. 
