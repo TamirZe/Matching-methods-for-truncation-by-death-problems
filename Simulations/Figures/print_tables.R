@@ -82,3 +82,4 @@ tab = tab[!tab$Estimator=="SACE",]
 print(tab2 %>% xtable(digits=c(0, rep(2, 8), 3, rep(2, 4), 3, 3)), 
       size="\\fontsize{11pt}{11pt}\\selectfont", include.rownames=T) # xtable(digits=c(2))
 ############################################################################
+
