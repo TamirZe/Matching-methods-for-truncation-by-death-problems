@@ -1,36 +1,32 @@
 library(data.table); library(plyr); library(dplyr); library(rlang); library(rlist);library(ggplot2); library(mgsub)
 library(cowplot); library(ggpubr); library(textclean)
 setwd("~/A matching framework for truncation by death problems")
-source("Simulations_figures/plot_tables_functions.R")
+source("Simulations/Figures/plot_tables_functions.R")
 
 param_n=2000
-AX_interactions = T
-misspec_PS = 0 # no misspec (misspec_PS=0) # Func Form misspec (misspec_PS=2)
-misspec_outcome = 0 # no misspec (misspec_PS=0) # Func Form misspec (misspec_PS=2)
 mis_xi = 0
+AX_interactions = T
+misspec_PS = 2 # no misspec (misspec_PS=0) # Func Form misspec (misspec_PS=2)
+misspec_outcome = 2 # no misspec (misspec_PS=0) # Func Form misspec (misspec_PS=2)
 xi_values = c(0, 0.05, 0.1, 0.2) # sort(unique(full_results_table$xi)) # c(0, 0.05, 0.1, 0.2)
-#xi_assm_values = c(0, 0.05, 0.1, 0.2)
 
-#figure_name = paste0(ifelse(mis_xi, "Mis_xi", "Crct_xi"), "_Yinteractions=", AX_interactions, "_misY=", misspec_outcome, "_misPS=", misspec_PS, "_N", param_n)
+
 figure_name = paste0(ifelse(mis_xi, "Mis_xi", "Crct_xi"), "_Yinteractions=", AX_interactions, "_misY=", misspec_outcome, "_misPS=", misspec_PS, "_N", param_n)
-
 ##################################################################################################
-results_summary$results_table
 # paperStyle GENERAL####
 estimators_vec_gnrl = c("maha_cal_rep_TRUE", "maha_cal_rep_FALSE", "PS_rep_TRUE", "OLS_int", "WLS_int", "BC_cal_rep_TRUE", "DL_MA_est")
 legend_labels_gnrl = c("Matching:Crude", "Matching:CrudeWout", "Matching:PS", 
                        "Matching:RegressionOLS",  "Matching:RegressionWLS", "Matching:BC", "Weighting")
 colors_arg_gnrl = c("palevioletred3", "yellow", "yellow", "dodgerblue3", "red4", "forestgreen", "forestgreen")
 shapes_arg_gnrl = c(15, 15, 15, 16, 17, 18, 18)
-
-estimators_vec_gnrl = c("mahal_crude_Yes_rep", "mahal_OLS_int", "mahal_WLS_int", "PS_OLS_int",  "PS_WLS_int",  "DL_MA_est")
-legend_labels_gnrl = c("Mahal", "Mahal:OLS", "Mahal:WLS", "PS:OLS", "PS:WLS", "DL")
-colors_arg_gnrl = c("palevioletred3", "yellow", "yellow", "dodgerblue3", "red4", "forestgreen")
-shapes_arg_gnrl = c(0, 15, 15, 16, 16, 18)
-
+# COMPARE TO pdf
+# estimators_vec_gnrl = c("maha_cal_rep_FALSE", "OLS_int", "maha_cal_rep_TRUE", "WLS_int",  "BC_cal_rep_TRUE", "DL_MA_est")
+# legend_labels_gnrl = c("Crude Wout", "OLS inter", "Crude With", "WLS inter", "BC With", "DingLu MA")
+# colors_arg_gnrl = c("forestgreen", "dodgerblue3", "yellow1", "firebrick3", "palevioletred3", "black")
+# shapes_arg_gnrl = c(1, 2, 15, 16, 17, 18)  
   
-full_results_table = combine_small_large_pro_func(param_n=param_n, xi_values=xi_values, xi_assm_values=xi_assm_values, mis_xi=mis_xi,
-    AX_interactions=AX_interactions, misspec_outcome=misspec_outcome, misspec_PS=misspec_PS, estimators_vec=estimators_vec_gnrl)
+full_results_table = combine_small_large_pro_func(param_n=param_n, xi_values=xi_values, mis_xi=mis_xi,
+        AX_interactions=AX_interactions, misspec_outcome=misspec_outcome, misspec_PS=misspec_PS, estimators_vec=estimators_vec_gnrl)
 dimx_vec = unique(sort(full_results_table$dim_x))
 
 pdf(file = paste0("~/A matching framework for truncation by death problems/Figures_pdf/Bias_GENERAL_", figure_name, ".pdf")) # Figures_pdf/Bias_GENERAL_"

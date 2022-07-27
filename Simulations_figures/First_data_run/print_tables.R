@@ -6,7 +6,7 @@ source("Simulations/Figures/plot_tables_functions.R")
 ############################################################################
 param_n=2000
 mis_xi = 0
-AX_interactions = F
+AX_interactions = T
 misspec_PS = 0 # no misspec (misspec_PS=0) # Func Form misspec (misspec_PS=2)
 misspec_outcome = 0 # no misspec (misspec_PS=0) # Func Form misspec (misspec_PS=2)
 xi_values = c(0, 0.05, 0.1, 0.2) # sort(unique(full_results_table$xi)) # c(0, 0.05, 0.1, 0.2)

@@ -1,35 +1,65 @@
 ##################################################################################################
-##################################################################################################
 # path to results_tables ####
-path_func = function(param_n, xi_assm, xi, AX_interactions, misspec_outcome, misspec_PS){
+path_func_old = function(param_n, xi, AX_interactions, misspec_outcome, misspec_PS){
   # Cluster/GH
   #main_path = "/a/home/cc/stud_math/tamirzehavi/MatchingSACE/Simulation_studies/"
   #path_data = paste0(main_path, "Data/")
   
   # local
   main_path = "~/A matching framework for truncation by death problems/"
+  path_data = paste0(main_path, "Data_cluster/")
   
-  path_data = paste0(main_path, "Data_cluster_new/")
-  path = paste0(path_data, "Data_DGM_seq/N=", param_n, "/",
-        ifelse(AX_interactions==T, "True_outcome_with_interactions/", "True_outcome_wout_interactions/"),
-        ifelse(misspec_outcome==0, "Correct_spec_outcome/", "Mis_spec_outcome/"),
-        ifelse(misspec_PS==0, "Correct_spec_PS/", "Mis_spec_PS/"))
-  
+  path = paste0(path_data, "N=", param_n, 
+                ifelse(AX_interactions==T, "/True_outcome_with_interactions/", "/True_outcome_wout_interactions/"),
+                ifelse(misspec_outcome==0, "Correct_spec_outcome/", "Mis_spec_outcome/"),
+                ifelse(misspec_PS==0, "Correct_spec_PS/", "Mis_spec_PS/"))
   all_path_lst = list(
-    small_pro_small_as_path3 = paste0(path, "3X/Low_pi_pro/pi_as_0.5/", "xi_assm=", xi_assm, "/xi=", xi, "/"),
-    small_pro_large_as_path3 = paste0(path, "3X/Low_pi_pro/pi_as_0.75/", "xi_assm=", xi_assm, "/xi=", xi, "/"),
-    large_pro_small_as_path3 = paste0(path, "3X/Large_pi_pro/pi_as_0.5/", "xi_assm=", xi_assm, "/xi=", xi, "/"),
-    large_pro_large_as_path3 = paste0(path, "3X/Large_pi_pro/pi_as_0.75/", "xi_assm=", xi_assm, "/xi=", xi, "/"),
-    small_pro_small_as_path5 = paste0(path, "5X/Low_pi_pro/pi_as_0.5/", "xi_assm=", xi_assm, "/xi=", xi, "/"),
-    small_pro_large_as_path5 = paste0(path, "5X/Low_pi_pro/pi_as_0.75/", "xi_assm=", xi_assm, "/xi=", xi, "/"),
-    large_pro_small_as_path5 = paste0(path, "5X/Large_pi_pro/pi_as_0.5/", "xi_assm=", xi_assm, "/xi=", xi, "/"),
-    large_pro_large_as_path5 = paste0(path, "5X/Large_pi_pro/pi_as_0.75/", "xi_assm=", xi_assm, "/xi=", xi, "/"),
-    small_pro_small_as_path10 = paste0(path, "10X/Low_pi_pro/pi_as_0.5/", "xi_assm=", xi_assm, "/xi=", xi, "/"),
-    small_pro_large_as_path10 = paste0(path, "10X/Low_pi_pro/pi_as_0.75/", "xi_assm=", xi_assm, "/xi=", xi, "/"),
-    large_pro_small_as_path10 = paste0(path, "10X/Large_pi_pro/pi_as_0.5/", "xi_assm=", xi_assm, "/xi=", xi, "/"),
-    large_pro_large_as_path10 = paste0(path, "10X/Large_pi_pro/pi_as_0.75/", "xi_assm=", xi_assm, "/xi=", xi, "/")
+    small_pro_small_as_path3 = paste0(path, "3X/Low_pi_pro/pi_as_0.5/", "xi = ", xi, "/"),
+    small_pro_large_as_path3 = paste0(path, "3X/Low_pi_pro/pi_as_0.75/", "xi = ", xi, "/"),
+    large_pro_small_as_path3 = paste0(path, "3X/Large_pi_pro/pi_as_0.5/", "xi = ", xi, "/"),
+    large_pro_large_as_path3 = paste0(path, "3X/Large_pi_pro/pi_as_0.75/", "xi = ", xi, "/"),
+    small_pro_small_as_path5 = paste0(path, "5X/Low_pi_pro/pi_as_0.5/", "xi = ", xi, "/"),
+    small_pro_large_as_path5 = paste0(path, "5X/Low_pi_pro/pi_as_0.75/", "xi = ", xi, "/"),
+    large_pro_small_as_path5 = paste0(path, "5X/Large_pi_pro/pi_as_0.5/", "xi = ", xi, "/"),
+    large_pro_large_as_path5 = paste0(path, "5X/Large_pi_pro/pi_as_0.75/", "xi = ", xi, "/"),
+    small_pro_small_as_path10 = paste0(path, "10X/Low_pi_pro/pi_as_0.5/", "xi = ", xi, "/"),
+    small_pro_large_as_path10 = paste0(path, "10X/Low_pi_pro/pi_as_0.75/", "xi = ", xi, "/"),
+    large_pro_small_as_path10 = paste0(path, "10X/Large_pi_pro/pi_as_0.5/", "xi = ", xi, "/"),
+    large_pro_large_as_path10 = paste0(path, "10X/Large_pi_pro/pi_as_0.75/", "xi = ", xi, "/")
   )
+  return(all_path_lst=all_path_lst)
+}
+##################################################################################################
+
+##################################################################################################
+path_func = function(param_n, xi, mis_xi, AX_interactions, misspec_outcome, misspec_PS){
+  # Cluster/GH
+  #main_path = "/a/home/cc/stud_math/tamirzehavi/MatchingSACE/Simulation_studies/"
+  #path_data = paste0(main_path, "Data/")
   
+  # local
+  main_path = "~/A matching framework for truncation by death problems/"
+  path_data = paste0(main_path, "Data_cluster/")
+  
+  path = paste0(path_data, "Data_DGMseq/N=", param_n, "/",
+                ifelse(mis_xi==0, "Data_crct_xi/", "Data_Mis_xi/"),
+                ifelse(AX_interactions==T, "True_outcome_with_interactions/", "True_outcome_wout_interactions/"),
+                ifelse(misspec_outcome==0, "Correct_spec_outcome/", "Mis_spec_outcome/"),
+                ifelse(misspec_PS==0, "Correct_spec_PS/", "Mis_spec_PS/"))
+  all_path_lst = list(
+    small_pro_small_as_path3 = paste0(path, "3X/Low_pi_pro/pi_as_0.5/", "xi = ", xi, "/"),
+    small_pro_large_as_path3 = paste0(path, "3X/Low_pi_pro/pi_as_0.75/", "xi = ", xi, "/"),
+    large_pro_small_as_path3 = paste0(path, "3X/Large_pi_pro/pi_as_0.5/", "xi = ", xi, "/"),
+    large_pro_large_as_path3 = paste0(path, "3X/Large_pi_pro/pi_as_0.75/", "xi = ", xi, "/"),
+    small_pro_small_as_path5 = paste0(path, "5X/Low_pi_pro/pi_as_0.5/", "xi = ", xi, "/"),
+    small_pro_large_as_path5 = paste0(path, "5X/Low_pi_pro/pi_as_0.75/", "xi = ", xi, "/"),
+    large_pro_small_as_path5 = paste0(path, "5X/Large_pi_pro/pi_as_0.5/", "xi = ", xi, "/"),
+    large_pro_large_as_path5 = paste0(path, "5X/Large_pi_pro/pi_as_0.75/", "xi = ", xi, "/"),
+    small_pro_small_as_path10 = paste0(path, "10X/Low_pi_pro/pi_as_0.5/", "xi = ", xi, "/"),
+    small_pro_large_as_path10 = paste0(path, "10X/Low_pi_pro/pi_as_0.75/", "xi = ", xi, "/"),
+    large_pro_small_as_path10 = paste0(path, "10X/Large_pi_pro/pi_as_0.5/", "xi = ", xi, "/"),
+    large_pro_large_as_path10 = paste0(path, "10X/Large_pi_pro/pi_as_0.75/", "xi = ", xi, "/")
+  )
   return(all_path_lst=all_path_lst)
 }
 ##################################################################################################
@@ -59,16 +89,13 @@ add_bias_tables = function(res_tab, estimators_vec=NULL, N, num_of_x){
 
 # estimators_vec: vec of estimators name
 ##################################################################################################
-combine_small_large_pro_func = function(param_n, xi_values, mis_xi, AX_interactions, 
-                                        misspec_outcome, misspec_PS, estimators_vec){
+combine_small_large_pro_func = function(param_n, xi_values, mis_xi, AX_interactions, misspec_outcome, misspec_PS, estimators_vec){
   
   small_large_pro = NULL
-  #for(j in 1:length(xi_assm_values))
   for(i in 1:length(xi_values)){
     xi = xi_values[i]
-    if(mis_xi==0){ xi_assm=xi }else{ xi_assm=0 }
     ind=i-1
-    all_path_lst = path_func(param_n=param_n, xi_assm=xi_assm, xi=xi,  
+    all_path_lst = path_func(param_n=param_n, xi=xi, mis_xi=mis_xi, 
                              AX_interactions=AX_interactions, misspec_outcome=misspec_outcome, misspec_PS=misspec_PS)
     
     # ind from plot_path, the index of xi in c(0,0.05,0.1,0.2) 
@@ -77,22 +104,22 @@ combine_small_large_pro_func = function(param_n, xi_values, mis_xi, AX_interacti
     # read data: matching on mahalanobis with PS caliper - several estimators (final_tables_general)
     
     # 3X
-    table_small_pro_small_as_3 = get(load(paste0(all_path_lst$small_pro_small_as_path3, "results_table_", xi_assm, "_",  xi, ".RData"))) 
-    table_small_pro_large_as_3 = get(load(paste0(all_path_lst$small_pro_large_as_path3, "results_table_", xi_assm, "_",  xi, ".RData"))) 
-    table_large_pro_small_as_3 = get(load(paste0(all_path_lst$large_pro_small_as_path3, "results_table_", xi_assm, "_",  xi, ".RData"))) 
-    table_large_pro_large_as_3 = get(load(paste0(all_path_lst$large_pro_large_as_path3, "results_table_", xi_assm, "_",  xi, ".RData"))) 
+    table_small_pro_small_as_3 = get(load(paste0(all_path_lst$small_pro_small_as_path3, "results_table_", ind,".RData"))) 
+    table_small_pro_large_as_3 = get(load(paste0(all_path_lst$small_pro_large_as_path3, "results_table_", ind,".RData"))) 
+    table_large_pro_small_as_3 = get(load(paste0(all_path_lst$large_pro_small_as_path3, "results_table_", ind,".RData"))) 
+    table_large_pro_large_as_3 = get(load(paste0(all_path_lst$large_pro_large_as_path3, "results_table_", ind,".RData"))) 
     
     # 5X
-    table_small_pro_small_as_5 = get(load(paste0(all_path_lst$small_pro_small_as_path5, "results_table_", xi_assm, "_",  xi, ".RData"))) 
-    table_small_pro_large_as_5 = get(load(paste0(all_path_lst$small_pro_large_as_path5, "results_table_", xi_assm, "_",  xi, ".RData"))) 
-    table_large_pro_small_as_5 = get(load(paste0(all_path_lst$large_pro_small_as_path5, "results_table_", xi_assm, "_",  xi, ".RData"))) 
-    table_large_pro_large_as_5 = get(load(paste0(all_path_lst$large_pro_large_as_path5, "results_table_", xi_assm, "_",  xi, ".RData"))) 
+    table_small_pro_small_as_5 = get(load(paste0(all_path_lst$small_pro_small_as_path5, "results_table_", ind,".RData"))) 
+    table_small_pro_large_as_5 = get(load(paste0(all_path_lst$small_pro_large_as_path5, "results_table_", ind,".RData"))) 
+    table_large_pro_small_as_5 = get(load(paste0(all_path_lst$large_pro_small_as_path5, "results_table_", ind,".RData"))) 
+    table_large_pro_large_as_5 = get(load(paste0(all_path_lst$large_pro_large_as_path5, "results_table_", ind,".RData")))
     
     # 10X
-    table_small_pro_small_as_10 = get(load(paste0(all_path_lst$small_pro_small_as_path10, "results_table_", xi_assm, "_",  xi, ".RData"))) 
-    table_small_pro_large_as_10 = get(load(paste0(all_path_lst$small_pro_large_as_path10, "results_table_", xi_assm, "_",  xi, ".RData"))) 
-    table_large_pro_small_as_10 = get(load(paste0(all_path_lst$large_pro_small_as_path10, "results_table_", xi_assm, "_",  xi, ".RData"))) 
-    table_large_pro_large_as_10 = get(load(paste0(all_path_lst$large_pro_large_as_path10, "results_table_", xi_assm, "_",  xi, ".RData"))) 
+    table_small_pro_small_as_10 = get(load(paste0(all_path_lst$small_pro_small_as_path10, "results_table_", ind,".RData"))) 
+    table_small_pro_large_as_10 = get(load(paste0(all_path_lst$small_pro_large_as_path10, "results_table_", ind,".RData"))) 
+    table_large_pro_small_as_10 = get(load(paste0(all_path_lst$large_pro_small_as_path10, "results_table_", ind,".RData"))) 
+    table_large_pro_large_as_10 = get(load(paste0(all_path_lst$large_pro_large_as_path10, "results_table_", ind,".RData")))
     ##################################################################################################
     
     ##################################################################################################
@@ -311,3 +338,125 @@ plot_tables_func_by_xi_paperStyle_flex = function(small_large_pro, param_n, mis_
 }
 ##################################################################################################
 
+##################################################################################################
+plot_tables_func_by_dimx = function(small_large_pro, param_n, mis_xi, AX_interactions, misspec_outcome, misspec_PS, 
+                                    legend_levels, extract_legend_bool=FALSE){
+  
+  # plot ####
+  # http://www.cookbook-r.com/Graphs/Facets_(ggplot2)/ # https://www.datanovia.com/en/blog/ggplot-legend-title-position-and-labels # http://r-statistics.co/Complete-Ggplot2-Tutorial-Part2-Customizing-Theme-With-R-Code.html
+  
+  #small_large_pro$rel_bias[1:6] = 0
+  plot_general <- ggplot(small_large_pro, aes(x=l, y=Bias)) + # Bias # rel_bias 
+    geom_point(aes(col = EstCombi, size = 7)) + # shape = EstCombi
+    xlim("3", "5", "10") +
+    labs(colour = "Estimator"
+         #, size = "Emp SD"
+    ) + 
+    guides(colour = guide_legend(order = 1, override.aes = list(size=7))
+           , size=FALSE
+    ) + 
+    geom_hline(yintercept = 0 )
+  
+  plot_general = plot_general + scale_color_manual(name="Estimator", 
+                                                   labels = legend_levels, 
+                                                   values = c("Crude Wout" = "forestgreen", "OLS inter" = "dodgerblue3",
+                                                              "Crude With" = "yellow1", "WLS inter" = "firebrick3", "BC With" = "palevioletred3", "DingLu MA" = "black"))  +
+    facet_grid(glue('pi[pro]*" : {protected}"') ~ glue('pi[as]*" = {pi_as}"'), labeller = label_parsed) +
+    theme(
+      strip.text.x = element_text(size=16, face="bold"),
+      strip.text.y = element_text(size=16, face="bold"),
+      strip.background = element_rect(colour="black", fill="white")
+    ) + 
+    labs(y="Bias", x="k") + 
+    # param_n=param_n, xi=unique(small_large_pro$xi), AX_interactions=AX_interactions, misspec_outcome=misspec_outcome, misspec_PS=misspec_PS
+    #ggtitle(glue('xi" : 0"')) + 
+    ggtitle(paste0(bquote(xi), "=", unique(small_large_pro$xi), "(", ifelse(mis_xi, "Mis xi", "crct xi") , "), interactions=", 
+                   AX_interactions, ", mis_Y=", misspec_outcome, ", mis_PS=", misspec_PS, ", N=", param_n)) + 
+    theme(plot.title=element_text(size=15, color="black", hjust=0.5,
+                                  lineheight=1.2),  # title
+          plot.subtitle=element_text(size=15, 
+                                     family="American Typewriter",
+                                     face="bold",
+                                     hjust=0.5),  # subtitle
+          plot.caption=element_text(size=10),  # caption
+          axis.title.x=element_text(
+            size=22),  # X axis title
+          axis.title.y=element_text(size=22),  # Y axis title
+          axis.text.x=element_text(size=15, 
+                                   angle = 30,
+                                   vjust=.5),  # X axis text
+          axis.text.y=element_text(size=15)) # Y axis text
+  
+  if(extract_legend_bool == TRUE){
+    # Extract the legend. Returns a gtable
+    lgnd_general <- get_legend(plot_general)
+    # Convert to a ggplot and print
+    as_ggplot(lgnd_general)
+    plot_general = plot_general + theme(legend.position = 'none') 
+  }
+  
+  print(plot_general)
+  return(plot_general=plot_general)
+}
+##################################################################################################
+
+##################################################################################################
+plot_tables_func_by_xi = function(small_large_pro, param_n, mis_xi, AX_interactions, misspec_outcome, misspec_PS, 
+                                  legend_levels, extract_legend_bool){
+  # plot
+  # http://www.cookbook-r.com/Graphs/Facets_(ggplot2)/ # https://www.datanovia.com/en/blog/ggplot-legend-title-position-and-labels # http://r-statistics.co/Complete-Ggplot2-Tutorial-Part2-Customizing-Theme-With-R-Code.html
+  
+  #small_large_pro$rel_bias[1:6] = 0
+  plot_general <- ggplot(small_large_pro, aes(x=as.factor(xi), y=Bias)) + # Bias # rel_bias 
+    geom_point(aes(col = EstCombi, size = 7)) + # shape = EstCombi
+    #xlim("0", ".05", "0.1", ".2") +
+    labs(colour = "Estimator"
+         #, size = "Emp SD"
+    ) + 
+    guides(colour = guide_legend(order = 1, override.aes = list(size=7))
+           , size=FALSE
+    ) + 
+    geom_hline(yintercept = 0)
+  
+  plot_general = plot_general + scale_color_manual(name="Estimator", 
+                                                   labels = legend_levels, 
+                                                   values = c("Crude Wout" = "forestgreen", "OLS inter" = "dodgerblue3",
+                                                              "Crude With" = "yellow1", "WLS inter" = "firebrick3", "BC With" = "palevioletred3", "DingLu MA" = "black")) +
+    facet_grid(glue('pi[pro]*" : {protected}"') ~ glue('pi[as]*" = {pi_as}"'), labeller = label_parsed) +
+    theme(
+      strip.text.x = element_text(size=16, face="bold"),
+      strip.text.y = element_text(size=16, face="bold"),
+      strip.background = element_rect(colour="black", fill="white")
+    ) + 
+    labs(y="Bias", x=bquote(xi)) + 
+    # param_n=param_n, xi=xi, AX_interactions=AX_interactions, misspec_outcome=misspec_outcome, misspec_PS=misspec_PS
+    #ggtitle(glue('xi" : 0"')) + 
+    ggtitle(paste0(unique(small_large_pro$dim_x) ,"X, ", ifelse(mis_xi, "Mis xi", "Crct xi"), ", interactions=", 
+                   AX_interactions, ", mis_Y=", misspec_outcome, ", mis_PS=", misspec_PS, ", N=", param_n)) + 
+    theme(plot.title=element_text(size=15, color="black", hjust=0.5,
+                                  lineheight=1.2),  # title
+          plot.subtitle=element_text(size=15, 
+                                     family="American Typewriter",
+                                     face="bold",
+                                     hjust=0.5),  # subtitle
+          plot.caption=element_text(size=10),  # caption
+          axis.title.x=element_text(
+            size=22),  # X axis title
+          axis.title.y=element_text(size=22),  # Y axis title
+          axis.text.x=element_text(size=15, 
+                                   angle = 30,
+                                   vjust=.5),  # X axis text
+          axis.text.y=element_text(size=15)) # Y axis text
+  
+  if(extract_legend_bool == TRUE){
+    # Extract the legend. Returns a gtable
+    lgnd_general <- get_legend(plot_general)
+    # Convert to a ggplot and print
+    as_ggplot(lgnd_general)
+    plot_general = plot_general + theme(legend.position = 'none') 
+  }
+  
+  print(plot_general)
+  return(plot_general=plot_general)
+}
+##################################################################################################

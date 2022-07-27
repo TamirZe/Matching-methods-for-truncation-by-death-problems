@@ -84,19 +84,18 @@ caliper = 0.25; match_on = "O11_posterior_ratio"
 ###############################################################################################
 
 ###############################################################################################
-param_n_sim = 1000 # param_n = 2000; param_n_sim = 1000
+param_n_sim = 1000; param_n = 2000 # param_n = 2000; param_n_sim = 1000
 ###############################################################################################
 
 #############################################################################################
 xi_values = c(0, 0.05, 0.1, 0.2)
-arguments_mat = expand.grid(param_n = c(2000,  5000), AX_interactions = c(TRUE, FALSE), 
+arguments_mat = expand.grid(AX_interactions = c(TRUE, FALSE), 
       misspec_PS = c(0, 2), misspec_outcome = c(0, 2), xi = xi_values, xi_assm = xi_values) %>% 
-      arrange(param_n, AX_interactions, misspec_outcome, misspec_PS, xi_assm)
+      arrange(AX_interactions, misspec_outcome, misspec_PS, xi_assm)
 
 if( job_id >= 0 & job_id <= (nrow(arguments_mat) - 1) ){
   set.seed(101)
   # extract arguments from arguments_mat
-  param_n = arguments_mat[job_id+1, "param_n"]
   AX_interactions = arguments_mat[job_id+1, "AX_interactions"]
   # CPSR parameter
   xi = arguments_mat[job_id+1, "xi"]

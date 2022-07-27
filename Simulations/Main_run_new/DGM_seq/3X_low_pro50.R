@@ -92,9 +92,9 @@ xi_values = c(0, 0.05, 0.1, 0.2)
 # arguments_mat = expand.grid(param_n = c(2000,  5000), AX_interactions = c(TRUE, FALSE), 
 #  misspec_PS = c(0, 2), misspec_outcome = c(0, 2), xi = xi_values, xi_assm = xi_values) %>% 
 #  arrange(param_n, AX_interactions, misspec_outcome, misspec_PS, xi_assm)
-arguments_mat = expand.grid(AX_interactions = c(TRUE, FALSE), 
+arguments_mat = expand.grid(param_n = c(2000,  5000), AX_interactions = c(TRUE, FALSE), 
   misspec_PS = c(0, 2), misspec_outcome = c(0, 2), xi = xi_values, xi_assm = xi_values) %>% 
-  arrange(AX_interactions, misspec_outcome, misspec_PS, xi_assm)
+  arrange(param_n, AX_interactions, misspec_outcome, misspec_PS, xi_assm)
 
 if( job_id >= 0 & job_id <= (nrow(arguments_mat) - 1) ){
   set.seed(101)
