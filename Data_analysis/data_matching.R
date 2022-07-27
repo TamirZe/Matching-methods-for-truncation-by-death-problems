@@ -345,8 +345,11 @@ balance_after_matching = function(m_data, match_obj, dt_match, X_sub_cols, metri
   cont_var = setdiff(X_sub_cols[-1], disc_var)
   
   if(vertical_table == TRUE){
-    m_data_trt_cont = subset(dt_match, select = c("A", "EMest_p_as", "EMest_p_pro", "e_1_as", cont_var))
-    m_data_untrt_cont = subset(dt_match, select = paste0("A0_", c("A", "EMest_p_as", "EMest_p_pro", "e_1_as", cont_var)))
+    #m_data_trt_cont = subset(dt_match, select = c("A", "EMest_p_as", "EMest_p_pro", "e_1_as", cont_var))
+    #m_data_untrt_cont = subset(dt_match, select = paste0("A0_", c("A", "EMest_p_as", "EMest_p_pro", "e_1_as", cont_var)))
+    m_data_trt_cont = dt_match %>% select_if(names(.) %in% c("A", "EMest_p_as", "EMest_p_pro", "e_1_as", cont_var))
+    m_data_untrt_cont = dt_match %>% select_if(names(.) %in% paste0("A0_", c("A", "EMest_p_as", "EMest_p_pro", "e_1_as", cont_var)))
+    
     trt = rbind(c( m_data[A==1, .N, by="A"]$N, 0), 
                 data.frame(sapply(m_data_trt_cont, function(x) c(mean = mean(x), sd = sd(x))) %>% t))
     untrt = rbind(c( m_data[A==0, .N, by="A"]$N, 0), 

@@ -290,12 +290,13 @@ for (i in 1:param_n_sim){
   matching_estimators_mat[i,] = estimators
   colnames(matching_estimators_mat) = names(estimators)
   
+  # estimated SE of matching estimators
   DL_na = -101 # DL estimators do not include SE and CI
   SE = c(SACE=SACE, naive_estimators_SE, c(DL_est=DL_na, DL_MA_est=DL_na), matching_estimators_SE)
   matching_estimators_SE_mat[i,] = SE
   colnames(matching_estimators_SE_mat) = names(SE)
   
-  # CI of matching crude, BC and regression estimators after matching
+  # CI of matching estimators
   CI_mat[i,] = c(SACE=SACE, unlist(naive_estimators_CI), c(DL_est=DL_na, DL_MA_est=DL_na), matching_estimators_CI)
   colnames(CI_mat) = c("SACE", names(unlist(naive_estimators_CI)), names(DL_est),
                        names(matching_estimators_CI))

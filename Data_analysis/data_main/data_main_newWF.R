@@ -105,7 +105,9 @@ if(EM_est_seq == TRUE){ # EM-seq
   #   X=as.matrix(subset(data_for_EM, select = grep(paste(paste0("^",X_sub_cols[-1], "$"), collapse="|"), colnames(data_for_EM)))),
   #   Y=data_for_EM$Y, eta=xi_assm, iter.max=iterations_EM, error0=epsilon_EM)  
 }
+######################################################################## 
 
+######################################################################## 
 #EM error
 error = est_ding_lst$error
 #EM coeffs
@@ -128,7 +130,6 @@ DL_est = c(DL_est = est_ding_lst$AACE, DL_MA_est = est_ding_lst$AACE.reg)
 # bootstrap for DL estimator
 #boosting_results = run_boosting(data, BS=500, seed=19, iter.max=iterations, error0=epsilon_EM)
 ######################################################################## 
-
 
 ######################################################################## 
 # matching newWF ####
@@ -166,7 +167,9 @@ for(j in c(1:length(replace_vec))){
     matching_estimators_CI = c(matching_estimators_CI, CI_tmp, reg_estimator_tmp_lst$reg_matching_estimators_CI)
   }
 }
+######################################################################## 
 
+######################################################################## 
 # check ties in BC caliper (only after matching with replacement [[2]])
 #unlist(lapply(lapply(post_matching_analysis_lst[[2]], "[[", "BC_inference_lst"), "[[", "BC_ties_multiple_treated"))
 BC_ties = c(unlist(post_matching_analysis_lst[[2]]$ps_estimators$BC_inference_lst$BC_ties_multiple_treated), 
@@ -174,6 +177,14 @@ BC_ties = c(unlist(post_matching_analysis_lst[[2]]$ps_estimators$BC_inference_ls
             unlist(post_matching_analysis_lst[[2]]$mahal_cal_estimators$BC_inference_lst$BC_ties_multiple_treated))
 ######################################################################## 
 
+######################################################################## 
+estimators = c(naive_estimators, DL_est, matching_estimators)
+# estimated SE of matching estimators
+DL_na = -101 # DL estimators do not include SE and CI
+SE = c(naive_estimators_SE, c(DL_est=DL_na, DL_MA_est=DL_na), matching_estimators_SE)
+# CI of matching estimators
+CI = c(unlist(naive_estimators_CI), c(DL_est=DL_na, DL_MA_est=DL_na), matching_estimators_CI)
+######################################################################## 
 
 ######################################################################## 
 # TODO adjust to newWF
@@ -192,33 +203,56 @@ for (measure in names(data_pairs_lst)) {
 print(EM_coeffs %>% xtable(), size="\\fontsize{9pt}{9pt}\\selectfont", include.rownames=F)
 
 # balance  ####
+
 # balance in the full dataset
-balance_full_data = covarites_descriptive_table_cont_disc(dat = data_with_PS, cov_descr = variables)
-
-# TODO adjust to newWF
-# balance in the employed and in the matched dataset, using 3 distance measures
-#matching_datasets_lst[[1]]$balance_all_measures$mean_by_subset_mahal_cal
-BALANCE_TABLE = rbind(lst_matching_estimators[[1]][[1]]$balance_table, lst_matching_estimators[[2]][[1]]$balance_table) 
-
-BALANCE_TABLE_with = filter(BALANCE_TABLE, Replacements==TRUE, Variable != "N") %>% 
-  subset(select = -grep(".1|.2|Replacements", colnames(BALANCE_TABLE)))
-BALANCE_TABLE_wout = filter(BALANCE_TABLE, Replacements==FALSE, Variable != "N") %>% 
-  subset(select = -grep(".1|.2|Replacements", colnames(BALANCE_TABLE)))
-
-# balance in the full dataset, employed and matched dataset using mahalanobis with caliper
-BALANCE_TABLE_with = cbind(filter(balance_full_data, !Variable %in% c("N", "S")), 
-                           subset(BALANCE_TABLE_with, select = -Variable))
-BALANCE_TABLE_wout = cbind(filter(balance_full_data, !Variable %in% c("N", "S")), 
-                           subset(BALANCE_TABLE_wout, select = -Variable))
-
-colnames(BALANCE_TABLE_with) <- colnames(BALANCE_TABLE_wout) <- gsub("\\..*","", colnames(BALANCE_TABLE_with))
-print(BALANCE_TABLE_with[-c(4:6, 9, 15),] %>% xtable(caption = paste0("Matched data-set means, ", data_bool ," Sample.")), size="\\fontsize{6pt}{6pt}\\selectfont", include.rownames=F)
-print(BALANCE_TABLE_wout[-c(4:6),] %>% xtable(caption = paste0("Matched data-set means, ", data_bool ," Sample.")), size="\\fontsize{6pt}{6pt}\\selectfont", include.rownames=F)
+balance_full_data = covarites_descriptive_table_cont_disc(dat=data_with_PS, cov_descr=variables)
+# balance in the survivors (employed)
+balance_employed = covarites_descriptive_table_cont_disc(dat=data_with_PS[S==1], cov_descr=variables, metric="Employed")
+# combine full dataset and  survivors (employed)
+variables_remove = c("N", "N_match","N_unq", "EMest_p_as")
+variables_names_balance = setdiff(balance_full_data$Variable, variables_remove)
+balance_before_matching = merge(balance_full_data, balance_employed ,by="Variable", all.x = F)
+balance_before_matching = balance_before_matching[match(variables_names_balance, balance_before_matching$Variable), ]
+# colnames(balance_before_matching) = gsub("\\..*","", colnames(balance_before_matching))
 
 
-# matching estimators ####
-ESTIMATORS_TABLE = rbind(lst_matching_estimators[[1]][[1]]$summary_table, 
-                         lst_matching_estimators[[2]][[1]]$summary_table) %>% data.frame() 
+# balance in the matched dataset, using 3 distance measures, with and wout replacement
+Variables_balance_match = 
+  c("Metric","N","N_match","N_unq","EMest_p_as","age","education","re74","re75","black","hispanic","married","nodegree","emp74","emp75")
+balance_match_wout = balance_match_with = data.frame(Variable = Variables_balance_match)
+print(names(matching_datasets_lst[[2]])[1:length(matching_measures)]) # check this is the same order as matching_measures
+for (l in 1:length(matching_measures)){
+  matching_lst_measure_wout = matching_datasets_lst[[1]][[l]]
+  matching_lst_measure_with = matching_datasets_lst[[2]][[l]]
+  
+  balance_match_wout = merge(balance_match_wout, balance_after_matching_newWF(m_data=m_data, 
+    match_obj=matching_lst_measure_wout$match_obj, dt_match=matching_lst_measure_wout$dt_match_S1,
+    X_sub_cols=variables, metric=matching_measures[l]), by="Variable")
+
+  balance_match_with = merge(balance_match_with, balance_after_matching_newWF(m_data=m_data, 
+    match_obj=matching_lst_measure_with$match_obj, dt_match=matching_lst_measure_with$dt_match_S1,
+    X_sub_cols=variables, metric=matching_measures[l]), by="Variable")
+}
+
+
+BALANCE_TABLE_wout = merge(balance_before_matching, balance_match_wout, by="Variable", all.x = T, all.y = T)
+#rownames(BALANCE_TABLE_wout) = BALANCE_TABLE_wout$Variable
+BALANCE_TABLE_wout = BALANCE_TABLE_wout[match(Variables_balance_match, BALANCE_TABLE_wout$Variable), ]
+BALANCE_TABLE_wout = BALANCE_TABLE_wout %>% filter(!Variable %in% c("N", "N_match", "N_unq", "EMest_p_as", "re74", "emp74"))
+BALANCE_TABLE_wout = BALANCE_TABLE_wout[, !BALANCE_TABLE_wout[1,] %in% matching_measures[c(1,2)]]
+
+BALANCE_TABLE_with = merge(balance_before_matching, balance_match_with, by="Variable", all.x = T, all.y = T)
+BALANCE_TABLE_with = BALANCE_TABLE_with[match(Variables_balance_match, BALANCE_TABLE_with$Variable), ]
+BALANCE_TABLE_with = BALANCE_TABLE_with %>% filter(!Variable %in% c("N", "N_match", "N_unq", "EMest_p_as", "re74", "emp74"))
+BALANCE_TABLE_with = BALANCE_TABLE_with[, !BALANCE_TABLE_with[1,] %in% matching_measures[c(1,2)]]
+
+colnames(BALANCE_TABLE_wout) <- colnames(BALANCE_TABLE_with) <- gsub("\\..*","", colnames(BALANCE_TABLE_with))
+BALANCE_TABLE_wout$Variable <- BALANCE_TABLE_with$Variable <- mgsub(BALANCE_TABLE_with$Variable, 
+BALANCE_TABLE_with$Variable, c("Metric", "Age", "Education","Earnings75", "Black", "Hispanic", "Married", "Nodegree", "Employed75"))
+
+
+print(BALANCE_TABLE_wout %>% xtable(caption = paste0("Matched data-set means, ", data_bool ," Sample.")), size="\\fontsize{6pt}{6pt}\\selectfont", include.rownames=F)
+print(BALANCE_TABLE_with %>% xtable(caption = paste0("Matched data-set means, ", data_bool ," Sample.")), size="\\fontsize{6pt}{6pt}\\selectfont", include.rownames=F)
 ######################################################################## 
 
 

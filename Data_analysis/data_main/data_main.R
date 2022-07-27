@@ -125,7 +125,7 @@ data_with_PS$e_1_as = data_with_PS$EMest_p_as / (data_with_PS$EMest_p_as + data_
 # Ding and Lu estimators ####
 DL_est = c(DL_est = est_ding_lst$AACE, DL_MA_est = est_ding_lst$AACE.reg)
 # bootstrap for DL estimator
-'''boosting_results = run_boosting(data, BS=500, seed=19, iter.max=iterations, error0=epsilon_EM)'''
+#boosting_results = run_boosting(data, BS=500, seed=19, iter.max=iterations, error0=epsilon_EM)
 ######################################################################## 
 
 ######################################################################## 
@@ -166,6 +166,9 @@ print(EM_coeffs %>% xtable(), size="\\fontsize{9pt}{9pt}\\selectfont", include.r
 # balance  ####
 # balance in the full dataset
 balance_full_data = covarites_descriptive_table_cont_disc(dat = data_with_PS, cov_descr = variables)
+# balance in the survivors (employed)
+balance_employed = covarites_descriptive_table_cont_disc(dat = data_with_PS[S==1], cov_descr = variables)
+
 
 # balance in the employed and in the matched dataset, using 3 distance measures
 BALANCE_TABLE = rbind(lst_matching_estimators[[1]][[1]]$balance_table, lst_matching_estimators[[2]][[1]]$balance_table) 
