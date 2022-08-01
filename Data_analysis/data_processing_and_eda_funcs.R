@@ -38,7 +38,7 @@ covarites_descriptive_table_cont_disc = function(dat, cov_descr, metric = "Full 
   disc_var = c(names(which(apply(subset(dat, select = cov_descr[-1]), 2, function(x) { all(x %in% 0:1)}))), "S")
   cont_var = setdiff(cov_descr[-1], disc_var)
   # cont
-  m_data_cont = subset(dat, select = c("A", "EMest_p_as", "EMest_p_pro", "e_1_as", cont_var))
+  m_data_cont = subset(dat, select = c("A", "EMest_p_as", "EMest_p_pro", "pi_tilde_as1", cont_var))
   trt = rbind(c( filter(m_data_cont, A==1)[, .N, by="A"]$N, 0), 
               data.frame(sapply(filter(m_data_cont, A==1), function(x) c(mean = mean(x), sd = sd(x))) %>% t))
   untrt = rbind(c( filter(m_data_cont, A==0)[, .N, by="A"]$N, 0), 
@@ -77,8 +77,8 @@ covarites_descriptive_table_cont_disc = function(dat, cov_descr, metric = "Full 
 balance_after_matching_newWF = function(m_data, match_obj, dt_match, X_sub_cols, metric, rnd=1){
   disc_var = names(which(apply(subset(m_data, select = X_sub_cols[-1]), 2, function(x) { all(x %in% 0:1)})))
   cont_var = setdiff(X_sub_cols[-1], disc_var)
-  m_data_trt_cont = dt_match %>% select_if(names(.) %in% c("A", "EMest_p_as", "EMest_p_pro", "e_1_as", cont_var))
-  m_data_untrt_cont = dt_match %>% select_if(names(.) %in% paste0("A0_", c("A", "EMest_p_as", "EMest_p_pro", "e_1_as", cont_var)))
+  m_data_trt_cont = dt_match %>% select_if(names(.) %in% c("A", "EMest_p_as", "EMest_p_pro", "pi_tilde_as1", cont_var))
+  m_data_untrt_cont = dt_match %>% select_if(names(.) %in% paste0("A0_", c("A", "EMest_p_as", "EMest_p_pro", "pi_tilde_as1", cont_var)))
   
   trt = rbind(c( m_data[A==1, .N, by="A"]$N, 0), 
               data.frame(sapply(m_data_trt_cont, function(x) c(mean = mean(x), sd = sd(x))) %>% t))

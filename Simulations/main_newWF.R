@@ -94,7 +94,7 @@ mat_pis_per_gamma_mis_PS
 ###############################################################################################
 # matching arguments
 # caliper is in sd
-caliper = 0.25; match_on = "O11_posterior_ratio" 
+caliper = 0.25; caliper_variable = "O11_posterior_ratio" 
 ###############################################################################################
 
 ###############################################################################################
@@ -245,7 +245,8 @@ for (i in 1:param_n_sim){
   replace_vec = c(FALSE, TRUE)
   for(j in c(1:length(replace_vec))){
     matching_datasets_lst[[j]] = 
-        matching_all_measures_func(m_data=m_data, match_on=match_on, X_sub_cols=X_sub_cols, 
+        matching_all_measures_func(m_data=m_data, match_on=caliper_variable, 
+         covariates_mahal=X_sub_cols, reg_BC=X_sub_cols, X_sub_cols=X_sub_cols, # TODO 31.07 CHECK IF WORK WITH cov_mahal=X_sub_cols, reg_BC=X_sub_cols, X_sub_cols=X_sub_cols, and add those arguments to main_run cluster files
          M=1, replace=replace_vec[j], estimand="ATC", mahal_match=2, caliper=caliper)
   }
   
@@ -257,7 +258,7 @@ for (i in 1:param_n_sim){
     replace=replace_vec[j]; all_measures_matched_lst=matching_datasets_lst[[j]] # j=1: wout replacement, j=2: with replacement
     post_matching_analysis_lst[[j]] =
       post_matching_analysis_func(m_data=m_data, replace=replace, all_measures_matched_lst=all_measures_matched_lst,
-                                  X_sub_cols=X_sub_cols) #TODO 27.07 CHECK IF WORK WITH X_sub_cols=X_sub_cols
+                                  reg_covariates=X_sub_cols) #TODO 31.07 CHECK IF WORK WITH reg_covariates=X_sub_cols
     
     # extract estimators and SE + CI of crude/BC/HL matching estimators of all distance measures 
     for (l in 1:length(matching_measures)){

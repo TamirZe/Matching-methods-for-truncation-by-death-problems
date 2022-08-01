@@ -80,7 +80,7 @@ two_log_est_EM = FALSE
 ###############################################################################################
 # matching arguments
 # caliper is in SDs
-caliper = 0.25; match_on = "O11_posterior_ratio" 
+caliper = 0.25; caliper_variable = "O11_posterior_ratio" 
 ###############################################################################################
 
 ###############################################################################################
@@ -142,8 +142,8 @@ if( job_id >= 0 & job_id <= (nrow(arguments_mat) - 1) ){
   ###############################################################################################
   # matrices and lists to retain results from all iterations ####
   list_EM_not_conv <- list_mean_by_g <- 
-    balance_PS_wout_rep_lst <- balance_PS_with_rep_lst <- balance_maha_wout_rep_lst <- balance_maha_with_rep_lst <- 
-    balance_maha_cal_wout_rep_lst <- balance_maha_cal_with_rep_lst <- list()
+    balance_PS_wout_rep_lst <- balance_PS_with_rep_lst <- balance_mahal_wout_rep_lst <- balance_mahal_with_rep_lst <- 
+    balance_mahal_cal_wout_rep_lst <- balance_mahal_cal_with_rep_lst <- list()
   pis_pis_est_obs_mat = NULL
   coeff_ah_mat <- coeff_pro_mat <- beta_S0_mat <-  coeff_ns_mat <- matrix(nrow = param_n_sim, ncol = dim_x) 
   matching_estimators_mat <- matrix(nrow = param_n_sim, ncol = 35)
@@ -271,8 +271,9 @@ if( job_id >= 0 & job_id <= (nrow(arguments_mat) - 1) ){
     replace_vec = c(FALSE, TRUE)
     for(j in c(1:length(replace_vec))){
       matching_datasets_lst[[j]] = 
-        matching_all_measures_func(m_data=m_data, match_on=match_on, X_sub_cols=X_sub_cols, 
-                                   M=1, replace=replace_vec[j], estimand="ATC", mahal_match=2, caliper=caliper)
+        matching_all_measures_func(m_data=m_data, match_on=caliper_variable, 
+         covariates_mahal=X_sub_cols, reg_BC=X_sub_cols, X_sub_cols=X_sub_cols, 
+         M=1, replace=replace_vec[j], estimand="ATC", mahal_match=2, caliper=caliper)
     }
     
     # post-matching analysis for 2 (wout/with replacement) datasets
@@ -282,7 +283,9 @@ if( job_id >= 0 & job_id <= (nrow(arguments_mat) - 1) ){
     for(j in c(1:length(replace_vec))){
       replace=replace_vec[j]; all_measures_matched_lst=matching_datasets_lst[[j]] # j=1: wout replacement, j=2: with replacement
       post_matching_analysis_lst[[j]] =
-        post_matching_analysis_func(m_data=m_data, replace=replace, all_measures_matched_lst=all_measures_matched_lst)
+        post_matching_analysis_func(m_data=m_data, replace=replace, all_measures_matched_lst=all_measures_matched_lst,
+                                    reg_covariates=X_sub_cols)
+      
       # extract estimators and SE + CI of crude/BC/HL matching estimators of all distance measures 
       for (l in 1:length(matching_measures)){
         # extract estimators, SE and CI of crude/BC/HL/regression matching estimators
@@ -328,10 +331,10 @@ if( job_id >= 0 & job_id <= (nrow(arguments_mat) - 1) ){
     # balance (mean_by_subset) of x_obs (original covariates) and PS+Y transformations
     balance_PS_wout_rep_lst[[i]] = matching_datasets_lst[[1]]$balance_all_measures$mean_by_subset_ps
     balance_PS_with_rep_lst[[i]] = matching_datasets_lst[[2]]$balance_all_measures$mean_by_subset_ps
-    balance_maha_wout_rep_lst[[i]] = matching_datasets_lst[[1]]$balance_all_measures$mean_by_subset_mahal
-    balance_maha_with_rep_lst[[i]] = matching_datasets_lst[[2]]$balance_all_measures$mean_by_subset_mahal
-    balance_maha_cal_wout_rep_lst[[i]] = matching_datasets_lst[[1]]$balance_all_measures$mean_by_subset_mahal_cal
-    balance_maha_cal_with_rep_lst[[i]] = matching_datasets_lst[[2]]$balance_all_measures$mean_by_subset_mahal_cal
+    balance_mahal_wout_rep_lst[[i]] = matching_datasets_lst[[1]]$balance_all_measures$mean_by_subset_mahal
+    balance_mahal_with_rep_lst[[i]] = matching_datasets_lst[[2]]$balance_all_measures$mean_by_subset_mahal
+    balance_mahal_cal_wout_rep_lst[[i]] = matching_datasets_lst[[1]]$balance_all_measures$mean_by_subset_mahal_cal
+    balance_mahal_cal_with_rep_lst[[i]] = matching_datasets_lst[[2]]$balance_all_measures$mean_by_subset_mahal_cal
     
     end_time1 <- Sys.time()
     print(paste0("one iteration lasts ", difftime(end_time1, start_time1)))
@@ -339,27 +342,27 @@ if( job_id >= 0 & job_id <= (nrow(arguments_mat) - 1) ){
   } # out of for loop for all the iterations (param_n_sim iterations in total)
   
   raw_results_lst = list(true_SACE=true_SACE, param_n_sim=param_n_sim, 
-                         matching_estimators_mat=matching_estimators_mat, matching_estimators_SE_mat=matching_estimators_SE_mat, CI_mat=CI_mat, 
-                         BC_ties_multiple_treated_mat=BC_ties_multiple_treated_mat, pis_pis_est_obs_mat=pis_pis_est_obs_mat, 
-                         beta_S0_mat=beta_S0_mat, coeff_ah_mat=coeff_ah_mat, coeff_pro_mat=coeff_pro_mat, list_mean_by_g=list_mean_by_g,
-                         balance_PS_wout_rep_lst=balance_PS_wout_rep_lst, balance_PS_with_rep_lst=balance_PS_with_rep_lst, 
-                         balance_maha_wout_rep_lst=balance_maha_wout_rep_lst, balance_maha_with_rep_lst=balance_maha_with_rep_lst, 
-                         balance_maha_cal_wout_rep_lst=balance_maha_cal_wout_rep_lst, balance_maha_cal_with_rep_lst=balance_maha_cal_with_rep_lst)
-  
+           matching_estimators_mat=matching_estimators_mat, matching_estimators_SE_mat=matching_estimators_SE_mat, CI_mat=CI_mat, 
+           BC_ties_multiple_treated_mat=BC_ties_multiple_treated_mat, pis_pis_est_obs_mat=pis_pis_est_obs_mat, 
+           beta_S0_mat=beta_S0_mat, coeff_ah_mat=coeff_ah_mat, coeff_pro_mat=coeff_pro_mat, list_mean_by_g=list_mean_by_g,
+           balance_PS_wout_rep_lst=balance_PS_wout_rep_lst, balance_PS_with_rep_lst=balance_PS_with_rep_lst, 
+           balance_mahal_wout_rep_lst=balance_mahal_wout_rep_lst, balance_mahal_with_rep_lst=balance_mahal_with_rep_lst, 
+           balance_mahal_cal_wout_rep_lst=balance_mahal_cal_wout_rep_lst, balance_mahal_cal_with_rep_lst=balance_mahal_cal_with_rep_lst)
+
   #TODO summaries of all iterations of one scenario (according to mat_gamma and its row, k) from the simulations in summaries_newWF.R
   # summaries of all iterations of one scenario (according to mat_gamma and its row, k) from the simulations in summaries_newWF.R
   results_summary = summary_func(true_SACE=true_SACE, 
-                                 param_n_sim=param_n_sim, param_n=param_n, cont_x=cont_x, xi=xi, xi_assm=xi_assm,
-                                 matching_estimators_mat=matching_estimators_mat, 
-                                 matching_estimators_SE_mat=matching_estimators_SE_mat, 
-                                 CI_mat=CI_mat, 
-                                 BC_ties_multiple_treated_mat=BC_ties_multiple_treated_mat,
-                                 pis_pis_est_obs_mat=pis_pis_est_obs_mat,
-                                 beta_S0_mat=beta_S0_mat, coeff_ah_mat=coeff_ah_mat, coeff_pro_mat=coeff_pro_mat, coeff_ns_mat=coeff_ns_mat,
-                                 list_mean_by_g=list_mean_by_g,
-                                 balance_PS_wout_rep_lst=balance_PS_wout_rep_lst, balance_PS_with_rep_lst=balance_PS_with_rep_lst, 
-                                 balance_maha_wout_rep_lst=balance_maha_wout_rep_lst, balance_maha_with_rep_lst=balance_maha_with_rep_lst, 
-                                 balance_maha_cal_wout_rep_lst=balance_maha_cal_wout_rep_lst, balance_maha_cal_with_rep_lst=balance_maha_cal_with_rep_lst)
+           param_n_sim=param_n_sim, param_n=param_n, cont_x=cont_x, xi=xi, xi_assm=xi_assm,
+           matching_estimators_mat=matching_estimators_mat, 
+           matching_estimators_SE_mat=matching_estimators_SE_mat, 
+           CI_mat=CI_mat, 
+           BC_ties_multiple_treated_mat=BC_ties_multiple_treated_mat,
+           pis_pis_est_obs_mat=pis_pis_est_obs_mat,
+           beta_S0_mat=beta_S0_mat, coeff_ah_mat=coeff_ah_mat, coeff_pro_mat=coeff_pro_mat, coeff_ns_mat=coeff_ns_mat,
+           list_mean_by_g=list_mean_by_g,
+           balance_PS_wout_rep_lst=balance_PS_wout_rep_lst, balance_PS_with_rep_lst=balance_PS_with_rep_lst, 
+           balance_mahal_wout_rep_lst=balance_mahal_wout_rep_lst, balance_mahal_with_rep_lst=balance_mahal_with_rep_lst, 
+           balance_mahal_cal_wout_rep_lst=balance_mahal_cal_wout_rep_lst, balance_mahal_cal_with_rep_lst=balance_mahal_cal_with_rep_lst)
   
   results_table = results_summary$results_table
   BC_ties_multiple_treated_sum = results_summary$BC_ties_multiple_treated_sum

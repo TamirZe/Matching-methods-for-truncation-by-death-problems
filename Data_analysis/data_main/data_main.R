@@ -47,7 +47,7 @@ reg_after_match = c("age", "education", "black", "hispanic", "married", "re75")
 reg_BC =          c("age", "education", "black", "hispanic", "married", "re75") 
 
 # parameters and variables for matching and regressions ####
-match_on = "e_1_as"  # "e_1_as" # EMest_p_as 
+match_on = "pi_tilde_as1"  # "e_1_as/pi_tilde_as1" # EMest_p_as 
 caliper = 0.4 # 0.3 # 0.4
 ######################################################################## 
 
@@ -118,7 +118,7 @@ colnames(EM_coeffs)[-1] = sub(".*]", "", colnames(EM_coeffs)[-1])
 PS_est = data.frame(est_ding_lst$ps.score)
 # add the principal scores to the data
 data_with_PS = data.table(data, PS_est)
-data_with_PS$e_1_as = data_with_PS$EMest_p_as / (data_with_PS$EMest_p_as + data_with_PS$EMest_p_pro)
+data_with_PS$pi_tilde_as1 = data_with_PS$EMest_p_as / (data_with_PS$EMest_p_as + data_with_PS$EMest_p_pro)
 ######################################################################## 
 
 ######################################################################## 

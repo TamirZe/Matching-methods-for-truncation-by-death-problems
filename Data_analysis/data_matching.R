@@ -14,14 +14,14 @@ matching_func_multiple_data = function(match_on=NULL,
     balance_before_match = covarites_descriptive_table_cont_disc(dat = m_data, cov_descr = X_sub_cols, metric = "Surv", rnd=1)
   # horizontically
   } else{
-     balance_before_match = subset(m_data, select = c("A", "EMest_p_as", "EMest_p_pro", "e_1_as",
+     balance_before_match = subset(m_data, select = c("A", "EMest_p_as", "EMest_p_pro", "pi_tilde_as1",
                                                      X_sub_cols[-1]))[,lapply(.SD, mean), by="A"] 
      balance_before_match$N = m_data[, .N, by="A"]$N
      balance_before_match = rbind(balance_before_match[2,], balance_before_match[1,])
      balance_before_match = data.frame(Metric = "Surviors", subset(balance_before_match, select = c(A, N)),
                                       N_match = "", N_unq = "", subset(balance_before_match, select = -c(A, N)))
-     est_var_x0 = apply(subset(filter(m_data, A==0), select = c("A", "EMest_p_as", "EMest_p_pro", "e_1_as", X_sub_cols[-1])), 2, var)
-     est_var_x1 = apply(subset(filter(m_data,A==0), select = c("A", "EMest_p_as", "EMest_p_pro", "e_1_as", X_sub_cols[-1])), 2, var)
+     est_var_x0 = apply(subset(filter(m_data, A==0), select = c("A", "EMest_p_as", "EMest_p_pro", "pi_tilde_as1", X_sub_cols[-1])), 2, var)
+     est_var_x1 = apply(subset(filter(m_data,A==0), select = c("A", "EMest_p_as", "EMest_p_pro", "pi_tilde_as1", X_sub_cols[-1])), 2, var)
      sd_smd = sqrt(est_var_x0) #sd_smd = sqrt(0.5 * (est_var_x0 + est_var_x1))
      SMD = (balance_before_match[1,-c(1:5)] - balance_before_match[2,-c(1:5)]) / sd_smd[-1]
      balance_before_match[3,] = c(rep(" ",5), mutate_if(SMD, is.numeric, round, 3))
@@ -31,7 +31,7 @@ matching_func_multiple_data = function(match_on=NULL,
    
   print(paste0("replace is ", replace, " nrows is ", nrow(m_data)))
   # mahal_match for Weight = 2 for mahalanobis distance. 1 for inverse of variance
-  vec_caliper = c(rep(1001, length(cont_cov_mahal)), caliper)
+  vec_caliper = c(rep(10000, length(cont_cov_mahal)), caliper)
   # set weights matrix for mahalanobis for continous covariates
   if(w_mat_bool == "INVERSE_SD"){
     #TODO INVERSE SD
@@ -52,7 +52,7 @@ matching_func_multiple_data = function(match_on=NULL,
   }
   
   #1. MATCHING ONLY ONLY PS: EMest_p_as
-  set.seed(101)
+  #set.seed(101)
   print(match_on)
   MATCH_PS_only  <- Match(Y=m_data[,Y], Tr=m_data[,A]
                           ,X = subset(m_data, select = match_on)
@@ -74,7 +74,7 @@ matching_func_multiple_data = function(match_on=NULL,
      X_sub_cols=X_sub_cols, metric="PS", replace=replace, smd_se="not_weighted", vertical_table=vertical_table)
   
   #2. MAHALANOBIS WITHOUT PS CALIPER
-  set.seed(102)
+  #set.seed(102)
   print("MAHALANOBIS WITHOUT PS CALIPER")
   MATCH_MAHA_wout_PS  <- Match(Y=m_data[,Y], Tr=m_data[,A]
                                , X = subset(m_data, select = cont_cov_mahal)
@@ -96,7 +96,7 @@ matching_func_multiple_data = function(match_on=NULL,
                                                  X_sub_cols=X_sub_cols, metric="Mahal", replace=replace, smd_se="not_weighted", vertical_table=vertical_table)
   
   #3. MAHALANOBIS WITH PS CALIPER
-  set.seed(103)
+  #set.seed(103)
   print("MAHALANOBIS WITH PS CALIPER")
   ATE_MATCH_PS  <- Match(Y=m_data[,Y], Tr=m_data[,A]
                          , X = subset(m_data, select = c(cont_cov_mahal, match_on))
@@ -246,7 +246,7 @@ matching_func_multiple_data = function(match_on=NULL,
   crude_lst = list(crude_inference_lst_only_ps, crude_inference_lst_mala_wout_cal, crude_inference_lst)
   names(crude_lst) <- names(dt_and_pairs_match_lst)
   
-  
+  #set.seed(104)
   #TODO Bias Corrected estimator
   if(replace == TRUE){
     m_data_just_inter = m_data$A * subset(m_data, select = reg_BC)
@@ -254,6 +254,7 @@ matching_func_multiple_data = function(match_on=NULL,
     m_data_inter = data.table(m_data, m_data_just_inter)
     
     # PS only
+    
     matchBC_PS <- Match(Y=m_data[,Y], Tr=m_data[,A], X = subset(m_data, select = match_on),
                      Z = subset(m_data, select = reg_BC), BiasAdjust=TRUE
                      ,ties=TRUE ,M=M, replace = replace, estimand = estimand, Weight = mahal_match
@@ -345,10 +346,10 @@ balance_after_matching = function(m_data, match_obj, dt_match, X_sub_cols, metri
   cont_var = setdiff(X_sub_cols[-1], disc_var)
   
   if(vertical_table == TRUE){
-    #m_data_trt_cont = subset(dt_match, select = c("A", "EMest_p_as", "EMest_p_pro", "e_1_as", cont_var))
-    #m_data_untrt_cont = subset(dt_match, select = paste0("A0_", c("A", "EMest_p_as", "EMest_p_pro", "e_1_as", cont_var)))
-    m_data_trt_cont = dt_match %>% select_if(names(.) %in% c("A", "EMest_p_as", "EMest_p_pro", "e_1_as", cont_var))
-    m_data_untrt_cont = dt_match %>% select_if(names(.) %in% paste0("A0_", c("A", "EMest_p_as", "EMest_p_pro", "e_1_as", cont_var)))
+    #m_data_trt_cont = subset(dt_match, select = c("A", "EMest_p_as", "EMest_p_pro", "pi_tilde_as1", cont_var))
+    #m_data_untrt_cont = subset(dt_match, select = paste0("A0_", c("A", "EMest_p_as", "EMest_p_pro", "pi_tilde_as1", cont_var)))
+    m_data_trt_cont = dt_match %>% select_if(names(.) %in% c("A", "EMest_p_as", "EMest_p_pro", "pi_tilde_as1", cont_var))
+    m_data_untrt_cont = dt_match %>% select_if(names(.) %in% paste0("A0_", c("A", "EMest_p_as", "EMest_p_pro", "pi_tilde_as1", cont_var)))
     
     trt = rbind(c( m_data[A==1, .N, by="A"]$N, 0), 
                 data.frame(sapply(m_data_trt_cont, function(x) c(mean = mean(x), sd = sd(x))) %>% t))
@@ -380,21 +381,21 @@ balance_after_matching = function(m_data, match_obj, dt_match, X_sub_cols, metri
   else if(vertical_table == FALSE){
     balance_match = data.frame(
       rbind(apply(subset(dt_match, 
-                       select = paste0("A0_", c("A", "EMest_p_as", "EMest_p_pro", "e_1_as", X_sub_cols[-1]))), 2, mean),
+                       select = paste0("A0_", c("A", "EMest_p_as", "EMest_p_pro", "pi_tilde_as1", X_sub_cols[-1]))), 2, mean),
             apply(subset(dt_match, 
-                         select = c("A", "EMest_p_as", "EMest_p_pro", "e_1_as", X_sub_cols[-1])), 2, mean)) ) 
+                         select = c("A", "EMest_p_as", "EMest_p_pro", "pi_tilde_as1", X_sub_cols[-1])), 2, mean)) ) 
     balance_match = mutate_if(balance_match, is.numeric, round, 2) 
     colnames(balance_match) = substr(colnames(balance_match), 4, 100)
     
     if(smd_se == "not_weighted"){ # se in denominator of smd is sd(X|A=0)
       sd_smd = apply(subset(dt_match, 
-                select = paste0("A0_", c("A", "EMest_p_as", "EMest_p_pro", "e_1_as", X_sub_cols[-1]))), 2, var)
+                select = paste0("A0_", c("A", "EMest_p_as", "EMest_p_pro", "pi_tilde_as1", X_sub_cols[-1]))), 2, var)
       sd_smd = sqrt(sd_smd)
     }else if(smd_se == "weighted_simple_AI2011"){
       est_var_x0 = apply(subset(dt_match, 
-                        select = paste0("A0_", c("A", "EMest_p_as", "EMest_p_pro", "e_1_as", X_sub_cols[-1]))), 2, var)
+                        select = paste0("A0_", c("A", "EMest_p_as", "EMest_p_pro", "pi_tilde_as1", X_sub_cols[-1]))), 2, var)
       est_var_x1 = apply(subset(dt_match, 
-                        select = c("A", "EMest_p_as", "EMest_p_pro", "e_1_as", X_sub_cols[-1])), 2, var)
+                        select = c("A", "EMest_p_as", "EMest_p_pro", "pi_tilde_as1", X_sub_cols[-1])), 2, var)
       sd_smd = sqrt(0.5 * (est_var_x0 + est_var_x1))
     }
     
@@ -420,7 +421,7 @@ balance_after_matching = function(m_data, match_obj, dt_match, X_sub_cols, metri
   sapply(data_matched_appear, function(x) all(x) %in% c(0,1))
   catVars = c("black", "hispanic", "married", "nodegree", "emp74", "emp75")
   #catVars = which(colSums(apply(subset(data_matched_appear, select = -c(intercept, A, S)), 2, function(x) !x %in% c(0,1))) == 0)
-  table1 <- CreateTableOne(vars = c("EMest_p_as", "EMest_p_pro", "e_1_as", X_sub_cols[-1]),
+  table1 <- CreateTableOne(vars = c("EMest_p_as", "EMest_p_pro", "pi_tilde_as1", X_sub_cols[-1]),
                            strata = "A", data = expandRows(data_matched_appear, count="weight"), 
                            smd = TRUE, factorVars = catVars) # factorVars = catVars
   balance_table1 = print(table1, smd = TRUE)
@@ -431,16 +432,16 @@ arrange_dataset_after_matching_DATA = function(m_data, match_obj, replace_bool, 
   ncols  = ncol(subset(m_data[match_obj$index.treated, ], 
      select = c("id"
         #, "p_as"
-      , "EMest_p_as", "EMest_p_pro", "e_1_as", "Y", "A", "S", X_sub_cols[-1]))) + 1
+      , "EMest_p_as", "EMest_p_pro", "pi_tilde_as1", "Y", "A", "S", X_sub_cols[-1]))) + 1
   dt_match = data.table(subset(m_data[match_obj$index.treated, ], 
      select = c("id"
       #, "p_as"
-      , "EMest_p_as", "EMest_p_pro", "e_1_as", "Y", "A", "S", X_sub_cols[-1])),
+      , "EMest_p_as", "EMest_p_pro", "pi_tilde_as1", "Y", "A", "S", X_sub_cols[-1])),
               match_obj$index.treated, match_obj$index.control,
               subset(m_data[match_obj$index.control, ], 
      select = c("id"
         #, "p_as"
-      , "EMest_p_as", "EMest_p_pro", "e_1_as", "Y", "A", "S", X_sub_cols[-1])))
+      , "EMest_p_as", "EMest_p_pro", "pi_tilde_as1", "Y", "A", "S", X_sub_cols[-1])))
   
   colnames(dt_match)[(ncols + 1): (2 * ncols)] = 
     paste0("A0_", colnames(dt_match)[(ncols + 1): (2 * ncols)])

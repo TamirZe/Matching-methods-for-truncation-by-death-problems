@@ -6,8 +6,8 @@ library(nnet); library(xtable); library(rlang);library(gridExtra); library(table
 library(ggplot2); library(rockchalk); library(nnet); library(stats); library(mgsub); library(reshape2)
 library(Matching); library(sandwich); library(clubSandwich); library(lmtest); library(splitstackshape)
 
-library(caret); library(PerformanceAnalytics); library(Hmisc)
-library(DOS); library(rmutil); library(rlist); library(glue); library(tidyr)
+#library(caret); library(PerformanceAnalytics); library(Hmisc)
+#library(DOS); library(rmutil); library(rlist); library(glue); library(tidyr)
 ########################################################################
 
 ########################################################################
@@ -42,13 +42,14 @@ EM_est_seq = TRUE
 two_log_est_EM = FALSE
 iterations_EM = 500; epsilon_EM = 1e-06
 
-covariates_PS = c("age", "black", "hispanic", "married", "re75", "emp75") # "re75_square",
-cont_cov_mahal = c("age", "education", "re75")
-reg_after_match = c("age", "education", "black", "hispanic", "married", "re75")
-reg_BC =          c("age", "education", "black", "hispanic", "married", "re75") 
+covariates_PS =    c("age", "black", "hispanic", "married", "re75", "emp75") # "re75_square",
+# adding intercept is for keeping the format of vars_names[-1] as in the simulations, since X1 in the simulations is the intercept
+covariates_mahal = c("intercept", "age", "education", "re75")
+reg_after_match =  c("intercept", "age", "education", "black", "hispanic", "married", "re75")
+reg_BC =           c("intercept", "age", "education", "black", "hispanic", "married", "re75") 
 
 # parameters and variables for matching and regressions ####
-match_on = "e_1_as"  # "e_1_as" # EMest_p_as 
+caliper_variable = "pi_tilde_as1"  # "e_1_as/pi_tilde_as1" # EMest_p_as 
 caliper = 0.4 # 0.3 # 0.4
 ######################################################################## 
 
@@ -90,13 +91,11 @@ if(EM_est_seq == TRUE){ # EM-seq
       glm(as.formula(paste0("S ~ ",paste(covariates_PS, collapse="+"))), data=filter(data, A==0), family="binomial")
     beta_S0 = fit_S0_in_A0$coefficients
   }else{beta_S0=NULL}
-  
   est_ding_lst = xi_2log_PSPS_M_weighting(Z=data$A, D=data$S,
                                           X=as.matrix(subset(data, select = covariates_PS)), Y=data$Y,
                                           xi_est=0, beta.S0=beta_S0, beta.ah=NULL, beta.c=NULL,
                                           iter.max=iterations_EM, error0=epsilon_EM)
 }else{ # EM-multi
-  # EM
   # est_ding_lst = PSPS_M_weighting(Z=data$A, D=data$S,
   #   X=as.matrix(subset(data, select = covariates_PS)), Y=data$Y, trc = TRUE, ep1 = 1, ep0 = 1, 
   #   beta.a = NULL, beta.n = NULL, iter.max = iterations_EM, error0 = epsilon_EM)
@@ -121,13 +120,13 @@ colnames(EM_coeffs)[-1] = sub(".*]", "", colnames(EM_coeffs)[-1])
 PS_est = data.frame(est_ding_lst$ps.score)
 # add the principal scores to the data
 data_with_PS = data.table(data, PS_est)
-data_with_PS$e_1_as = data_with_PS$EMest_p_as / (data_with_PS$EMest_p_as + data_with_PS$EMest_p_pro)
+data_with_PS$pi_tilde_as1 = data_with_PS$EMest_p_as / (data_with_PS$EMest_p_as + data_with_PS$EMest_p_pro)
 ######################################################################## 
 
 ######################################################################## 
 # Ding and Lu estimators ####
 DL_est = c(DL_est = est_ding_lst$AACE, DL_MA_est = est_ding_lst$AACE.reg)
-# bootstrap for DL estimator
+# bootstrap for SE estimate of DL estimator
 #boosting_results = run_boosting(data, BS=500, seed=19, iter.max=iterations, error0=epsilon_EM)
 ######################################################################## 
 
@@ -139,7 +138,8 @@ matching_datasets_lst = list()
 replace_vec = c(FALSE, TRUE)
 for(j in c(1:length(replace_vec))){
   matching_datasets_lst[[j]] = 
-    matching_all_measures_func(m_data=m_data, match_on=match_on, X_sub_cols=variables, 
+    matching_all_measures_func(m_data=m_data, match_on=caliper_variable, 
+                               covariates_mahal=covariates_mahal, reg_BC=reg_BC, X_sub_cols=variables, 
                                M=1, replace=replace_vec[j], estimand="ATC", mahal_match=2, caliper=caliper)
 }
 
@@ -149,7 +149,7 @@ matching_estimators = matching_estimators_SE = matching_estimators_CI = c()
 for(j in c(1:length(replace_vec))){
   replace=replace_vec[j]; all_measures_matched_lst=matching_datasets_lst[[j]] # j=1: wout replacement, j=2: with replacement
   post_matching_analysis_lst[[j]] =
-    post_matching_analysis_func(m_data=m_data, replace=replace, all_measures_matched_lst=all_measures_matched_lst,  X_sub_cols=X_sub_cols)
+    post_matching_analysis_func(m_data=m_data, replace=replace, all_measures_matched_lst=all_measures_matched_lst, reg_covariates=reg_after_match)
   # extract estimators and SE + CI of crude/BC/HL matching estimators of all distance measures 
   for (l in 1:length(matching_measures)){
     # extract estimators, SE and CI of crude/BC/HL/regression matching estimators
@@ -187,9 +187,8 @@ CI = c(unlist(naive_estimators_CI), c(DL_est=DL_na, DL_MA_est=DL_na), matching_e
 ######################################################################## 
 
 ######################################################################## 
-# TODO adjust to newWF
 #aligned_ranktets ####
-data_pairs_lst = matching_datasets_lst[[2]][[1]]$data_pairs_lst
+data_pairs_lst = lapply(matching_datasets_lst[[2]][1:3], "[[", "matched_data")
 aligned_ranktets_lst = list()
 for (measure in names(data_pairs_lst)) {
   data_new_grp = adjust_pairs_to_new_grp(data_pairs_lst[[measure]])
@@ -215,7 +214,6 @@ balance_before_matching = merge(balance_full_data, balance_employed ,by="Variabl
 balance_before_matching = balance_before_matching[match(variables_names_balance, balance_before_matching$Variable), ]
 # colnames(balance_before_matching) = gsub("\\..*","", colnames(balance_before_matching))
 
-
 # balance in the matched dataset, using 3 distance measures, with and wout replacement
 Variables_balance_match = 
   c("Metric","N","N_match","N_unq","EMest_p_as","age","education","re74","re75","black","hispanic","married","nodegree","emp74","emp75")
@@ -234,25 +232,25 @@ for (l in 1:length(matching_measures)){
     X_sub_cols=variables, metric=matching_measures[l]), by="Variable")
 }
 
+arrange_balance_table = function(balance_before_matching, balance_match, Variables_balance_match, matching_measures){
+  BALANCE_TABLE = merge(balance_before_matching, balance_match, by="Variable", all.x = T, all.y = T)
+  #rownames(BALANCE_TABLE) = BALANCE_TABLE$Variable
+  BALANCE_TABLE = BALANCE_TABLE[match(Variables_balance_match, BALANCE_TABLE$Variable), ]
+  BALANCE_TABLE = BALANCE_TABLE %>% filter(!Variable %in% c("N", "N_match", "N_unq", "EMest_p_as", "re74", "emp74"))
+  BALANCE_TABLE = BALANCE_TABLE[, !BALANCE_TABLE[1,] %in% matching_measures[c(1,2)]]
+  
+  colnames(BALANCE_TABLE) <- gsub("\\..*","", colnames(BALANCE_TABLE_with))
+  BALANCE_TABLE$Variable <- mgsub(BALANCE_TABLE_with$Variable, BALANCE_TABLE_with$Variable,
+      c("Metric", "Age", "Education","Earnings75", "Black", "Hispanic", "Married", "Nodegree", "Employed75"))
+  
+  print(BALANCE_TABLE %>% xtable(caption = paste0("Matched data-set means, ", data_bool ," Sample.")), size="\\fontsize{6pt}{6pt}\\selectfont", include.rownames=F)
+  return(BALANCE_TABLE)
+}
 
-BALANCE_TABLE_wout = merge(balance_before_matching, balance_match_wout, by="Variable", all.x = T, all.y = T)
-#rownames(BALANCE_TABLE_wout) = BALANCE_TABLE_wout$Variable
-BALANCE_TABLE_wout = BALANCE_TABLE_wout[match(Variables_balance_match, BALANCE_TABLE_wout$Variable), ]
-BALANCE_TABLE_wout = BALANCE_TABLE_wout %>% filter(!Variable %in% c("N", "N_match", "N_unq", "EMest_p_as", "re74", "emp74"))
-BALANCE_TABLE_wout = BALANCE_TABLE_wout[, !BALANCE_TABLE_wout[1,] %in% matching_measures[c(1,2)]]
-
-BALANCE_TABLE_with = merge(balance_before_matching, balance_match_with, by="Variable", all.x = T, all.y = T)
-BALANCE_TABLE_with = BALANCE_TABLE_with[match(Variables_balance_match, BALANCE_TABLE_with$Variable), ]
-BALANCE_TABLE_with = BALANCE_TABLE_with %>% filter(!Variable %in% c("N", "N_match", "N_unq", "EMest_p_as", "re74", "emp74"))
-BALANCE_TABLE_with = BALANCE_TABLE_with[, !BALANCE_TABLE_with[1,] %in% matching_measures[c(1,2)]]
-
-colnames(BALANCE_TABLE_wout) <- colnames(BALANCE_TABLE_with) <- gsub("\\..*","", colnames(BALANCE_TABLE_with))
-BALANCE_TABLE_wout$Variable <- BALANCE_TABLE_with$Variable <- mgsub(BALANCE_TABLE_with$Variable, 
-BALANCE_TABLE_with$Variable, c("Metric", "Age", "Education","Earnings75", "Black", "Hispanic", "Married", "Nodegree", "Employed75"))
-
-
-print(BALANCE_TABLE_wout %>% xtable(caption = paste0("Matched data-set means, ", data_bool ," Sample.")), size="\\fontsize{6pt}{6pt}\\selectfont", include.rownames=F)
-print(BALANCE_TABLE_with %>% xtable(caption = paste0("Matched data-set means, ", data_bool ," Sample.")), size="\\fontsize{6pt}{6pt}\\selectfont", include.rownames=F)
+BALANCE_TABLE_wout = arrange_balance_table(balance_before_matching=balance_before_matching, balance_match=balance_match_wout,
+                             Variables_balance_match=Variables_balance_match, matching_measures=matching_measures)
+BALANCE_TABLE_with = arrange_balance_table(balance_before_matching=balance_before_matching, balance_match=balance_match_with,
+                             Variables_balance_match=Variables_balance_match, matching_measures=matching_measures)
 ######################################################################## 
 
 

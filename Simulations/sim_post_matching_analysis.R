@@ -1,4 +1,4 @@
-post_matching_analysis_func = function(m_data, replace, all_measures_matched_lst, X_sub_cols){
+post_matching_analysis_func = function(m_data, replace, all_measures_matched_lst, reg_covariates){ 
   
   # linear regressions, only for MAHALANOBIS WITH PS CALIPER
   LS_bool = ifelse(replace == F, "OLS", "WLS")
@@ -12,10 +12,10 @@ post_matching_analysis_func = function(m_data, replace, all_measures_matched_lst
   
   reg_wout_interactions_inference_ps_lst =
     regression_adjusted_function(m_data=m_data, matched_data=matched_data_ps, matched_pairs=matched_pairs_ps,
-                 reg_covariates=X_sub_cols[-1], interactions_bool=FALSE, LS=LS_bool, mu_x_fixed=F, x_as=NULL)
+                 reg_covariates=reg_covariates[-1], interactions_bool=FALSE, LS=LS_bool, mu_x_fixed=F, x_as=NULL)
   reg_with_interactions_inference_ps_lst =
     regression_adjusted_function(m_data=m_data, matched_data=matched_data_ps, matched_pairs=matched_pairs_ps,
-                 reg_covariates=X_sub_cols[-1], interactions_bool=TRUE, LS=LS_bool, mu_x_fixed=F, x_as=NULL)
+                 reg_covariates=reg_covariates[-1], interactions_bool=TRUE, LS=LS_bool, mu_x_fixed=F, x_as=NULL)
   
   wilcoxon_and_HL_ps = wilcoxon_and_HL_func(match_lst=all_measures_matched_lst$ps_lst, boot_HL=FALSE)
   
@@ -27,10 +27,10 @@ post_matching_analysis_func = function(m_data, replace, all_measures_matched_lst
   
   reg_wout_interactions_inference_mahal_lst =
     regression_adjusted_function(m_data=m_data, matched_data=matched_data_mahal, matched_pairs=matched_pairs_mahal,
-                reg_covariates=X_sub_cols[-1], interactions_bool=FALSE, LS=LS_bool, mu_x_fixed=F, x_as=NULL)
+                reg_covariates=reg_covariates[-1], interactions_bool=FALSE, LS=LS_bool, mu_x_fixed=F, x_as=NULL)
   reg_with_interactions_inference_mahal_lst =
     regression_adjusted_function(m_data=m_data, matched_data=matched_data_mahal, matched_pairs=matched_pairs_mahal,
-                reg_covariates=X_sub_cols[-1], interactions_bool=TRUE, LS=LS_bool, mu_x_fixed=F, x_as=NULL)
+                reg_covariates=reg_covariates[-1], interactions_bool=TRUE, LS=LS_bool, mu_x_fixed=F, x_as=NULL)
   
   wilcoxon_and_HL_mahal = wilcoxon_and_HL_func(match_lst=all_measures_matched_lst$mahal_lst, boot_HL=FALSE)
   
@@ -42,10 +42,10 @@ post_matching_analysis_func = function(m_data, replace, all_measures_matched_lst
   
   reg_wout_interactions_inference_mahal_cal_lst =
     regression_adjusted_function(m_data=m_data, matched_data=matched_data_mahal_cal, matched_pairs=matched_pairs_mahal_cal,
-                 reg_covariates=X_sub_cols[-1], interactions_bool=FALSE, LS=LS_bool, mu_x_fixed=F, x_as=NULL)
+                 reg_covariates=reg_covariates[-1], interactions_bool=FALSE, LS=LS_bool, mu_x_fixed=F, x_as=NULL)
   reg_with_interactions_inference_mahal_cal_lst =
     regression_adjusted_function(m_data=m_data, matched_data=matched_data_mahal_cal, matched_pairs=matched_pairs_mahal_cal,
-                 reg_covariates=X_sub_cols[-1], interactions_bool=TRUE, LS=LS_bool, mu_x_fixed=F, x_as=NULL)
+                 reg_covariates=reg_covariates[-1], interactions_bool=TRUE, LS=LS_bool, mu_x_fixed=F, x_as=NULL)
   
   wilcoxon_and_HL_mahal_cal = wilcoxon_and_HL_func(match_lst=all_measures_matched_lst$mahal_cal_lst, boot_HL=FALSE)
   
