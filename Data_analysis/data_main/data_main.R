@@ -5,7 +5,6 @@ library(rlist); library(locfit); library(plyr); library(dplyr); library(data.tab
 library(nnet); library(xtable); library(rlang);library(gridExtra); library(tableone)
 library(ggplot2); library(rockchalk); library(nnet); library(stats); library(mgsub); library(reshape2)
 library(Matching); library(sandwich); library(clubSandwich); library(lmtest); library(splitstackshape)
-
 library(caret); library(PerformanceAnalytics); library(Hmisc)
 library(DOS); library(rmutil); library(rlist); library(glue); library(tidyr)
 ########################################################################
@@ -15,8 +14,8 @@ library(DOS); library(rmutil); library(rlist); library(glue); library(tidyr)
 setwd("~/A matching framework for truncation by death problems")
 source("Data_analysis/data_processing_and_eda_funcs.R")
 source("Simulations/naive_estimation.R")
-source("Data_analysis/data_matching.R")
-source("Data_analysis/data_regression_estimators.R")
+source("Data_analysis/data_OLD/data_matching.R")
+source("Data_analysis/data_OLD/data_regression_estimators.R")
 source("Data_analysis/data_aligned_ranktest.R")
 source("Data_analysis/data_sensitivity_analyses/data_SA_regression_funcs.R")
 source("EM/EM_seq.R")
@@ -156,6 +155,15 @@ for (measure in names(data_pairs_lst)) {
   data_new_grp = adjust_pairs_to_new_grp(data_pairs_lst[[measure]])
   aligned_ranktets_lst[[measure]] = alignedranktest(outcome=data_new_grp$Y, matchedset=data_new_grp$trt_grp, treatment=data_new_grp$A)
 }
+data_pairs_lst_first_ver=data_pairs_lst
+#save(data_pairs_lst_first_ver, file = 'data_pairs_lst_first_ver.Rdata')
+#lst_matching_estimators_first_ver=lst_matching_estimators
+#save(lst_matching_estimators_first_ver, file = 'lst_matching_estimators_first_ver.Rdata')
+#library(arsenal)
+#summary(comparedf(data_pairs_lst$ps_lst %>% arrange(id, pair), data_pairs_lst_first_ver$data_pairs_only_ps %>% arrange(id, pair))) 
+#summary(comparedf(data_pairs_lst$mahal_lst %>% arrange(id, pair), data_pairs_lst_first_ver$data_pairs_maha_wout_cal %>% arrange(id, pair))) 
+#summary(comparedf(data_pairs_lst$mahal_cal_lst %>% arrange(id, pair), data_pairs_lst_first_ver$data_pairs_maha_cal_PS %>% arrange(id, pair))) 
+
 ######################################################################## 
 
 ######################################################################## 

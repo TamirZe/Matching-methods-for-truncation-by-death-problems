@@ -18,6 +18,7 @@ alpha0_mono_vec_names = paste0("alpha0_mono_", alpha0_mono_vec)
 reg_sensi_mono <- NULL
 for (j in 1:length(xi_sensi_mono_names)) {
   xi = xi_sensi_mono_vec[j]
+  #########################################################################################
   tmp = data 
   # EM
   # calculate PS for the current xi
@@ -34,23 +35,29 @@ for (j in 1:length(xi_sensi_mono_names)) {
                            iter.max=iterations_EM, error0=epsilon_EM)
   # est_ding_lst_SA_mono = xi_PSPS_M_weighting_SA(Z=tmp$A, D=tmp$S, X=as.matrix(subset(tmp, select = covariates_PS)),  
   #                       Y=tmp$Y, eta=xi, beta.c = NULL, beta.n = NULL)
-  
-  DL_MA_sensi = est_ding_lst_SA_mono$AACE.reg
-  # if we use xi_PSPS_M_weighting_SA, the order: c(prob.c, prob.d, prob.a, prob.n)
-  PS_est = est_ding_lst_SA_mono$ps.score
+  DING_model_assisted_sensi = est_ding_lst_SA_mono$AACE.reg
+  # Ding order: c(prob.c, prob.d, prob.a, prob.n)
+  PS_est_sensi_mono = est_ding_lst_SA_mono$ps.score
+  # adjust the cols the same order as in myEM: my order is: as, ns, pro, har.
+  PS_est = data.frame(EMest_p_as = PS_est_sensi_mono[,3], EMest_p_ns = PS_est_sensi_mono[,4],
+                      EMest_p_pro = PS_est_sensi_mono[,1], EMest_p_har = PS_est_sensi_mono[,2])
   tmp = data.table(tmp, PS_est)
-  print(paste0("PS NAs after EM? ", which(is.na(PS_est)==TRUE)))
-  tmp$pi_tilde_as1 = tmp$EMest_p_as / (tmp$EMest_p_as + tmp$EMest_p_pro) # pi_tilde_as1 # e_1_as
-  tmp$pi_tilde_as0 = tmp$EMest_p_as / (tmp$EMest_p_as + tmp$EMest_p_har) # pi_tilde_as0 # e_0_as
-  tmp = data.table(subset(tmp, select = -c(pi_tilde_as1, pi_tilde_as0)),  subset(tmp, select = c(pi_tilde_as1, pi_tilde_as0))) # pi_tilde_as0 == 1/(1+xi)
+  which(is.na(tmp)==TRUE)
+  tmp$e_1_as = tmp$EMest_p_as / (tmp$EMest_p_as + tmp$EMest_p_pro)
+  tmp$e_0_as = tmp$EMest_p_as / (tmp$EMest_p_as + tmp$EMest_p_har)
+  tmp = data.table(subset(tmp, select = -c(e_1_as, e_0_as)),  subset(tmp, select = c(e_1_as, e_0_as)))
+  ##########################################################################
+
   # matching for the current xi ####
   # set.seed because otherwise the matching procedure will not yield the same results when alpha_0=1 under all values of xi, during the SA for monotonicity (for mahalanobis measure) 
   # also, otherwise, when xi=0 in SA for monotonicity results will not be similar to results when alpha_1=1 in SA for PPI (for mahalanobis measure)
-  #TODO 22.02.22 even when we set.seed here matching on mahalanobis alone yields different results. Need to set.seed before every matching procedure for the same results
+  #TODO 22.02.22 even when we set.seed here matching on malanobis alone yields different results. Need to set.seed before every matching procedure for the same results
   set.seed(101) 
-  matching_lst = matching_all_measures_func(m_data=tmp[S==1], match_on=caliper_variable, 
-      covariates_mahal=covariates_mahal, reg_BC=reg_BC, X_sub_cols=variables, 
-      M=1, replace=TRUE, estimand="ATC", caliper=caliper)
+  matching_lst = matching_func_multiple_data(match_on = match_on
+           ,cont_cov_mahal=cont_cov_mahal,  reg_cov=reg_after_match, X_sub_cols=variables
+           ,reg_BC = reg_BC, m_data = tmp[S==1]
+           ,w_mat_bool="NON-INFO", M=1, replace=TRUE, estimand="ATC", mahal_match=2, caliper=caliper,
+           boost_HL=FALSE, one_leraner_bool=TRUE)
  
   # matched_set_lst for all distance metrics
   matched_data_lst = matching_lst$matched_set_lst

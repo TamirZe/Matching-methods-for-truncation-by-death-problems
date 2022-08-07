@@ -273,7 +273,7 @@ if( job_id >= 0 & job_id <= (nrow(arguments_mat) - 1) ){
       matching_datasets_lst[[j]] = 
         matching_all_measures_func(m_data=m_data, match_on=caliper_variable, 
                                    covariates_mahal=X_sub_cols, reg_BC=X_sub_cols, X_sub_cols=X_sub_cols, 
-                                   M=1, replace=replace_vec[j], estimand="ATC", mahal_match=2, caliper=caliper)
+                                   M=1, replace=replace_vec[j], estimand="ATC", caliper=caliper)
     }
     
     # post-matching analysis for 2 (wout/with replacement) datasets

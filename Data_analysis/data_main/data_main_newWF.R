@@ -1,13 +1,10 @@
 # libraries for data analysis
 ########################################################################
 library(readstata13); library(cem) # reading NSW datasets
-library(rlist); library(locfit); library(plyr); library(dplyr); library(data.table)
-library(nnet); library(xtable); library(rlang);library(gridExtra); library(tableone)
+library(rlist); library(locfit); library(plyr); library(dplyr); library(tidyr); library(data.table)
+library(nnet); library(xtable); library(rlang);library(gridExtra); library(tableone); library(expm)
 library(ggplot2); library(rockchalk); library(nnet); library(stats); library(mgsub); library(reshape2)
 library(Matching); library(sandwich); library(clubSandwich); library(lmtest); library(splitstackshape)
-
-#library(caret); library(PerformanceAnalytics); library(Hmisc)
-#library(DOS); library(rmutil); library(rlist); library(glue); library(tidyr)
 ########################################################################
 
 ########################################################################
@@ -49,8 +46,8 @@ reg_after_match =  c("intercept", "age", "education", "black", "hispanic", "marr
 reg_BC =           c("intercept", "age", "education", "black", "hispanic", "married", "re75") 
 
 # parameters and variables for matching and regressions ####
-caliper_variable = "pi_tilde_as1"  # "e_1_as/pi_tilde_as1" # EMest_p_as 
-caliper = 0.4 # 0.3 # 0.4
+caliper_variable = "pi_tilde_as1"  
+caliper = 0.4 
 ######################################################################## 
 
 ######################################################################## 
@@ -58,7 +55,7 @@ caliper = 0.4 # 0.3 # 0.4
 data = LL
 data = adjust_data(data, 1000, data_bool=data_bool) #DW #LL
 #data$re75_square = data$re75^2
-variables = setdiff(colnames(data), c("id", "A", "S", "Y", "OBS", "emp_74_75"))
+variables = setdiff(colnames(data), c("id", "A", "S", "Y", "OBS", "emp_74_75", "g"))
 ######################################################################## 
 
 ######################################################################## 
@@ -115,7 +112,6 @@ coeff_pro = est_ding_lst$beta.c
 EM_coeffs = rbind(coeff_as, coeff_pro)
 colnames(EM_coeffs)[-1] = sub(".*]", "", colnames(EM_coeffs)[-1])
 
-
 # adjust the cols the same order as in myEM: my order is: as, ns, pro. Ding order: c(prob.c, prob.a, prob.n)
 PS_est = data.frame(est_ding_lst$ps.score)
 # add the principal scores to the data
@@ -133,14 +129,13 @@ DL_est = c(DL_est = est_ding_lst$AACE, DL_MA_est = est_ding_lst$AACE.reg)
 ######################################################################## 
 # matching newWF ####
 m_data=data_with_PS[S==1]
-m_data$id = c(1:nrow(m_data)); m_data$g="unknown"
 matching_datasets_lst = list()
 replace_vec = c(FALSE, TRUE)
 for(j in c(1:length(replace_vec))){
   matching_datasets_lst[[j]] = 
     matching_all_measures_func(m_data=m_data, match_on=caliper_variable, 
                                covariates_mahal=covariates_mahal, reg_BC=reg_BC, X_sub_cols=variables, 
-                               M=1, replace=replace_vec[j], estimand="ATC", mahal_match=2, caliper=caliper)
+                               M=1, replace=replace_vec[j], estimand="ATC", caliper=caliper)
 }
 
 matching_measures = c("PS", "mahal", "mahal_cal")
@@ -194,6 +189,10 @@ for (measure in names(data_pairs_lst)) {
   data_new_grp = adjust_pairs_to_new_grp(data_pairs_lst[[measure]])
   aligned_ranktets_lst[[measure]] = alignedranktest(outcome=data_new_grp$Y, matchedset=data_new_grp$trt_grp, treatment=data_new_grp$A)
 }
+#library(arsenal)
+#summary(comparedf(data_pairs_lst$ps_lst %>% arrange(pair,A), data_pairs_lst_first_ver$data_pairs_only_ps %>% arrange(pair,A))) 
+#summary(comparedf(data_pairs_lst$mahal_lst %>% arrange(pair,A), data_pairs_lst_first_ver$data_pairs_maha_wout_cal %>% arrange(pair,A))) 
+#summary(comparedf(data_pairs_lst$mahal_cal_lst %>% arrange(pair,A), data_pairs_lst_first_ver$data_pairs_maha_cal_PS %>% arrange(pair,A)))  
 ######################################################################## 
 
 ######################################################################## 
@@ -207,7 +206,7 @@ print(EM_coeffs %>% xtable(), size="\\fontsize{9pt}{9pt}\\selectfont", include.r
 balance_full_data = covarites_descriptive_table_cont_disc(dat=data_with_PS, cov_descr=variables)
 # balance in the survivors (employed)
 balance_employed = covarites_descriptive_table_cont_disc(dat=data_with_PS[S==1], cov_descr=variables, metric="Employed")
-# combine full dataset and  survivors (employed)
+# combine full dataset and survivors (employed)
 variables_remove = c("N", "N_match","N_unq", "EMest_p_as")
 variables_names_balance = setdiff(balance_full_data$Variable, variables_remove)
 balance_before_matching = merge(balance_full_data, balance_employed ,by="Variable", all.x = F)
@@ -215,9 +214,9 @@ balance_before_matching = balance_before_matching[match(variables_names_balance,
 # colnames(balance_before_matching) = gsub("\\..*","", colnames(balance_before_matching))
 
 # balance in the matched dataset, using 3 distance measures, with and wout replacement
-Variables_balance_match = 
+variables_balance_match = 
   c("Metric","N","N_match","N_unq","EMest_p_as","age","education","re74","re75","black","hispanic","married","nodegree","emp74","emp75")
-balance_match_wout = balance_match_with = data.frame(Variable = Variables_balance_match)
+balance_match_wout = balance_match_with = data.frame(Variable = variables_balance_match)
 print(names(matching_datasets_lst[[2]])[1:length(matching_measures)]) # check this is the same order as matching_measures
 for (l in 1:length(matching_measures)){
   matching_lst_measure_wout = matching_datasets_lst[[1]][[l]]
@@ -232,25 +231,26 @@ for (l in 1:length(matching_measures)){
     X_sub_cols=variables, metric=matching_measures[l]), by="Variable")
 }
 
-arrange_balance_table = function(balance_before_matching, balance_match, Variables_balance_match, matching_measures){
+arrange_balance_table = function(balance_before_matching, balance_match, variables_balance_match, matching_measures){
   BALANCE_TABLE = merge(balance_before_matching, balance_match, by="Variable", all.x = T, all.y = T)
   #rownames(BALANCE_TABLE) = BALANCE_TABLE$Variable
-  BALANCE_TABLE = BALANCE_TABLE[match(Variables_balance_match, BALANCE_TABLE$Variable), ]
+  BALANCE_TABLE = BALANCE_TABLE[match(variables_balance_match, BALANCE_TABLE$Variable), ]
   BALANCE_TABLE = BALANCE_TABLE %>% filter(!Variable %in% c("N", "N_match", "N_unq", "EMest_p_as", "re74", "emp74"))
   BALANCE_TABLE = BALANCE_TABLE[, !BALANCE_TABLE[1,] %in% matching_measures[c(1,2)]]
   
-  colnames(BALANCE_TABLE) <- gsub("\\..*","", colnames(BALANCE_TABLE_with))
-  BALANCE_TABLE$Variable <- mgsub(BALANCE_TABLE_with$Variable, BALANCE_TABLE_with$Variable,
+  colnames(BALANCE_TABLE) <- gsub("\\..*","", colnames(BALANCE_TABLE))
+  BALANCE_TABLE$Variable <- mgsub(BALANCE_TABLE$Variable, BALANCE_TABLE$Variable,
       c("Metric", "Age", "Education","Earnings75", "Black", "Hispanic", "Married", "Nodegree", "Employed75"))
-  
-  print(BALANCE_TABLE %>% xtable(caption = paste0("Matched data-set means, ", data_bool ," Sample.")), size="\\fontsize{6pt}{6pt}\\selectfont", include.rownames=F)
   return(BALANCE_TABLE)
 }
 
 BALANCE_TABLE_wout = arrange_balance_table(balance_before_matching=balance_before_matching, balance_match=balance_match_wout,
-                             Variables_balance_match=Variables_balance_match, matching_measures=matching_measures)
+                             variables_balance_match=variables_balance_match, matching_measures=matching_measures)
+print(BALANCE_TABLE_wout %>% xtable(caption = paste0("Matched data-set means, ", data_bool ," Sample.")), size="\\fontsize{6pt}{6pt}\\selectfont", include.rownames=F)
+
 BALANCE_TABLE_with = arrange_balance_table(balance_before_matching=balance_before_matching, balance_match=balance_match_with,
-                             Variables_balance_match=Variables_balance_match, matching_measures=matching_measures)
+                             variables_balance_match=variables_balance_match, matching_measures=matching_measures)
+print(BALANCE_TABLE_with %>% xtable(caption = paste0("Matched data-set means, ", data_bool ," Sample.")), size="\\fontsize{6pt}{6pt}\\selectfont", include.rownames=F)
 ######################################################################## 
 
 

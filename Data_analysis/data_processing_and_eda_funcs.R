@@ -1,6 +1,6 @@
 # adjust data
 ######################################################################## 
-adjust_data = function(data, divide_salary = 1000, log_salary = F, data_bool="DW"){
+adjust_data = function(data, divide_salary=1000, log_salary=F, data_bool){
   #data$nodegree = 1 - data$nodegree
   data$emp74 = ifelse(data$re74 > 0, 1, 0)
   data$emp75 = ifelse(data$re75 > 0, 1, 0)
@@ -26,6 +26,7 @@ adjust_data = function(data, divide_salary = 1000, log_salary = F, data_bool="DW
     #data = subset(data, select = -c(re74, emp74))
   }
   data$OBS = paste0("O(", data$A, ",", data$S, ")")
+  data$g = "unknown"
   data = data.table(data)
   return(data)
 }
