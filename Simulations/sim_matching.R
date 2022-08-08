@@ -19,7 +19,7 @@ matching_all_measures_func = function(m_data, match_on=NULL, covariates_mahal, r
   
   # TODO MATCHING ONLY ONLY on the weights, O11_posterior_ratio
   print("MATCHING ON PS")
-  #set.seed(101)
+  set.seed(101)
   # Match(Y=Y, Tr=Tr, X=X, M=1) # PS matching according to documentation https://cran.r-project.org/web/packages/Matching/Matching.pdf
   ps_obj <- Match(Y=m_data[,Y], Tr=m_data[,A]
       ,X = subset(m_data, select = match_on)
@@ -31,7 +31,7 @@ matching_all_measures_func = function(m_data, match_on=NULL, covariates_mahal, r
   
   # TODO MAHALANOBIS WITHOUT PS CALIPER
   print("MAHALANOBIS WITHOUT PS CALIPER")
-  #set.seed(102)
+  set.seed(102)
   mahal_obj <- Match(Y = m_data[,Y], Tr = m_data[,A]
        ,X = x_mahal
        ,ties = FALSE, M = M, replace = replace, estimand = estimand
@@ -45,7 +45,7 @@ matching_all_measures_func = function(m_data, match_on=NULL, covariates_mahal, r
   print("MAHALANOBIS WITH PS CALIPER")
   w_mat_mahal_cal = diag(ncol(x_mahal) + 1)
   w_mat_mahal_cal[ncol(w_mat_mahal_cal), ncol(w_mat_mahal_cal)] = 0
-  #set.seed(103)
+  set.seed(103)
   mahal_cal_obj  <- Match(Y = m_data[,Y], Tr = m_data[,A]
          ,X = data.frame(x_mahal %*% minus_sqrt_x_cov_mat, subset(m_data, select = match_on))
          ,ties = FALSE, M = M, replace = replace, estimand = estimand
@@ -56,7 +56,7 @@ matching_all_measures_func = function(m_data, match_on=NULL, covariates_mahal, r
   mean_by_subset_mahal_cal = mean_x_summary(m_data=m_data, matched_data=mahal_cal_lst$matched_data, X_sub_cols=X_sub_cols)
   
   # TODO AI bias-corrected estimator, employ only when replace==TRUE
-  #set.seed(104)
+  set.seed(104)
   if(replace == TRUE){ 
     print("START BC")
     
@@ -112,13 +112,12 @@ matching_all_measures_func = function(m_data, match_on=NULL, covariates_mahal, r
 arrange_dataset_after_matching = function(match_obj, m_data, replace_bool, X_sub_cols){
   x_ind = which(grepl(paste(c(X_sub_cols[-1],"x_PS","x_out"),collapse="|"), colnames(m_data)) & !grepl("X1$", colnames(m_data)))
   x_cols = colnames(m_data)[x_ind]
+  names_col = c("id", "EMest_p_as", "Y", "A", "S", "g") 
   ncols  = ncol(subset(m_data[match_obj$index.treated, ], 
-                          select = c("id", "EMest_p_as", "Y", "A", "S", "g", x_cols))) + 1 # X_sub_cols[-1] # x_cols
-  dt_match = data.table(subset(m_data[match_obj$index.treated, ], 
-                          select = c("id", "EMest_p_as", "Y", "A", "S", "g", x_cols)), # X_sub_cols[-1] # x_cols
+                        select = c("id", "EMest_p_as", "Y", "A", "S", "g", x_cols))) + 1 # names_col
+  dt_match = data.table(subset(m_data[match_obj$index.treated, ], select = c(names_col, x_cols)), 
                         match_obj$index.treated, match_obj$index.control,
-                        subset(m_data[match_obj$index.control, ], 
-                           select = c("id","EMest_p_as", "Y", "A", "S", "g", x_cols))) # X_sub_cols[-1] # x_cols
+                        subset(m_data[match_obj$index.control, ], select = c(names_col, x_cols))) 
   colnames(dt_match)[(ncols + 1): (2 * ncols)] = 
     paste0("A0_", colnames(dt_match)[(ncols + 1): (2 * ncols)])
   colnames(dt_match)[c(ncols: (ncols+1))] = c("id_trt", "id_ctrl")
@@ -140,8 +139,7 @@ arrange_dataset_after_matching = function(match_obj, m_data, replace_bool, X_sub
   matched_data = merge(wts, merge(matched_pairs, m_data, by="id", all.x=T, all.y=F), by="id") %>% arrange(id)
   #chck = expandRows(merge(wts, m_data, by="id", all.x=T, all.y=F), "w") %>% arrange(id)
   #summary(comparedf(matched_data, chck)); identical(subset(matched_data, select = -c(w, pair)), chck)
-  #a = c(dt_match_S1$id_ctrl, dt_match_S1$id_trt); b = matched_data$id
-  #identical(a[order(a)],b[order(b)])
+  #a = c(dt_match_S1$id_ctrl, dt_match_S1$id_trt); b = matched_data$id; identical(a[order(a)],b[order(b)])
   
   return(list(match_obj=match_obj, matched_data=matched_data, dt_match_S1=dt_match_S1, wts=wts, matched_pairs=matched_pairs))
 }

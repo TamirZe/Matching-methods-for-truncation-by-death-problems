@@ -1,23 +1,28 @@
 set.seed(101) 
-# EM parameters
+#########################################################################################
+# EM parameters, as in the main script ####
 two_log_est_EM = FALSE
-iterations_EM = 400; epsilon_EM = 1e-06
+iterations_EM = 500; epsilon_EM = 1e-06
+#########################################################################################
+
 #########################################################################################
 # sensitivity parameters ####
-#bounds for xi
+# data from data_main script
+
+# bounds for xi
 p1 = mean(data[A==1,S]); p0 = mean(data[A==0,S])
 up_bound_xi = (1 - p1) / (p0 - (1 - p1))
-xi_sensi_mono_vec = seq(0, 0.5, 0.1)
-xi_sensi_mono_vec[length(xi_sensi_mono_vec)] = 0.48 #round(up_bound_xi,2)
-xi_sensi_mono_names = paste0("xi_mono_", round(xi_sensi_mono_vec, 2))
-# alpha0_mono
-alpha0_mono_vec = seq(0.5, 2, 0.25) 
-alpha0_mono_vec_names = paste0("alpha0_mono_", alpha0_mono_vec)  
+xi_SA_mono_vec = seq(0, 0.5, 0.1)
+xi_SA_mono_vec[length(xi_SA_mono_vec)] = 0.48 #round(up_bound_xi,2)
+xi_SA_mono_names = paste0("xi_mono_", round(xi_SA_mono_vec, 2))
 
-# SA for each combinations of xi and alpha_0  and for all distance metrics ####
-reg_sensi_mono <- NULL
-for (j in 1:length(xi_sensi_mono_names)) {
-  xi = xi_sensi_mono_vec[j]
+alpha0_SA_mono_vec = seq(0.5, 2, 0.25) 
+alpha0_SA_mono_vec_names = paste0("alpha0_mono_", alpha0_SA_mono_vec)  
+
+# SA for each combinations of xi and alpha_0, and for all distance metrics ####
+reg_SA_mono <- NULL
+for (j in 1:length(xi_SA_mono_names)) {
+  xi = xi_SA_mono_vec[j]
   tmp = data 
   # EM
   # calculate PS for the current xi
@@ -32,10 +37,8 @@ for (j in 1:length(xi_sensi_mono_names)) {
                            X=as.matrix(subset(tmp, select = covariates_PS)), Y=tmp$Y,
                            xi_est=xi, beta.S0=beta_S0, beta.ah=NULL, beta.c=NULL,
                            iter.max=iterations_EM, error0=epsilon_EM)
-  # est_ding_lst_SA_mono = xi_PSPS_M_weighting_SA(Z=tmp$A, D=tmp$S, X=as.matrix(subset(tmp, select = covariates_PS)),  
-  #                       Y=tmp$Y, eta=xi, beta.c = NULL, beta.n = NULL)
   
-  DL_MA_sensi = est_ding_lst_SA_mono$AACE.reg
+  DL_MA_SA = est_ding_lst_SA_mono$AACE.reg
   # if we use xi_PSPS_M_weighting_SA, the order: c(prob.c, prob.d, prob.a, prob.n)
   PS_est = est_ding_lst_SA_mono$ps.score
   tmp = data.table(tmp, PS_est)
@@ -43,70 +46,82 @@ for (j in 1:length(xi_sensi_mono_names)) {
   tmp$pi_tilde_as1 = tmp$EMest_p_as / (tmp$EMest_p_as + tmp$EMest_p_pro) # pi_tilde_as1 # e_1_as
   tmp$pi_tilde_as0 = tmp$EMest_p_as / (tmp$EMest_p_as + tmp$EMest_p_har) # pi_tilde_as0 # e_0_as
   tmp = data.table(subset(tmp, select = -c(pi_tilde_as1, pi_tilde_as0)),  subset(tmp, select = c(pi_tilde_as1, pi_tilde_as0))) # pi_tilde_as0 == 1/(1+xi)
+  
   # matching for the current xi ####
   # set.seed because otherwise the matching procedure will not yield the same results when alpha_0=1 under all values of xi, during the SA for monotonicity (for mahalanobis measure) 
-  # also, otherwise, when xi=0 in SA for monotonicity results will not be similar to results when alpha_1=1 in SA for PPI (for mahalanobis measure)
-  #TODO 22.02.22 even when we set.seed here matching on mahalanobis alone yields different results. Need to set.seed before every matching procedure for the same results
+  #TODO Actually, even when we seed here, matching on mahalanobis alone yields different results. Need to set.seed before every matching procedure for the same results
+  # also, if not seed, when xi=0 in SA for monotonicity results will not be similar to results when alpha_1=1 in SA for PPI (for mahalanobis measure)
   set.seed(101) 
   matching_lst = matching_all_measures_func(m_data=tmp[S==1], match_on=caliper_variable, 
       covariates_mahal=covariates_mahal, reg_BC=reg_BC, X_sub_cols=variables, 
       M=1, replace=TRUE, estimand="ATC", caliper=caliper)
- 
+  reg_matched_lst = lapply(matching_lst[1:3], "[[", "matched_data")
+  
   # matched_set_lst for all distance metrics
-  matched_data_lst = matching_lst$matched_set_lst
-  reg_matched_lst = matching_lst$reg_data_matched_lst
+  # matched_data_lst = list(
+  #   PS = reg_matched_lst$ps_lst %>% distinct(id, .keep_all = TRUE) %>% subset(select = -pair),
+  #   Mahal = reg_matched_lst$mahal_lst %>% distinct(id, .keep_all = TRUE) %>% subset(select = -pair),
+  #   Mahal_PS_cal = reg_matched_lst$mahal_cal_lst %>% distinct(id, .keep_all = TRUE) %>% subset(select = -pair)
+  # )
+  
   # run on all distance metrics
   for(ind_matched_set in c(1:length(reg_matched_lst))){  
-    matched_data = matched_data_lst[[ind_matched_set]]
+    #matched_data = matched_data_lst[[ind_matched_set]]
     reg_data_matched_SA = reg_matched_lst[[ind_matched_set]]
-    print(paste0("unique weights for control are really = ", unique(filter(matched_data, A==0)$w)))
+    print(paste0("unique weights for control are really = ", unique(filter(reg_data_matched_SA, A==0)$w)))
     
     #regression on the matched dataset with original Y
-    coeffs_regression_one_model = regression_function_one_model(reg_data_matched_SA=reg_data_matched_SA,
-      data_reg=matched_data, reg_after_match=reg_after_match) 
-    coeffs_regression_two_models = regression_function_two_models(reg_data_matched_SA=reg_data_matched_SA,
-      data_reg=matched_data, reg_after_match=reg_after_match) 
+    coeffs_regression_one_model = regression_function_one_model(
+      reg_data_matched=reg_data_matched_SA, reg_after_match=reg_after_match[-1], repl=TRUE) 
+    coeffs_regression_two_models = regression_function_two_models(
+      reg_data_matched=reg_data_matched_SA, reg_after_match=reg_after_match[-1], repl=TRUE) 
     
-    for (i in 1:length(alpha0_mono_vec_names)) {
-      print(alpha0_mono_vec_names[i])
-      alpha0 = alpha0_mono_vec[i]; alpha1 = 1
+    for (i in 1:length(alpha0_SA_mono_vec_names)) {
+      print(alpha0_SA_mono_vec_names[i])
+      alpha0 = alpha0_SA_mono_vec[i]
+      alpha1 = 1
       
-      # ONE-LEARNER regression approach
-      # predictions for units from O(0,1), plugging A={0,1} + 4. sensitivity adjustments
-      reg_sensi_mono =
-        rbind( reg_sensi_mono, c(measure = names(matched_data_lst)[ind_matched_set], xi_mono = xi, alpha0_mono = alpha0, 
-        unlist(SACE_estimation_1LEARNER_mono(matched_data=matched_data, reg_after_match=reg_after_match, alpha0_mono=alpha0, xi=xi, 
-        coeffs_regression_one_model=coeffs_regression_one_model, coeffs_regression_two_models=coeffs_regression_two_models, two_models_bool=TRUE))) )
-      
-      print(paste0(xi_sensi_mono_names[j], " ", alpha0_mono_vec_names[i]))
-    }
-  }
-}
+      # predictions for units from O(0,1) (plugging A={0,1}) + sensitivity adjustments
+      reg_SA_mono =
+        rbind( reg_SA_mono, c(measure = names(reg_matched_lst)[ind_matched_set], xi=xi, alpha0=alpha0, 
+        unlist(SACE_estimation_LEARNER_mono(reg_data_matched=reg_data_matched_SA, reg_after_match=reg_after_match[-1],
+        alpha0=alpha0, xi=xi, 
+        coeffs_regression_one_model=coeffs_regression_one_model, coeffs_regression_two_models=coeffs_regression_two_models,
+        two_models_bool=TRUE))) )
+      print(paste0(xi_SA_mono_names[j], " ", alpha0_SA_mono_vec_names[i]))
+    } # all values of alpha0 for specific value of xi and specific distance measure
+  } # per distance measure for specific value of xi
+} # per xi
 #########################################################################################
 
 #########################################################################################\
 # process before plotting ####
-reg_sensi_mono = data.frame(reg_sensi_mono)
-reg_sensi_mono[,-1] = apply(reg_sensi_mono[,-1] , 2, as.numeric)
-reg_sensi_mono[,-c(1,2,3)] = round(reg_sensi_mono[,-c(1,2,3)])
-reg_sensi_mono_est = reg_sensi_mono[,c(1:3,4,6,8)] %>% gather("Estimator", "Estimate", c(4:6)) %>% arrange(measure, xi_mono, alpha0_mono)
-reg_sensi_mono_se = reg_sensi_mono[,c(1:3,5,7,9)] %>% gather("Estimator", "SE", c(4:6)) %>% arrange(measure, xi_mono, alpha0_mono)
-reg_sensi_mono_se$Estimator = mgsub(reg_sensi_mono_se$Estimator, c("\\_se$"), "")
-reg_sensi_mono = merge(reg_sensi_mono_est, reg_sensi_mono_se, by=c("measure", "xi_mono", "alpha0_mono", "Estimator"))
-reg_sensi_mono$lower_CI = reg_sensi_mono$Estimate - 1.96 * reg_sensi_mono$SE
-reg_sensi_mono$upper_CI = reg_sensi_mono$Estimate + 1.96 * reg_sensi_mono$SE
+keep_reg_SA_mono = reg_SA_mono
+
+reg_SA_mono = data.frame(reg_SA_mono)
+reg_SA_mono[,-1] = apply(reg_SA_mono[,-1] , 2, as.numeric)
+reg_SA_mono[,-c(1,2,3)] = round(reg_SA_mono[,-c(1,2,3)])
+reg_SA_mono_est = reg_SA_mono[,c(1:3,4,6,8)] %>% gather("Estimator", "Estimate", c(4:6)) %>% arrange(measure, xi, alpha0)
+reg_SA_mono_se = reg_SA_mono[,c(1:3,5,7,9)] %>% gather("Estimator", "SE", c(4:6)) %>% arrange(measure, xi, alpha0)
+reg_SA_mono_se$Estimator = mgsub(reg_SA_mono_se$Estimator, c("\\_se$"), "")
+reg_SA_mono = merge(reg_SA_mono_est, reg_SA_mono_se, by=c("measure", "xi", "alpha0", "Estimator"))
+reg_SA_mono$lower_CI = reg_SA_mono$Estimate - 1.96 * reg_SA_mono$SE
+reg_SA_mono$upper_CI = reg_SA_mono$Estimate + 1.96 * reg_SA_mono$SE
 
 legend_levels = c("Crude", "WLS", "WLS inter")
-reg_sensi_mono$Estimator = mgsub(reg_sensi_mono$Estimator,
-                                 c("crude_est_adj", "SACE_1LEARNER_adj", "SACE_1LEARNER_inter_adj"), legend_levels)
-reg_sensi_mono$Estimator = factor(reg_sensi_mono$Estimator, levels = legend_levels)
-reg_sensi_mono$set = data_bool
+# "SACE_LEARNER_inter_adj"
+reg_SA_mono$Estimator = mgsub(reg_SA_mono$Estimator,
+                                 c("crude_est_adj", "SACE_1LEARNER_adj", "SACE_LEARNER_inter_adj"), legend_levels)
+reg_SA_mono$Estimator = factor(reg_SA_mono$Estimator, levels = legend_levels)
+reg_SA_mono$measure = mgsub(reg_SA_mono$measure, names(reg_matched_lst), c("PS", "Mahal", "Mahal_PS_cal"))
+#reg_SA_mono$measure = factor(reg_SA_mono$measure, levels = c("Mahal_PS_cal", "Mahal", "PS"))
+reg_SA_mono$set = data_bool
 #########################################################################################
 
 #########################################################################################
 # plot SA for monotonicity under PPI, as a function of xi and alpha_0 ####
-plot_SA_mono <- ggplot(filter(reg_sensi_mono, measure == "Mahal_PS_cal" & Estimator %in% c("WLS")), 
-                          aes(x=alpha0_mono, y=Estimate)) + 
+plot_SA_mono <- ggplot(filter(reg_SA_mono, measure == "Mahal_PS_cal" & Estimator %in% c("WLS")), 
+                          aes(x=alpha0, y=Estimate)) + 
   geom_point(aes(col = Estimator, size = 7), size = 3) + theme_bw() + 
   scale_color_manual(values = c("Crude" = "green3", "WLS" = "orangered2", "WLS inter" = "cornflowerblue")) + 
   geom_line(aes(col = Estimator, size = 1.5), size=1.5) + 
@@ -129,7 +144,7 @@ plot_SA_mono <- ggplot(filter(reg_sensi_mono, measure == "Mahal_PS_cal" & Estima
   geom_hline(yintercept = 0)
 
 plot_SA_mono = plot_SA_mono +
-  facet_grid(~ glue('xi*" = {xi_mono}"'), labeller = label_parsed) +
+  facet_grid(~ glue('xi*" = {xi}"'), labeller = label_parsed) +
   theme(
     strip.text.x = element_text(size=12, face="bold"), strip.text.y = element_text(size=12, face="bold"),
     strip.background = element_rect(colour="black", fill="white"), 
@@ -142,10 +157,7 @@ plot_SA_mono = plot_SA_mono +
 
 #########################################################################################
 # plot SA for monotonicity under SPPI (alpha_0=1) under several xi values ####
-reg_sensi_mono$measure = mgsub(as.character(reg_sensi_mono$measure), "_", " ")
-reg_sensi_mono$measure = factor(reg_sensi_mono$measure, levels = c("Mahal", "Mahal PS cal", "PS"))
-
-plot_SA_by_metric <- reg_sensi_mono %>% filter(alpha0_mono==1 & !Estimator=="WLS inter") %>% ggplot(aes(x=xi_mono, y=Estimate)) +
+plot_SA_by_metric <- reg_SA_mono %>% filter(alpha0==1 & !Estimator=="WLS inter") %>% ggplot(aes(x=xi, y=Estimate)) +
   geom_point(aes(col = Estimator, size = 7), size = 2) + 
   geom_line(aes(col = Estimator, size = 1.5), size=1.5) + 
   #xlim("0.25", "0.5", "0.75", "1", "1.25", "1.5", "1.75") +
@@ -164,7 +176,7 @@ plot_SA_by_metric = plot_SA_by_metric +
                      labels = legend_levels, 
                      values = c("Crude" = "orangered2", "WLS" = "green3", "WLS inter" = "cornflowerblue"))  +
   facet_grid(~ measure) + # set ~ measure # Metric ~ Set
-  scale_x_continuous(breaks=xi_sensi_mono_vec) + 
+  scale_x_continuous(breaks=xi_SA_mono_vec) + 
   theme(
     #legend.direction = "horizontal",
     strip.text.x = element_text(size=8, face="bold"), strip.text.y = element_text(size=12, face="bold"),
