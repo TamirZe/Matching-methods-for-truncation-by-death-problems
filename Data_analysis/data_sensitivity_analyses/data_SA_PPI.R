@@ -56,16 +56,14 @@ reg_SA_PPI$upper_CI = reg_SA_PPI$Estimate + 1.96 * reg_SA_PPI$SE
 legend_levels = c("Crude", "WLS", "WLS inter")
 reg_SA_PPI$Estimator = mgsub(reg_SA_PPI$Estimator,
           c("crude_est_adj", "SACE_1LEARNER_adj", "SACE_LEARNER_inter_adj"), legend_levels)
-reg_SA_PPI$Estimator = factor(reg_SA_PPI$Estimator, levels = legend_levels)
-reg_SA_PPI$measure = mgsub(reg_SA_PPI$measure, names(reg_matched_lst), c("PS", "Mahal", "Mahal_PS_cal"))
-#reg_SA_mono$measure = factor(reg_SA_mono$measure, levels = c("Mahal_PS_cal", "Mahal", "PS"))
+reg_SA_PPI$measure = mgsub(reg_SA_PPI$measure, names(reg_matched_lst), c("PS", "Mahal", "Mahal cal"))
 reg_SA_PPI$set = data_bool
 #########################################################################################
 
 #########################################################################################
-#plot ####
-plot_SA_PPI = reg_SA_PPI %>% filter(measure == "Mahal_PS_cal" & Estimator %in% c("WLS")) %>%
-ggplot(aes(x=alpha1, y=Estimate)) + 
+#plot one measure####
+plot_SA_PPI = reg_SA_PPI %>% filter(measure == "Mahal cal" & Estimator %in% c("WLS")) %>%
+ggplot(aes(x = alpha1, y = Estimate)) + 
   geom_point(aes(col = Estimator, size = 7), size = 4) + theme_bw() + 
   scale_color_manual(values = c("Crude" = "green3", "WLS" = "orangered2", "WLS inter" = "cornflowerblue")) + 
   geom_line(aes(col = Estimator, size = 2.5), size=2.5) + 
@@ -89,3 +87,28 @@ ggplot(aes(x=alpha1, y=Estimate)) +
   geom_hline(yintercept = 0)
 #########################################################################################
 
+#########################################################################################
+#plot all measure####
+plot_SA_PPI_by_measure = reg_SA_PPI %>% filter(Estimator %in% c("WLS")) %>%
+  ggplot(aes(x = alpha1, y = Estimate)) + 
+  geom_point(aes(col = measure, size = 7), size = 4) + theme_bw() + 
+  scale_color_manual(name="Measure", breaks = unique(reg_SA_PPI$measure), 
+   labels = unique(reg_SA_PPI$measure), values = c("orangered2", "green3", "cornflowerblue")) +
+   #values = c("Mahal cal" = "orangered2", "Mahal" = "green3", "PS" = "cornflowerblue")) + 
+  geom_line(aes(col = measure, size = 2.5), size=2.5) + 
+  labs(colour = "Estimator"
+       , size = 1
+  ) + 
+  ylim(-2600,4000) + 
+  ylab(label="Estimate") +
+  xlab(label = bquote(alpha[1])) + # epsilon[PPI]
+  #labs( y="Estimate", x=glue('esp[PPI]*" : {protected}"')) +
+  guides(colour = guide_legend(order = 1, override.aes = list(size=5)), size=FALSE) + 
+  theme(
+    axis.title.x = element_text(size = 18)
+    ,axis.text.x = element_text(size = 12)
+    ,axis.title.y = element_text(size = 16)
+    #,legend.position="none" # remove legend
+  ) + 
+  geom_hline(yintercept = 0)
+#########################################################################################

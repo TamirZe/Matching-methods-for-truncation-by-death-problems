@@ -1,8 +1,7 @@
 set.seed(101) 
 #########################################################################################
 # EM parameters, as in the main script ####
-two_log_est_EM = FALSE
-iterations_EM = 500; epsilon_EM = 1e-06
+two_log_est_EM = FALSE; iterations_EM = 500; epsilon_EM = 1e-06
 #########################################################################################
 
 #########################################################################################
@@ -109,18 +108,17 @@ reg_SA_mono$lower_CI = reg_SA_mono$Estimate - 1.96 * reg_SA_mono$SE
 reg_SA_mono$upper_CI = reg_SA_mono$Estimate + 1.96 * reg_SA_mono$SE
 
 legend_levels = c("Crude", "WLS", "WLS inter")
-# "SACE_LEARNER_inter_adj"
 reg_SA_mono$Estimator = mgsub(reg_SA_mono$Estimator,
-                                 c("crude_est_adj", "SACE_1LEARNER_adj", "SACE_LEARNER_inter_adj"), legend_levels)
-reg_SA_mono$Estimator = factor(reg_SA_mono$Estimator, levels = legend_levels)
-reg_SA_mono$measure = mgsub(reg_SA_mono$measure, names(reg_matched_lst), c("PS", "Mahal", "Mahal_PS_cal"))
+                         c("crude_est_adj", "SACE_1LEARNER_adj", "SACE_LEARNER_inter_adj"), legend_levels)
+#reg_SA_mono$Estimator = factor(reg_SA_mono$Estimator, levels = legend_levels)
+reg_SA_mono$measure = mgsub(reg_SA_mono$measure, names(reg_matched_lst), c("PS", "Mahal", "Mahal cal"))
 #reg_SA_mono$measure = factor(reg_SA_mono$measure, levels = c("Mahal_PS_cal", "Mahal", "PS"))
 reg_SA_mono$set = data_bool
 #########################################################################################
 
 #########################################################################################
 # plot SA for monotonicity under PPI, as a function of xi and alpha_0 ####
-plot_SA_mono <- ggplot(filter(reg_SA_mono, measure == "Mahal_PS_cal" & Estimator %in% c("WLS")), 
+plot_SA_mono <- ggplot(filter(reg_SA_mono, measure == "Mahal cal" & Estimator %in% c("WLS")), 
                           aes(x=alpha0, y=Estimate)) + 
   geom_point(aes(col = Estimator, size = 7), size = 3) + theme_bw() + 
   scale_color_manual(values = c("Crude" = "green3", "WLS" = "orangered2", "WLS inter" = "cornflowerblue")) + 
@@ -157,13 +155,12 @@ plot_SA_mono = plot_SA_mono +
 
 #########################################################################################
 # plot SA for monotonicity under SPPI (alpha_0=1) under several xi values ####
-plot_SA_by_metric <- reg_SA_mono %>% filter(alpha0==1 & !Estimator=="WLS inter") %>% ggplot(aes(x=xi, y=Estimate)) +
+plot_SA_by_measure <- reg_SA_mono %>% filter(alpha0==1 & !Estimator=="WLS inter") %>% ggplot(aes(x=xi, y=Estimate)) +
   geom_point(aes(col = Estimator, size = 7), size = 2) + 
   geom_line(aes(col = Estimator, size = 1.5), size=1.5) + 
   #xlim("0.25", "0.5", "0.75", "1", "1.25", "1.5", "1.75") +
   labs(colour = "Estimator"
-       , size = 1
-  ) + 
+       , size = 1) + 
   ylab(label="Estimate") +
   xlab(label = bquote(xi)) + 
   guides(colour = guide_legend(order = 1, override.aes = list(size=5))
@@ -171,7 +168,7 @@ plot_SA_by_metric <- reg_SA_mono %>% filter(alpha0==1 & !Estimator=="WLS inter")
   ) + 
   geom_hline(yintercept = 0 )
 
-plot_SA_by_metric = plot_SA_by_metric + 
+plot_SA_by_measure = plot_SA_by_measure + 
   scale_color_manual(name="Estimator", 
                      labels = legend_levels, 
                      values = c("Crude" = "orangered2", "WLS" = "green3", "WLS inter" = "cornflowerblue"))  +
@@ -191,10 +188,10 @@ plot_SA_by_metric = plot_SA_by_metric +
 
 # EXTRACT LEGEND
 library(cowplot); library(ggpubr)
-lgnd_plt <- get_legend(plot_SA_by_metric) 
+lgnd_plt <- get_legend(plot_SA_by_measure) 
 # Convert to a ggplot and print
 as_ggplot(lgnd_plt)
-plot_SA_woutLGND = plot_SA_by_metric + theme(legend.position = 'none') 
+plot_SA_woutLGND = plot_SA_by_measure + theme(legend.position = 'none') 
 #########################################################################################
 
 

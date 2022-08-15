@@ -9,7 +9,8 @@ path_func = function(param_n, xi_assm, xi, AX_interactions, misspec_outcome, mis
   # local
   main_path = "~/A matching framework for truncation by death problems/"
   
-  path_data = paste0(main_path, "Data_cluster_new/")
+  path_data = paste0(main_path, "Data_new/")
+  #path_data_docs = "C:/Users/tamir/Documents/תזה/cluster/MatchingSACE/Simulation_studies/Data/"
   path = paste0(path_data, "Data_DGM_seq/N=", param_n, "/",
         ifelse(AX_interactions==T, "True_outcome_with_interactions/", "True_outcome_wout_interactions/"),
         ifelse(misspec_outcome==0, "Correct_spec_outcome/", "Mis_spec_outcome/"),
@@ -46,7 +47,7 @@ add_bias_tables = function(res_tab, estimators_vec=NULL, N, num_of_x){
                        subset(res_tab, select = !colnames(res_tab) %in% c("true_SACE", "N", "l", "dim_x", "pi_as")) )
   res_tab$Bias = res_tab$mean - as.numeric(res_tab$true_SACE)  
   res_tab$rel_bias = res_tab$Bias / as.numeric(res_tab$true_SACE) 
-  res_tab$true_SACE = round(res_tab$true_SACE, 4)
+  res_tab$true_SACE = round(res_tab$true_SACE, 5)
   if(!is.null(estimators_vec)){
     res_tab = filter(res_tab, Estimator %in% estimators_vec)
     #res_tab$EstCombi = mgsub(res_tab$Estimator, estimators_vec, legend_levels)
@@ -65,16 +66,13 @@ combine_small_large_pro_func = function(param_n, xi_values, mis_xi, AX_interacti
   small_large_pro = NULL
   #for(j in 1:length(xi_assm_values))
   for(i in 1:length(xi_values)){
+    print(i)
     xi = xi_values[i]
     if(mis_xi==0){ xi_assm=xi }else{ xi_assm=0 }
-    ind=i-1
+    ind = i-1
     all_path_lst = path_func(param_n=param_n, xi_assm=xi_assm, xi=xi,  
-                             AX_interactions=AX_interactions, misspec_outcome=misspec_outcome, misspec_PS=misspec_PS)
-    
+           AX_interactions=AX_interactions, misspec_outcome=misspec_outcome, misspec_PS=misspec_PS)
     # ind from plot_path, the index of xi in c(0,0.05,0.1,0.2) 
-    ##################################################################################################
-    # GENERAL matching estimators ####
-    # read data: matching on mahalanobis with PS caliper - several estimators (final_tables_general)
     
     # 3X
     table_small_pro_small_as_3 = get(load(paste0(all_path_lst$small_pro_small_as_path3, "results_table_", xi_assm, "_",  xi, ".RData"))) 
@@ -142,10 +140,11 @@ combine_small_large_pro_func = function(param_n, xi_values, mis_xi, AX_interacti
     small_large_pro_xi$SE_rel_bias = (small_large_pro_xi$SE - small_large_pro_xi$sd) / small_large_pro_xi$sd
     small_large_pro_xi$SE_rel_bias[small_large_pro_xi$Estimator == "DL_MA_est"] = 0 # since SE were nor calculated for DL
     # add label for the SACE, for each facet plot, per scenario
-    small_large_pro_xi[, label := paste0(unique(true_SACE), collapse=","), by = c("protected", "pi_as")]
+    small_large_pro_xi[, label := paste0(unique(true_SACE), collapse=","), by = c("protected", "pi_as")] 
     temp = apply(data.frame(list.rbind(strsplit(small_large_pro_xi$label, ","))), 2 , as.numeric) %>% round(2)
     small_large_pro_xi$label = paste0("SACE: ", apply(temp, 1, function(x) paste(x, collapse=", ")))
-    small_large_pro = rbind(small_large_pro, data.frame(xi = xi, small_large_pro_xi))
+    small_large_pro = rbind( small_large_pro, data.frame(subset(small_large_pro_xi, select = c(true_SACE, xi, xi_assm)),
+       subset(small_large_pro_xi, select = -c(true_SACE, xi, xi_assm))) )
   }
   ##################################################################################################
   return(small_large_pro)
@@ -158,15 +157,22 @@ plot_tables_func_by_dimx_paperStyle = function(small_large_pro, param_n, mis_xi,
   
   #small_large_pro$shape = mgsub(small_large_pro$Estimator, c("OLS|WLS|BC", " inter| caliper"), c("Model-based", ""))
   
-  # TODO plot # ggpubr::show_point_shapes()
+  # plot # ggpubr::show_point_shapes()
   plot_general = small_large_pro %>% filter(Estimator %in% estimators_vec) %>% 
     ggplot(aes(x = l, y = Bias)) + theme_bw() +
     geom_point(alpha = 0.65, size = 5, aes(col = Estimator, shape = Estimator)) + # , shape = as.character(shape)
     xlim("3", "5", "10") +
-    xlab("Number of Covariates") + 
+    xlab("Number of Covariates") +
+    scale_y_continuous(limits = c(-2.75, 1.75)) +
     #labs(colour = "Estimator", shape = as.character("shape")) + 
-    scale_colour_manual(name="", breaks = estimators_vec, labels = legend_labels, values = colors_arg) + 
-    scale_shape_manual(name="", breaks = estimators_vec, labels = legend_labels, values = shapes_arg) +
+    # paste0(estimators_vec, " = ", colors_arg)
+    # expression(paste(legend_labels, collapse = " "))
+    #scale_color_manual(name="", labels = legend_labels, 
+    #                   values = c("mahal_cal_crude_Yes_rep" = "palevioletred3", "PS_crude_Yes_rep = yellow",               
+    #                    "mahal_cal_OLS_int" = "dodgerblue3", "mahal_cal_WLS_int" = "red4",              
+    #                    "DL_MA_est" = "forestgreen", "mahal_cal_crude_Yes_rep" = "forestgreen"))  +
+    scale_colour_manual(name = "", breaks = estimators_vec, labels = legend_labels, values = colors_arg) + 
+    scale_shape_manual(name = "", breaks = estimators_vec, labels = legend_labels, values = shapes_arg) +
     guides(col=guide_legend(nrow=2,byrow=TRUE)) + 
     #guides(colour = guide_legend(order = 1, override.aes = list(size=7)), shape = guide_legend(title = "F"), size = FALSE) +
     geom_hline(yintercept = 0) + 
@@ -202,6 +208,7 @@ plot_tables_func_by_xi_paperStyle = function(small_large_pro, param_n, mis_xi, A
     ggplot(aes(x = as.factor(xi), y = Bias)) + theme_bw() +
     geom_point(alpha = 0.65, size = 5, aes(col = Estimator, shape = Estimator)) + # , shape = as.character(shape)
     xlab(bquote(xi)) + 
+    scale_y_continuous(limits = c(-2.75, 1.75)) +
     #labs(colour = "Estimator", shape = as.character("shape")) + 
     scale_colour_manual(name="", breaks = estimators_vec, labels = legend_labels, values = colors_arg) + 
     scale_shape_manual(name="", breaks = estimators_vec, labels = legend_labels, values = shapes_arg) +

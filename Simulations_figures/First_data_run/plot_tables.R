@@ -19,7 +19,7 @@ legend_labels_gnrl = c("Matching:Crude", "Matching:CrudeWout", "Matching:PS",
                        "Matching:RegressionOLS",  "Matching:RegressionWLS", "Matching:BC", "Weighting")
 colors_arg_gnrl = c("palevioletred3", "yellow", "yellow", "dodgerblue3", "red4", "forestgreen", "forestgreen")
 shapes_arg_gnrl = c(15, 15, 15, 16, 17, 18, 18)
-# COMPARE TO pdf
+
 # estimators_vec_gnrl = c("maha_cal_rep_FALSE", "OLS_int", "maha_cal_rep_TRUE", "WLS_int",  "BC_cal_rep_TRUE", "DL_MA_est")
 # legend_labels_gnrl = c("Crude Wout", "OLS inter", "Crude With", "WLS inter", "BC With", "DingLu MA")
 # colors_arg_gnrl = c("forestgreen", "dodgerblue3", "yellow1", "firebrick3", "palevioletred3", "black")

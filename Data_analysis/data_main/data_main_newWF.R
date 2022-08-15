@@ -232,18 +232,6 @@ for (l in 1:length(matching_measures)){
     X_sub_cols=variables, metric=matching_measures[l]), by="Variable")
 }
 
-arrange_balance_table = function(balance_before_matching, balance_match, variables_balance_match, matching_measures){
-  BALANCE_TABLE = merge(balance_before_matching, balance_match, by="Variable", all.x = T, all.y = T)
-  #rownames(BALANCE_TABLE) = BALANCE_TABLE$Variable
-  BALANCE_TABLE = BALANCE_TABLE[match(variables_balance_match, BALANCE_TABLE$Variable), ]
-  BALANCE_TABLE = BALANCE_TABLE %>% filter(!Variable %in% c("N", "N_match", "N_unq", "EMest_p_as", "re74", "emp74"))
-  BALANCE_TABLE = BALANCE_TABLE[, !BALANCE_TABLE[1,] %in% matching_measures[c(1,2)]]
-  
-  colnames(BALANCE_TABLE) <- gsub("\\..*","", colnames(BALANCE_TABLE))
-  BALANCE_TABLE$Variable <- mgsub(BALANCE_TABLE$Variable, BALANCE_TABLE$Variable,
-      c("Metric", "Age", "Education","Earnings75", "Black", "Hispanic", "Married", "Nodegree", "Employed75"))
-  return(BALANCE_TABLE)
-}
 
 BALANCE_TABLE_wout = arrange_balance_table(balance_before_matching=balance_before_matching, balance_match=balance_match_wout,
                              variables_balance_match=variables_balance_match, matching_measures=matching_measures)

@@ -1,37 +1,34 @@
 # m_data = data_with_PS[S==1]
 # caliper is in sd
-#replace = T; estimand = "ATC"; M=1
+replace = T; estimand = "ATC"; M=1; match_on=caliper_variable
 
-matching_all_measures_func = function(m_data, match_on=NULL, covariates_mahal, reg_BC, X_sub_cols, 
-                                     M=1, replace, estimand="ATC", caliper, sim_bool=TRUE){
+matching_all_measures_func = function(m_data, match_on, covariates_mahal, reg_BC, X_sub_cols, 
+                                     M=1, replace, estimand="ATC", caliper){
   m_data$id = c(1:nrow(m_data))
   print(paste0("replace is ", replace, ". nrows is ", nrow(m_data), "."))
   vec_caliper = c(rep(10000, length(covariates_mahal[-1])), caliper)
   
   x_mahal = as.matrix(subset(m_data, select = c(covariates_mahal[-1])))
-  x_cntr = apply(x_mahal, 2, function(x) x-mean(x))
+  #x_cntr = apply(x_mahal, 2, function(x) x-mean(x))
   x_cov_mat = cov(x_mahal)
+  ei = eigen(x_cov_mat)
+  ei_V = ei$vectors
+  minus_sqrt_x_cov_mat = ei_V %*% diag(1 / sqrt(ei$values)) %*% t(ei_V)
+  #x_cov_mat %*% minus_sqrt_x_cov_mat %*% minus_sqrt_x_cov_mat # check that minus_sqrt_x_cov_mat is indeed x_cov_mat^(-1/2)
   
-  ei <- eigen(x_cov_mat)
-  V <- ei$vectors
-  minus_sqrt_x_cov_mat <- V %*% diag(1 / sqrt(ei$values)) %*% t(V)
-  x_cov_mat %*% minus_sqrt_x_cov_mat %*% minus_sqrt_x_cov_mat
-  
-  # TODO MATCHING ONLY ONLY on the weights, O11_posterior_ratio
-  print("MATCHING ON PS")
+  # MATCHING ONLY ONLY on the weights, O11_posterior_ratio ####
   set.seed(101)
-  # Match(Y=Y, Tr=Tr, X=X, M=1) # PS matching according to documentation https://cran.r-project.org/web/packages/Matching/Matching.pdf
+  # match_on is "O11_posterior_ratio"/ "pi_tilde_as1", i.e. the col name of the variable that us being used as a cliper (caliper_variable)
   ps_obj <- Match(Y=m_data[,Y], Tr=m_data[,A]
       ,X = subset(m_data, select = match_on)
       ,ties = FALSE, M = M, replace = replace, estimand = estimand
-      ,Weight = 3, Weight.matrix = 1 
+      #,Weight = 3, Weight.matrix = 1 
   )
   ps_lst = arrange_dataset_after_matching(match_obj=ps_obj, m_data=m_data, replace_bool=replace, X_sub_cols=X_sub_cols)
   mean_by_subset_ps = mean_x_summary(m_data=m_data, matched_data=ps_lst$matched_data, X_sub_cols=X_sub_cols)
   
-  # TODO MAHALANOBIS WITHOUT PS CALIPER
-  print("MAHALANOBIS WITHOUT PS CALIPER")
-  set.seed(102)
+  # MAHALANOBIS WITHOUT PS CALIPER ####
+  #set.seed(102)
   mahal_obj <- Match(Y = m_data[,Y], Tr = m_data[,A]
        ,X = x_mahal
        ,ties = FALSE, M = M, replace = replace, estimand = estimand
@@ -41,11 +38,10 @@ matching_all_measures_func = function(m_data, match_on=NULL, covariates_mahal, r
   mahal_lst = arrange_dataset_after_matching(match_obj=mahal_obj, m_data=m_data, replace_bool=replace, X_sub_cols=X_sub_cols)
   mean_by_subset_mahal = mean_x_summary(m_data=m_data, matched_data=mahal_lst$matched_data, X_sub_cols=X_sub_cols)
   
-  # TODO MAHALANOBIS WITH PS CALIPER
-  print("MAHALANOBIS WITH PS CALIPER")
+  # MAHALANOBIS WITH PS CALIPER  ####
   w_mat_mahal_cal = diag(ncol(x_mahal) + 1)
   w_mat_mahal_cal[ncol(w_mat_mahal_cal), ncol(w_mat_mahal_cal)] = 0
-  set.seed(103)
+  #set.seed(103)
   mahal_cal_obj  <- Match(Y = m_data[,Y], Tr = m_data[,A]
          ,X = data.frame(x_mahal %*% minus_sqrt_x_cov_mat, subset(m_data, select = match_on))
          ,ties = FALSE, M = M, replace = replace, estimand = estimand
@@ -56,7 +52,7 @@ matching_all_measures_func = function(m_data, match_on=NULL, covariates_mahal, r
   mean_by_subset_mahal_cal = mean_x_summary(m_data=m_data, matched_data=mahal_cal_lst$matched_data, X_sub_cols=X_sub_cols)
   
   # TODO AI bias-corrected estimator, employ only when replace==TRUE
-  set.seed(104)
+  #set.seed(104)
   if(replace == TRUE){ 
     print("START BC")
     
@@ -169,3 +165,16 @@ mean_x_summary = function(m_data, matched_data, X_sub_cols){
   return(means_by_subset)
 } 
 
+# arrange balance tables after summaries (after running all the matching procedure)
+arrange_balance_table = function(balance_before_matching, balance_match, variables_balance_match, matching_measures){
+  BALANCE_TABLE = merge(balance_before_matching, balance_match, by="Variable", all.x = T, all.y = T)
+  #rownames(BALANCE_TABLE) = BALANCE_TABLE$Variable
+  BALANCE_TABLE = BALANCE_TABLE[match(variables_balance_match, BALANCE_TABLE$Variable), ]
+  BALANCE_TABLE = BALANCE_TABLE %>% filter(!Variable %in% c("N", "N_match", "N_unq", "EMest_p_as", "re74", "emp74"))
+  BALANCE_TABLE = BALANCE_TABLE[, !BALANCE_TABLE[1,] %in% matching_measures[c(1,2)]]
+  
+  colnames(BALANCE_TABLE) <- gsub("\\..*","", colnames(BALANCE_TABLE))
+  BALANCE_TABLE$Variable <- mgsub(BALANCE_TABLE$Variable, BALANCE_TABLE$Variable,
+                                  c("Metric", "Age", "Education","Earnings75", "Black", "Hispanic", "Married", "Nodegree", "Employed75"))
+  return(BALANCE_TABLE)
+}

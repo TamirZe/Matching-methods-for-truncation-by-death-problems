@@ -103,7 +103,7 @@ crude_estimator_inference = function(match_lst, replace_bool){
   }else{
     #SACE_matching_SE = ifelse(replace_bool==TRUE, match_obj$se, match_obj$se.standard) 
     SACE_matching_SE = match_obj$se
-    # need in matching on PS only, for some reason, meaning that for PS matching, there is no SE of AI (2006)
+    # Only required in matching on PS only, for some reason, for PS matching, there is no SE of AI (2006)
     if(is.null(match_obj$se)){
       print(deparse(substitute(MATCH_PS_only)))
       SACE_matching_SE = match_obj$se.standard

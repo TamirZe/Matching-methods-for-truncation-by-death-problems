@@ -342,12 +342,12 @@ if( job_id >= 0 & job_id <= (nrow(arguments_mat) - 1) ){
   } # out of for loop for all the iterations (param_n_sim iterations in total)
   
   raw_results_lst = list(true_SACE=true_SACE, param_n_sim=param_n_sim, 
-                         matching_estimators_mat=matching_estimators_mat, matching_estimators_SE_mat=matching_estimators_SE_mat, CI_mat=CI_mat, 
-                         BC_ties_multiple_treated_mat=BC_ties_multiple_treated_mat, pis_pis_est_obs_mat=pis_pis_est_obs_mat, 
-                         beta_S0_mat=beta_S0_mat, coeff_ah_mat=coeff_ah_mat, coeff_pro_mat=coeff_pro_mat, list_mean_by_g=list_mean_by_g,
-                         balance_PS_wout_rep_lst=balance_PS_wout_rep_lst, balance_PS_with_rep_lst=balance_PS_with_rep_lst, 
-                         balance_mahal_wout_rep_lst=balance_mahal_wout_rep_lst, balance_mahal_with_rep_lst=balance_mahal_with_rep_lst, 
-                         balance_mahal_cal_wout_rep_lst=balance_mahal_cal_wout_rep_lst, balance_mahal_cal_with_rep_lst=balance_mahal_cal_with_rep_lst)
+           matching_estimators_mat=matching_estimators_mat, matching_estimators_SE_mat=matching_estimators_SE_mat, CI_mat=CI_mat, 
+           BC_ties_multiple_treated_mat=BC_ties_multiple_treated_mat, pis_pis_est_obs_mat=pis_pis_est_obs_mat, 
+           beta_S0_mat=beta_S0_mat, coeff_ah_mat=coeff_ah_mat, coeff_pro_mat=coeff_pro_mat, list_mean_by_g=list_mean_by_g,
+           balance_PS_wout_rep_lst=balance_PS_wout_rep_lst, balance_PS_with_rep_lst=balance_PS_with_rep_lst, 
+           balance_mahal_wout_rep_lst=balance_mahal_wout_rep_lst, balance_mahal_with_rep_lst=balance_mahal_with_rep_lst, 
+           balance_mahal_cal_wout_rep_lst=balance_mahal_cal_wout_rep_lst, balance_mahal_cal_with_rep_lst=balance_mahal_cal_with_rep_lst)
   
   #TODO summaries of all iterations of one scenario (according to mat_gamma and its row, k) from the simulations in summaries_newWF.R
   # summaries of all iterations of one scenario (according to mat_gamma and its row, k) from the simulations in summaries_newWF.R

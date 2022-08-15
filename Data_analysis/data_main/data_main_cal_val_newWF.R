@@ -130,7 +130,6 @@ balance_before_matching = balance_before_matching[match(variables_names_balance,
 list_results_by_caliper = list()
 caliper_values = seq(0.05,0.5,0.05)
 for (i in 1:length(caliper_values)){
-  
   m_data=data_with_PS[S==1]
   matching_datasets_lst = list()
   replace_vec = c(FALSE, TRUE)
@@ -211,7 +210,6 @@ for (i in 1:length(caliper_values)){
 # arrange in a table ####
 BALANCE_TABLE_with_caliper_values = list_results_by_caliper$cliper_0.05$BALANCE_TABLE_with
 BALANCE_TABLE_with_caliper_values = BALANCE_TABLE_with_caliper_values[,BALANCE_TABLE_with_caliper_values[1,]!="mahal_cal"]
-
 tmp_res3 = NULL
 for (i in 1:length(caliper_values)){
   tmp_res = list_results_by_caliper[[i]]$BALANCE_TABLE_with
