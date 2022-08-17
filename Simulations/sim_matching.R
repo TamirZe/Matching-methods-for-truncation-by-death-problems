@@ -1,6 +1,6 @@
 # m_data = data_with_PS[S==1]
 # caliper is in sd
-replace = T; estimand = "ATC"; M=1; match_on=caliper_variable
+#replace = T; estimand = "ATC"; M=1; match_on=caliper_variable
 
 matching_all_measures_func = function(m_data, match_on, covariates_mahal, reg_BC, X_sub_cols, 
                                      M=1, replace, estimand="ATC", caliper){
@@ -17,7 +17,7 @@ matching_all_measures_func = function(m_data, match_on, covariates_mahal, reg_BC
   #x_cov_mat %*% minus_sqrt_x_cov_mat %*% minus_sqrt_x_cov_mat # check that minus_sqrt_x_cov_mat is indeed x_cov_mat^(-1/2)
   
   # MATCHING ONLY ONLY on the weights, O11_posterior_ratio ####
-  set.seed(101)
+  #set.seed(101)
   # match_on is "O11_posterior_ratio"/ "pi_tilde_as1", i.e. the col name of the variable that us being used as a cliper (caliper_variable)
   ps_obj <- Match(Y=m_data[,Y], Tr=m_data[,A]
       ,X = subset(m_data, select = match_on)

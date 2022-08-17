@@ -153,7 +153,8 @@ combine_small_large_pro_func = function(param_n, xi_values, mis_xi, AX_interacti
 
 ##################################################################################################
 plot_tables_func_by_dimx_paperStyle = function(small_large_pro, param_n, mis_xi, AX_interactions, misspec_outcome, misspec_PS,
-                                               estimators_vec, legend_labels, colors_arg, shapes_arg, measure_to_plot="Bias"){
+               estimators_vec, legend_labels, colors_arg, shapes_arg, measure_to_plot="Bias",
+               l_lim=-2.75, u_lim=1.75){
   
   #small_large_pro$shape = mgsub(small_large_pro$Estimator, c("OLS|WLS|BC", " inter| caliper"), c("Model-based", ""))
   
@@ -163,14 +164,9 @@ plot_tables_func_by_dimx_paperStyle = function(small_large_pro, param_n, mis_xi,
     geom_point(alpha = 0.65, size = 5, aes(col = Estimator, shape = Estimator)) + # , shape = as.character(shape)
     xlim("3", "5", "10") +
     xlab("Number of Covariates") +
-    scale_y_continuous(limits = c(-2.75, 1.75)) +
+    scale_y_continuous(limits = c(l_lim, u_lim)) + # limits = c(-2.75, 1.75)
     #labs(colour = "Estimator", shape = as.character("shape")) + 
     # paste0(estimators_vec, " = ", colors_arg)
-    # expression(paste(legend_labels, collapse = " "))
-    #scale_color_manual(name="", labels = legend_labels, 
-    #                   values = c("mahal_cal_crude_Yes_rep" = "palevioletred3", "PS_crude_Yes_rep = yellow",               
-    #                    "mahal_cal_OLS_int" = "dodgerblue3", "mahal_cal_WLS_int" = "red4",              
-    #                    "DL_MA_est" = "forestgreen", "mahal_cal_crude_Yes_rep" = "forestgreen"))  +
     scale_colour_manual(name = "", breaks = estimators_vec, labels = legend_labels, values = colors_arg) + 
     scale_shape_manual(name = "", breaks = estimators_vec, labels = legend_labels, values = shapes_arg) +
     guides(col=guide_legend(nrow=2,byrow=TRUE)) + 
@@ -199,7 +195,8 @@ plot_tables_func_by_dimx_paperStyle = function(small_large_pro, param_n, mis_xi,
 
 ##################################################################################################
 plot_tables_func_by_xi_paperStyle = function(small_large_pro, param_n, mis_xi, AX_interactions, misspec_outcome, misspec_PS, 
-                                             estimators_vec, legend_labels, colors_arg, shapes_arg, measure_to_plot="Bias"){
+                estimators_vec, legend_labels, colors_arg, shapes_arg, measure_to_plot="Bias",
+                l_lim=-2.75, u_lim=1.75){
   
   #small_large_pro$shape = mgsub(small_large_pro$Estimator, c("OLS|WLS|BC", " inter| caliper"), c("Model-based", ""))
   
@@ -208,7 +205,7 @@ plot_tables_func_by_xi_paperStyle = function(small_large_pro, param_n, mis_xi, A
     ggplot(aes(x = as.factor(xi), y = Bias)) + theme_bw() +
     geom_point(alpha = 0.65, size = 5, aes(col = Estimator, shape = Estimator)) + # , shape = as.character(shape)
     xlab(bquote(xi)) + 
-    scale_y_continuous(limits = c(-2.75, 1.75)) +
+    scale_y_continuous(limits = c(l_lim, u_lim)) + # limits = c(-2.75, 1.75)
     #labs(colour = "Estimator", shape = as.character("shape")) + 
     scale_colour_manual(name="", breaks = estimators_vec, labels = legend_labels, values = colors_arg) + 
     scale_shape_manual(name="", breaks = estimators_vec, labels = legend_labels, values = shapes_arg) +
