@@ -5,8 +5,7 @@ A matching framework for truncation by death problems
 
 Reproducibility of simulation results and data analysis associated with the paper "A matching framework for truncation by death problems" by Zehavi and Nevo.
 
-This repository includes two main parts, and an two additional folder containing the EM algorithms we have applied 
-and folder with files for visualizing the simulations results.
+This repository includes two main parts, and an two additional folders:
 
 1. Simulations: simulation scripts, simulation results and simulation summary
 (Figures 2 and Table 2 in the main text, and Figures 1,2,3,4,5 and Tables 5 and 6 in the Supplementary).
@@ -30,4 +29,6 @@ The data analysis can be ran through "data_main" file, except for the sensitivit
 the sensitivity analyses procedures for Monotonicity and PPI, were performed through data_SA_mono and data_SA_PPI files, respectively.
 
 ### EM
+
+#### Simulations_figures
 
