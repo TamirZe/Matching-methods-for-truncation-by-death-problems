@@ -30,7 +30,7 @@ nsw <- read.dta13("NSW_data_analysis/data_files/LL_DW_datasets/nsw_dw.dta") # de
 data(LL, package = "cem") # LaLonde dataset 
 ########################################################################
 
-set.seed(101)
+set.seed(102)
 ########################################################################
 data_bool = "LL" # "DW" for dehejia and wahba dataset # "LL" for LaLonde dataset 
 # EM parameters
@@ -40,7 +40,7 @@ EM_est_seq = TRUE
 two_log_est_EM = FALSE
 iterations_EM = 500; epsilon_EM = 1e-06
 
-covariates_PS =    c("age", "black", "hispanic", "married", "re75", "emp75") # "re75_square",
+covariates_PS =    c("age", "black", "hispanic", "married", "re75", "emp75") # "re75_square", # age_square
 # adding intercept is for keeping the format of vars_names[-1] as in the simulations, since X1 in the simulations is the intercept
 covariates_mahal = c("intercept", "age", "education", "re75")
 reg_after_match =  c("intercept", "age", "education", "black", "hispanic", "married", "re75")
@@ -55,6 +55,7 @@ caliper_variable = "pi_tilde_as1"
 data = LL
 data = adjust_data(data, 1000, data_bool=data_bool) #DW #LL
 #data$re75_square = data$re75^2
+#data$age_square = data$age^2
 variables = setdiff(colnames(data), c("id", "A", "S", "Y", "OBS", "emp_74_75", "g"))
 ######################################################################## 
 
