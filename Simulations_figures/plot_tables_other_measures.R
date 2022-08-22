@@ -1,15 +1,15 @@
 library(data.table); library(plyr); library(dplyr); library(rlang); library(rlist);library(ggplot2); library(mgsub)
 library(cowplot); library(ggpubr); library(textclean)
 setwd("~/A matching framework for truncation by death problems")
-source("Simulations/Figures/plot_tables_functions.R")
+source("Simulations_Figures/plot_tables_functions.R")
 
 param_n = 2000
-mis_xi = 2 #0 #2
+mis_xi = 0 #0 #2
 AX_interactions = T
-misspec_PS = 0 # no misspec (misspec_PS=0) # Func Form misspec (misspec_PS=2)
-misspec_outcome = 0 # no misspec (misspec_PS=0) # Func Form misspec (misspec_PS=2)
+misspec_PS = 2 # no misspec (misspec_PS=0) # Func Form misspec (misspec_PS=2)
+misspec_outcome = 2 # no misspec (misspec_PS=0) # Func Form misspec (misspec_PS=2)
 xi_values = c(0, 0.05, 0.1, 0.2) # sort(unique(full_results_table$xi)) # c(0, 0.05, 0.1, 0.2)
-measure_to_plot = "Coverage"
+measure_to_plot = "MSE"
 
 figure_name = paste0(ifelse(mis_xi, "Mis_xi", "Crct_xi"), "_Yinteractions=", AX_interactions, "_misY=", misspec_outcome, "_misPS=", misspec_PS, "_N", param_n)
 ##################################################################################################
@@ -18,11 +18,15 @@ estimators_vec_gnrl = c("OLS_int", "WLS_int", "BC_cal_rep_TRUE", "DL_MA_est")
 legend_labels_gnrl = c("OLS",  "WLS", "BC", "DLMA")
 colors_arg_gnrl =c("dodgerblue3", "red4", "yellow", "forestgreen")
 shapes_arg_gnrl = c(16, 17, 15, 18)
-# COMPARE TO pdf
-# estimators_vec_gnrl = c("maha_cal_rep_FALSE", "OLS_int", "maha_cal_rep_TRUE", "WLS_int",  "BC_cal_rep_TRUE", "DL_MA_est")
-# legend_labels_gnrl = c("Crude Wout", "OLS inter", "Crude With", "WLS inter", "BC With", "DingLu MA")
-# colors_arg_gnrl = c("forestgreen", "dodgerblue3", "yellow1", "firebrick3", "palevioletred3", "black")
-# shapes_arg_gnrl = c(1, 2, 15, 16, 17, 18)  
+  
+estimators_vec_gnrl = c("mahal_cal_crude_Yes_rep", "mahal_crude_Yes_rep", "PS_crude_Yes_rep", 
+                        "mahal_cal_WLS_int", "mahal_WLS_int", "PS_WLS_int", 
+                        "mahal_cal_OLS_int", "DL_MA_est")
+legend_labels_gnrl = c("Mahal cal", "Mahal", "PS",
+                       "Mahal cal: WLS", "Mahal: WLS", "PS: WLS",
+                       "Mahal cal: OLS", "DL")
+colors_arg_gnrl = c("darkblue", "#330033", "red4", "darkorange2", "yellow", "purple", "dodgerblue3", "forestgreen")
+shapes_arg_gnrl = c(6, 2, 7, 17, 15, 16, 16, 18)
 
 full_results_table = combine_small_large_pro_func(param_n=param_n, xi_values=xi_values, mis_xi=mis_xi,
                                                   AX_interactions=AX_interactions, misspec_outcome=misspec_outcome, misspec_PS=misspec_PS, estimators_vec=estimators_vec_gnrl)

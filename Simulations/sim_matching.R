@@ -51,7 +51,7 @@ matching_all_measures_func = function(m_data, match_on, covariates_mahal, reg_BC
   mahal_cal_lst = arrange_dataset_after_matching(match_obj=mahal_cal_obj, m_data=m_data, replace_bool=replace, X_sub_cols=X_sub_cols)
   mean_by_subset_mahal_cal = mean_x_summary(m_data=m_data, matched_data=mahal_cal_lst$matched_data, X_sub_cols=X_sub_cols)
   
-  # TODO AI bias-corrected estimator, employ only when replace==TRUE
+  # AI bias-corrected estimator, employ only when replace==TRUE
   #set.seed(104)
   if(replace == TRUE){ 
     print("START BC")
@@ -170,11 +170,12 @@ arrange_balance_table = function(balance_before_matching, balance_match, variabl
   BALANCE_TABLE = merge(balance_before_matching, balance_match, by="Variable", all.x = T, all.y = T)
   #rownames(BALANCE_TABLE) = BALANCE_TABLE$Variable
   BALANCE_TABLE = BALANCE_TABLE[match(variables_balance_match, BALANCE_TABLE$Variable), ]
-  BALANCE_TABLE = BALANCE_TABLE %>% filter(!Variable %in% c("N", "N_match", "N_unq", "EMest_p_as", "re74", "emp74"))
+  # "N", "N_match", "N_unq"
+  BALANCE_TABLE = BALANCE_TABLE %>% filter(!Variable %in% c("N", "N_unq", "EMest_p_as", "re74", "emp74"))
   BALANCE_TABLE = BALANCE_TABLE[, !BALANCE_TABLE[1,] %in% matching_measures[c(1,2)]]
   
   colnames(BALANCE_TABLE) <- gsub("\\..*","", colnames(BALANCE_TABLE))
   BALANCE_TABLE$Variable <- mgsub(BALANCE_TABLE$Variable, BALANCE_TABLE$Variable,
-                                  c("Metric", "Age", "Education","Earnings75", "Black", "Hispanic", "Married", "Nodegree", "Employed75"))
+                                  c("Metric", "N_match", "Age", "Education","Earnings75", "Black", "Hispanic", "Married", "Nodegree", "Employed75"))
   return(BALANCE_TABLE)
 }

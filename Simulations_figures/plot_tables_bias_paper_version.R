@@ -3,44 +3,37 @@ library(cowplot); library(ggpubr); library(textclean)
 setwd("~/A matching framework for truncation by death problems")
 source("Simulations_figures/plot_tables_functions.R")
 
+##################################################################################################
+# main text figure ####
+limits_with_inter = c(-2.75, 1.2)
+estimators_vec_gnrl = c("mahal_cal_WLS_int", "mahal_WLS_int", "PS_WLS_int", "mahal_cal_crude_Yes_rep", "DL_MA_est")
+legend_labels_gnrl = c("Mahal caliper: WLS", "Mahal: WLS", "PS: WLS", "Mahal caliper: Crude", "Weighting")
+colors_arg_gnrl = c("red4", "darkorange2", "dodgerblue3", "darkblue", "forestgreen")
+shapes_arg_gnrl = c(17, 15, 16, 20, 18)
+##################################################################################################
+
+##################################################################################################
 limits_with_inter = c(-2.75, 1.4)
 limits_wout_inter = c(-2.75, 1.25)
 
 main_bool = FALSE
 param_n = 2000
 xi_values = c(0, 0.05, 0.1, 0.2) # sort(unique(full_results_table$xi)) # c(0, 0.05, 0.1, 0.2)
-AX_interactions_vec = c(T,F)
+AX_interactions_vec = c(T, F)
 
 misspec_PS = 2 # no misspec (misspec_PS=0) # Func Form misspec (misspec_PS=2)
 misspec_outcome = 2 # no misspec (misspec_PS=0) # Func Form misspec (misspec_PS=2)
 ##################################################################################################
+
+##################################################################################################
 # paperStyle GENERAL ####
-
-# 1. main version ####
-'''estimators_vec_gnrl = c("mahal_cal_crude_Yes_rep", "PS_crude_Yes_rep", "mahal_cal_OLS_int", "mahal_cal_WLS_int", "DL_MA_est")
-#first option
-legend_labels_gnrl = c("Matching:Crude", "Matching:PScrude", "Matching:RegressionOLS", "Matching:RegressionWLS", "Weighting")
-colors_arg_gnrl = c("palevioletred3", "yellow", "dodgerblue3", "red4", "forestgreen", "forestgreen")
-shapes_arg_gnrl = c(15, 15, 16, 17, 18, 18)
-#second option
-legend_labels_gnrl = c("Matching:Crude", "Matching:PScrude", "Matching:OLS",  "Matching:WLS", "Weighting")
-colors_arg_gnrl = c("palevioletred3", "#330033", "dodgerblue3", "red4", "forestgreen")
-shapes_arg_gnrl = c(15, 0, 16, 17, 18)'''
-
-#TODO 2. second version ####
-# first option
-#estimators_vec_gnrl = c("mahal_crude_Yes_rep", "mahal_OLS_int", "mahal_WLS_int", "mahal_BC_Yes_rep", #"mahal_BC_Yes_rep",
-#                        "PS_crude_Yes_rep", "PS_OLS_int",  "PS_WLS_int", "PS_BC_Yes_rep", "DL_MA_est") # "PS_BC_Yes_rep"
-#legend_labels_gnrl = c("Mahal:crude", "Mahal:OLS", "Mahal:WLS", "PS:crude", "PS:OLS", "PS:WLS", "DL")
-#colors_arg_gnrl = c("#330033", "dodgerblue3", "red4",  "yellow", "darkblue", "darkorange2", "forestgreen")
-#shapes_arg_gnrl = c(15, 6, 17, 15, 10, 16, 18)
-#second option
-estimators_vec_gnrl = c("mahal_crude_Yes_rep", "mahal_cal_OLS_int", "mahal_cal_WLS_int", 
+estimators_vec_gnrl = c("mahal_cal_crude_Yes_rep", "mahal_cal_OLS_int", "mahal_cal_WLS_int", 
                         "mahal_WLS_int", "PS_WLS_int", "DL_MA_est")
 legend_labels_gnrl = c("Mahal caliper: Crude", "Mahal caliper: OLS", "Mahal caliper: WLS",
                        "Mahal: WLS", "PS: WLS", "Weighting")
 colors_arg_gnrl = c("darkblue", "#330033", "red4", "darkorange2", "dodgerblue3", "forestgreen")
 shapes_arg_gnrl = c(20, 6, 17, 15, 16, 18)
+##################################################################################################
 
 max_vec = c(); min_vec = c() 
 for (i in 1:length(AX_interactions_vec)){
@@ -65,7 +58,7 @@ for (i in 1:length(AX_interactions_vec)){
   figure = plot_tables_func_by_dimx_paperStyle(small_large_pro=small_large_pro, param_n=param_n, mis_xi=mis_xi
      ,AX_interactions=AX_interactions, misspec_outcome=misspec_outcome, misspec_PS=misspec_PS
      ,estimators_vec=estimators_vec_gnrl, legend_labels=legend_labels_gnrl
-     ,colors_arg=colors_arg_gnrl, shapes_arg=shapes_arg_gnrl, u_lim=u_lim, u_lim=u_lim)
+     ,colors_arg=colors_arg_gnrl, shapes_arg=shapes_arg_gnrl, l_lim=l_lim, u_lim=u_lim)
   dev.off()
   
   # TODO xi on X axis ####
@@ -96,3 +89,22 @@ for (i in 1:length(AX_interactions_vec)){
 }
 ##################################################################################################
 
+##################################################################################################
+#1. main version ####
+'''estimators_vec_gnrl = c("mahal_cal_crude_Yes_rep", "PS_crude_Yes_rep", "mahal_cal_OLS_int", "mahal_cal_WLS_int", "DL_MA_est")
+#first option
+legend_labels_gnrl = c("Matching:Crude", "Matching:PScrude", "Matching:RegressionOLS", "Matching:RegressionWLS", "Weighting")
+colors_arg_gnrl = c("palevioletred3", "yellow", "dodgerblue3", "red4", "forestgreen", "forestgreen")
+shapes_arg_gnrl = c(15, 15, 16, 17, 18, 18)
+#second option
+legend_labels_gnrl = c("Matching:Crude", "Matching:PScrude", "Matching:OLS",  "Matching:WLS", "Weighting")
+colors_arg_gnrl = c("palevioletred3", "#330033", "dodgerblue3", "red4", "forestgreen")
+shapes_arg_gnrl = c(15, 0, 16, 17, 18)'''
+
+#2. second version ####
+'''estimators_vec_gnrl = c("mahal_crude_Yes_rep", "mahal_OLS_int", "mahal_WLS_int", "mahal_BC_Yes_rep", #"mahal_BC_Yes_rep",
+                       "PS_crude_Yes_rep", "PS_OLS_int",  "PS_WLS_int", "PS_BC_Yes_rep", "DL_MA_est") # "PS_BC_Yes_rep"
+legend_labels_gnrl = c("Mahal:crude", "Mahal:OLS", "Mahal:WLS", "PS:crude", "PS:OLS", "PS:WLS", "DL")
+colors_arg_gnrl = c("#330033", "dodgerblue3", "red4",  "yellow", "darkblue", "darkorange2", "forestgreen")
+shapes_arg_gnrl = c(15, 6, 17, 15, 10, 16, 18)'''
+##################################################################################################

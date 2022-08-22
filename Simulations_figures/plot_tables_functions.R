@@ -66,7 +66,7 @@ combine_small_large_pro_func = function(param_n, xi_values, mis_xi, AX_interacti
   small_large_pro = NULL
   #for(j in 1:length(xi_assm_values))
   for(i in 1:length(xi_values)){
-    print(i)
+    #print(i)
     xi = xi_values[i]
     if(mis_xi==0){ xi_assm=xi }else{ xi_assm=0 }
     ind = i-1
@@ -235,14 +235,14 @@ plot_tables_func_by_xi_paperStyle = function(small_large_pro, param_n, mis_xi, A
 
 ##################################################################################################
 plot_tables_func_by_dimx_paperStyle_flex = function(small_large_pro, param_n, mis_xi, AX_interactions, misspec_outcome, misspec_PS,
-                                               estimators_vec, legend_labels, colors_arg, shapes_arg, measure_to_plot){
+               estimators_vec, legend_labels, colors_arg, shapes_arg, measure_to_plot){
   
   #small_large_pro$shape = mgsub(small_large_pro$Estimator, c("OLS|WLS|BC", " inter| caliper"), c("Model-based", ""))
   
   # TODO plot # ggpubr::show_point_shapes()
   plot_general = small_large_pro %>% filter(Estimator %in% estimators_vec) %>% 
     ggplot(aes_string(x = "l", y = measure_to_plot)) + theme_bw() + # SE_rel_bias
-    geom_point(alpha = 0.65, aes(col = Estimator, shape = Estimator)) + # , size = abs(SE_rel_bias)
+    geom_point(alpha = 0.65, size = 5, aes(col = Estimator, shape = Estimator)) + # , size = abs(SE_rel_bias)  # size = MSE
     xlim("3", "5", "10") +
     xlab("Number of Covariates") + 
     #labs(colour = "Estimator", size = "SE_rel_bias") + 
@@ -252,7 +252,7 @@ plot_tables_func_by_dimx_paperStyle_flex = function(small_large_pro, param_n, mi
     guides(col=guide_legend(nrow=2,byrow=TRUE)) + 
     #guides(colour = guide_legend(order = 1, override.aes = list(size=7)), shape = guide_legend(title = "F"), size = FALSE) +
     geom_hline(yintercept = 0) + 
-    geom_hline(yintercept = 0.95) +
+    #geom_hline(yintercept = 0.95) +
     #ylim(c(-0.75, 0.75)) + 
     facet_grid(glue::glue('pi[pro]*" : {protected}"') ~ glue::glue('pi[as]*" = {pi_as}"'), 
                labeller = label_parsed) +
@@ -276,7 +276,7 @@ plot_tables_func_by_dimx_paperStyle_flex = function(small_large_pro, param_n, mi
 
 ##################################################################################################
 plot_tables_func_by_xi_paperStyle_flex = function(small_large_pro, param_n, mis_xi, AX_interactions, misspec_outcome, misspec_PS, 
-                                             estimators_vec, legend_labels, colors_arg, shapes_arg, measure_to_plot){
+               estimators_vec, legend_labels, colors_arg, shapes_arg, measure_to_plot){
   
   #small_large_pro$shape = mgsub(small_large_pro$Estimator, c("OLS|WLS|BC", " inter| caliper"), c("Model-based", ""))
   
@@ -284,7 +284,7 @@ plot_tables_func_by_xi_paperStyle_flex = function(small_large_pro, param_n, mis_
   small_large_pro$xi = as.factor(small_large_pro$xi)
   plot_general = small_large_pro %>% filter(Estimator %in% estimators_vec) %>% 
     ggplot(aes_string(x = "xi", y = measure_to_plot)) + theme_bw() + # SE_rel_bias
-    geom_point(alpha = 0.65, aes(col = Estimator, shape = Estimator)) + #, size = abs(SE_rel_bias)
+    geom_point(alpha = 0.65, size = 5, aes(col = Estimator, shape = Estimator)) + #, size = abs(SE_rel_bias)  # size = MSE
     xlab(bquote(xi)) + 
     #labs(colour = "Estimator", shape = as.character("shape")) + 
     #labs(colour = "Estimator", size = "SE_rel_bias") + 
@@ -293,7 +293,7 @@ plot_tables_func_by_xi_paperStyle_flex = function(small_large_pro, param_n, mis_
     guides(col=guide_legend(nrow=2,byrow=TRUE)) + 
     #guides(colour = guide_legend(order = 1, override.aes = list(size=7)), shape = guide_legend(title = "F"), size = FALSE) +
     geom_hline(yintercept = 0) + 
-    geom_hline(yintercept = 0.95) + 
+    #geom_hline(yintercept = 0.95) + 
     #ylim(c(-0.75, 0.75)) + 
     facet_grid(glue::glue('pi[pro]*" : {protected}"') ~ glue::glue('pi[as]*" = {pi_as}"'), 
                labeller = label_parsed) +

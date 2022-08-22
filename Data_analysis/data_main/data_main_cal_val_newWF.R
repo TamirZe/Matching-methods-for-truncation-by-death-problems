@@ -30,7 +30,7 @@ nsw <- read.dta13("NSW_data_analysis/data_files/LL_DW_datasets/nsw_dw.dta") # de
 data(LL, package = "cem") # LaLonde dataset 
 ########################################################################
 
-set.seed(102)
+set.seed(101)
 ########################################################################
 data_bool = "LL" # "DW" for dehejia and wahba dataset # "LL" for LaLonde dataset 
 # EM parameters
@@ -43,6 +43,8 @@ iterations_EM = 500; epsilon_EM = 1e-06
 covariates_PS =    c("age", "black", "hispanic", "married", "re75", "emp75") # "re75_square", # age_square
 # adding intercept is for keeping the format of vars_names[-1] as in the simulations, since X1 in the simulations is the intercept
 covariates_mahal = c("intercept", "age", "education", "re75")
+#covariates_mahal = c("intercept", "age", "education", "married", "re75")
+#covariates_mahal = c("intercept", "age", "education", "re75", "black", "hispanic", "married", "nodegree", "emp75")
 reg_after_match =  c("intercept", "age", "education", "black", "hispanic", "married", "re75")
 reg_BC =           c("intercept", "age", "education", "black", "hispanic", "married", "re75") 
 
@@ -53,9 +55,8 @@ caliper_variable = "pi_tilde_as1"
 ######################################################################## 
 # adjust data  ####
 data = LL
-data = adjust_data(data, 1000, data_bool=data_bool) #DW #LL
+data = adjust_data(data=data, divide_salary=1000, data_bool=data_bool) #DW #LL
 #data$re75_square = data$re75^2
-#data$age_square = data$age^2
 variables = setdiff(colnames(data), c("id", "A", "S", "Y", "OBS", "emp_74_75", "g"))
 ######################################################################## 
 
@@ -121,7 +122,7 @@ balance_full_data = covarites_descriptive_table_cont_disc(dat=data_with_PS, cov_
 # balance in the survivors (employed)
 balance_employed = covarites_descriptive_table_cont_disc(dat=data_with_PS[S==1], cov_descr=variables, metric="Employed")
 # combine full dataset and survivors (employed)
-variables_remove = c("N", "N_match","N_unq", "EMest_p_as")
+variables_remove = c("N", "N_unq", "EMest_p_as") # c("N", "N_match","N_unq", "EMest_p_as")
 variables_names_balance = setdiff(balance_full_data$Variable, variables_remove)
 balance_before_matching = merge(balance_full_data, balance_employed ,by="Variable", all.x = F)
 balance_before_matching = balance_before_matching[match(variables_names_balance, balance_before_matching$Variable), ]
@@ -138,7 +139,7 @@ for (i in 1:length(caliper_values)){
     matching_datasets_lst[[j]] = 
       matching_all_measures_func(m_data=m_data, match_on=caliper_variable, 
                                  covariates_mahal=covariates_mahal, reg_BC=reg_BC, X_sub_cols=variables, 
-                                 M=1, replace=replace_vec[j], estimand="ATC", caliper=caliper)
+                                 M=1, replace=replace_vec[j], estimand="ATC", caliper=caliper_values[i])
   }
   
   matching_measures = c("PS", "mahal", "mahal_cal")
@@ -196,9 +197,11 @@ for (i in 1:length(caliper_values)){
           X_sub_cols=variables, metric=matching_measures[l]), by="Variable")
   }
   
-  BALANCE_TABLE_wout = arrange_balance_table(balance_before_matching=balance_before_matching, balance_match=balance_match_wout,
+  BALANCE_TABLE_wout = arrange_balance_table(
+                 balance_before_matching=balance_before_matching, balance_match=balance_match_wout,
                  variables_balance_match=variables_balance_match, matching_measures=matching_measures)
-  BALANCE_TABLE_with = arrange_balance_table(balance_before_matching=balance_before_matching, balance_match=balance_match_with,
+  BALANCE_TABLE_with = arrange_balance_table(
+                 balance_before_matching=balance_before_matching, balance_match=balance_match_with,
                  variables_balance_match=variables_balance_match, matching_measures=matching_measures)
   ######################################################################## 
   
@@ -214,9 +217,12 @@ BALANCE_TABLE_with_caliper_values = BALANCE_TABLE_with_caliper_values[,BALANCE_T
 tmp_res3 = NULL
 for (i in 1:length(caliper_values)){
   tmp_res = list_results_by_caliper[[i]]$BALANCE_TABLE_with
-  variables_col = c("", tmp_res$Variable)
+  variables_col = c("", tmp_res$Variable, "dscrp")
   tmp_res = tmp_res[,tmp_res[1,]=="mahal_cal"]
-  tmp_res = rbind(paste0("cal=", caliper_values[i]), tmp_res)
+  SMD_col = as.numeric(tmp_res$SMD)
+  SDR_col = as.numeric(tmp_res$SDR)
+  tmp_res = rbind(paste0("cal=", caliper_values[i]), tmp_res, 
+                  c(0, 0, sum(abs(SMD_col), na.rm = T), sum(abs(1-SDR_col), na.rm = T)))
   if(i %% 2 == 1){tmp_res3 = tmp_res}else{tmp_res3 = cbind(tmp_res3, tmp_res)}
   if(i %% 2 == 0){
     tmp_res3 = data.frame(Variable = variables_col, tmp_res3)

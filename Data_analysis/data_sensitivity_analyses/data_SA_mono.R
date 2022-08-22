@@ -1,4 +1,4 @@
-set.seed(101) 
+#set.seed(101) 
 #########################################################################################
 # EM parameters, as in the main script ####
 two_log_est_EM = FALSE; iterations_EM = 500; epsilon_EM = 1e-06
@@ -11,14 +11,15 @@ two_log_est_EM = FALSE; iterations_EM = 500; epsilon_EM = 1e-06
 # bounds for xi
 p1 = mean(data[A==1,S]); p0 = mean(data[A==0,S])
 up_bound_xi = (1 - p1) / (p0 - (1 - p1))
+# xi values
 xi_SA_mono_vec = seq(0, 0.5, 0.1)
 xi_SA_mono_vec[length(xi_SA_mono_vec)] = 0.48 #round(up_bound_xi,2)
 xi_SA_mono_names = paste0("xi_mono_", round(xi_SA_mono_vec, 2))
-
+# alpha0 values
 alpha0_SA_mono_vec = seq(0.5, 2, 0.25) 
 alpha0_SA_mono_vec_names = paste0("alpha0_mono_", alpha0_SA_mono_vec)  
 
-# SA for each combinations of xi and alpha_0, and for all distance metrics ####
+# SA for each combinations of xi and alpha0, and for all distance metrics ####
 reg_SA_mono <- NULL
 for (j in 1:length(xi_SA_mono_names)) {
   xi = xi_SA_mono_vec[j]
@@ -48,23 +49,25 @@ for (j in 1:length(xi_SA_mono_names)) {
   
   # matching for the current xi ####
   # set.seed because otherwise the matching procedure will not yield the same results when alpha_0=1 under all values of xi, during the SA for monotonicity (for mahalanobis measure) 
-  #TODO Actually, even when we seed here, matching on mahalanobis alone yields different results. Need to set.seed before every matching procedure for the same results
+  # Actually, even when we seed here, matching on mahalanobis alone yields different results. Need to set.seed before every matching procedure for the same results
   # also, if not seed, when xi=0 in SA for monotonicity results will not be similar to results when alpha_1=1 in SA for PPI (for mahalanobis measure)
-  set.seed(101) 
+  
+  # seed for xi=0 to be equal to SA_PPI when alpha1=1
+  if(j == 1){ set.seed(101) }
   matching_lst = matching_all_measures_func(m_data=tmp[S==1], match_on=caliper_variable, 
       covariates_mahal=covariates_mahal, reg_BC=reg_BC, X_sub_cols=variables, 
       M=1, replace=TRUE, estimand="ATC", caliper=caliper)
   reg_matched_lst = lapply(matching_lst[1:3], "[[", "matched_data")
   
-  # matched_set_lst for all distance metrics
-  # matched_data_lst = list(
-  #   PS = reg_matched_lst$ps_lst %>% distinct(id, .keep_all = TRUE) %>% subset(select = -pair),
-  #   Mahal = reg_matched_lst$mahal_lst %>% distinct(id, .keep_all = TRUE) %>% subset(select = -pair),
-  #   Mahal_PS_cal = reg_matched_lst$mahal_cal_lst %>% distinct(id, .keep_all = TRUE) %>% subset(select = -pair)
-  # )
+  # for mahalanobis measure, use only the dataset after the first matching - with xi = 0 - since xi does not change the matching procedure
+  if(j == 1){ # or mahalanobis measure, retain the matched dataset after the first matching, with xi = 0 
+    reg_data_matched_SA_mahal = reg_matched_lst$mahal_lst
+  }else{ # for xi != 0, replace the matched dataset after mahalanobis with the first matched dataset, with xi = 0 
+    reg_matched_lst[["mahal_lst"]] = reg_data_matched_SA_mahal
+  }
   
-  # run on all distance metrics
-  for(ind_matched_set in c(1:length(reg_matched_lst))){  
+  # run on all distance metrics # names(reg_matched_lst)
+  for(ind_matched_set in c(1:length(reg_matched_lst))){ 
     #matched_data = matched_data_lst[[ind_matched_set]]
     reg_data_matched_SA = reg_matched_lst[[ind_matched_set]]
     print(paste0("unique weights for control are really = ", unique(filter(reg_data_matched_SA, A==0)$w)))
@@ -96,13 +99,16 @@ for (j in 1:length(xi_SA_mono_names)) {
 #########################################################################################\
 # process before plotting ####
 keep_reg_SA_mono = reg_SA_mono
+#reg_SA_mono[10, -c(1:3)] == reg_SA_PPI[10, -c(1:2)]
 
 reg_SA_mono = data.frame(reg_SA_mono)
 reg_SA_mono[,-1] = apply(reg_SA_mono[,-1] , 2, as.numeric)
 reg_SA_mono[,-c(1,2,3)] = round(reg_SA_mono[,-c(1,2,3)])
 reg_SA_mono_est = reg_SA_mono[,c(1:3,4,6,8)] %>% gather("Estimator", "Estimate", c(4:6)) %>% arrange(measure, xi, alpha0)
 reg_SA_mono_se = reg_SA_mono[,c(1:3,5,7,9)] %>% gather("Estimator", "SE", c(4:6)) %>% arrange(measure, xi, alpha0)
-reg_SA_mono_se$Estimator = mgsub(reg_SA_mono_se$Estimator, c("\\_se$"), "")
+reg_SA_mono_se$Estimator = mgsub(reg_SA_mono_se$Estimator, c("\\_se$"), "") 
+#library(stringr); str_sub(reg_SA_mono_se$Estimator, end=-4)
+
 reg_SA_mono = merge(reg_SA_mono_est, reg_SA_mono_se, by=c("measure", "xi", "alpha0", "Estimator"))
 reg_SA_mono$lower_CI = reg_SA_mono$Estimate - 1.96 * reg_SA_mono$SE
 reg_SA_mono$upper_CI = reg_SA_mono$Estimate + 1.96 * reg_SA_mono$SE
