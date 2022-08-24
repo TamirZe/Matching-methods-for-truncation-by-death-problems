@@ -36,7 +36,8 @@ full_results_table = combine_small_large_pro_func(param_n=param_n, xi_values=xi_
     AX_interactions=AX_interactions, misspec_outcome=misspec_outcome, misspec_PS=misspec_PS, estimators_vec=estimators_vec_gnrl)
 dimx_vec = unique(sort(full_results_table$dim_x))
 
-pdf(file = paste0("~/A matching framework for truncation by death problems/Figures_pdf/Bias_GENERAL_", figure_name, ".pdf")) # Figures_pdf/Bias_GENERAL_"
+#pdf(file = paste0("~/A matching framework for truncation by death problems/Figures_pdf/Bias_GENERAL_", figure_name, ".pdf")) # Figures_pdf/Bias_GENERAL_"
+pdf(file = paste0("C:/Users/tamir/Desktop/Figures_pdf/Bias_GENERAL_", figure_name, ".pdf")) 
 # dimx=k on X axis
 figures_xi_values_lst_paperStyle = list()
 for (i in 1 : length(xi_values)){
@@ -80,7 +81,8 @@ full_results_table = combine_small_large_pro_func(param_n=param_n, xi_values=xi_
 dimx_vec = unique(sort(full_results_table$dim_x))
 
 
-pdf(file= paste0("~/A matching framework for truncation by death problems/Figures_pdf/Bias_CRUDE_", figure_name, ".pdf"))
+#pdf(file= paste0("~/A matching framework for truncation by death problems/Figures_pdf/Bias_CRUDE_", figure_name, ".pdf"))
+pdf(file = paste0("C:/Users/tamir/Desktop/Figures_pdf/Bias_CRUDE_", figure_name, ".pdf")) 
 #TODO dimx=k on X axis
 figures_xi_values_lst_paperStyle = list()
 for (i in 1 : length(xi_values)){
