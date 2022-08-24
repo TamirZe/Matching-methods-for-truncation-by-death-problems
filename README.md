@@ -17,7 +17,7 @@ Every script contains the main code for a given number of covariates and strata 
 $(\pi_{as} = 0.5,0.75$, and low/high $\pi_{pro})$.
 Different parameters per each Scenario are the number of covariates,
 betas_GPI (changing according to the number of covariates and whether or not interactions are included in the true outcome model), gamma_ah, gamma_pro (changing according to the number of covariates and strata proportions).
-The parameters misspec_PS and misspec_outcome equals zero (two) for a correct specification (misspecification) of the principal score model and the outcome model.
+The parameters misspec_PS and misspec_outcome equal zero (two) for a correct specification (misspecification) of the principal score model and the outcome model.
 
 2. Data analysis: analysis of the National Supported Work Demonstration (Figure 3 and Tables 3 and 4 in the main text, and Figures 3 and 3, and Tables 8,9,10 in the Supplementary).
 
