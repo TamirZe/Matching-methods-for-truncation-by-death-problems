@@ -4,15 +4,6 @@ setwd("~/A matching framework for truncation by death problems")
 source("Simulations_figures/plot_tables_functions.R")
 
 ##################################################################################################
-# main text figure ####
-limits_with_inter = c(-2.75, 1.2)
-estimators_vec_gnrl = c("mahal_cal_WLS_int", "mahal_WLS_int", "PS_WLS_int", "mahal_cal_crude_Yes_rep", "DL_MA_est")
-legend_labels_gnrl = c("Mahal caliper: WLS", "Mahal: WLS", "PS: WLS", "Mahal caliper: Crude", "Weighting")
-colors_arg_gnrl = c("red4", "darkorange2", "dodgerblue3", "darkblue", "forestgreen")
-shapes_arg_gnrl = c(17, 15, 16, 20, 18)
-##################################################################################################
-
-##################################################################################################
 limits_with_inter = c(-2.75, 1.4)
 limits_wout_inter = c(-2.75, 1.25)
 
@@ -23,6 +14,15 @@ AX_interactions_vec = c(T, F)
 
 misspec_PS = 2 # no misspec (misspec_PS=0) # Func Form misspec (misspec_PS=2)
 misspec_outcome = 2 # no misspec (misspec_PS=0) # Func Form misspec (misspec_PS=2)
+##################################################################################################
+
+##################################################################################################
+# main text figure ####
+limits_with_inter = c(-2.75, 1.2)
+estimators_vec_gnrl = c("mahal_cal_WLS_int", "mahal_WLS_int", "PS_WLS_int", "mahal_cal_crude_Yes_rep", "DL_MA_est")
+legend_labels_gnrl = c("Mahal caliper: WLS", "Mahal: WLS", "PS: WLS", "Mahal caliper: Crude", "Weighting")
+colors_arg_gnrl = c("red4", "darkorange2", "dodgerblue3", "darkblue", "forestgreen")
+shapes_arg_gnrl = c(17, 15, 16, 20, 18)
 ##################################################################################################
 
 ##################################################################################################

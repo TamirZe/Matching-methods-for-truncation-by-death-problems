@@ -56,8 +56,10 @@ mis_ps_crct_y_true_xi = combine_small_large_pro_func(param_n=param_n, xi_values=
         AX_interactions=T, misspec_outcome=0, misspec_PS=2, estimators_vec=estimators_vec)
 
 # several values of dim_x for xi=0 
-tab1 = paper_table_func( crct_ps_crct_y = crct_ps_crct_y_true_xi %>% filter(xi == 0 & protected == "Low" & dim_x %in% c(5)),
-                         mis_ps_crct_y  = mis_ps_crct_y_true_xi %>% filter(xi == 0 & protected == "Low" & dim_x %in% c(5)) )
+tab1 = paper_table_func( crct_ps_crct_y = crct_ps_crct_y_true_xi %>% 
+                           filter(xi == 0 & protected == "Low" & dim_x %in% c(5)),
+                         mis_ps_crct_y  = mis_ps_crct_y_true_xi %>% 
+                           filter(xi == 0 & protected == "Low" & dim_x %in% c(5)) )
 
 # several values of xi for dim_x=5 
 tab2 = paper_table_func( crct_ps_crct_y = crct_ps_crct_y_true_xi %>% filter(dim_x == 5 & protected == "Low" & xi %in% c(0.05)),
@@ -72,8 +74,10 @@ mis_ps_crct_y_wrong_xi = combine_small_large_pro_func(param_n=param_n, xi_values
        AX_interactions=T, misspec_outcome=0, misspec_PS=2, estimators_vec=estimators_vec)
 
 # several values of xi for dim_x=5 
-tab3 = paper_table_func( crct_ps_crct_y = crct_ps_crct_y_wrong_xi %>% filter(dim_x == 5 & protected == "Low" & xi %in% c(0.05, 0.1, 0.2)), 
-                          mis_ps_crct_y  = mis_ps_crct_y_wrong_xi %>% filter(dim_x == 5 & protected == "Low" & xi %in% c(0.05, 0.1, 0.2)) )
+tab3 = paper_table_func( crct_ps_crct_y = crct_ps_crct_y_wrong_xi %>% 
+                           filter(dim_x == 5 & protected == "Low" & xi %in% c(0.05, 0.1, 0.2)), 
+                          mis_ps_crct_y  = mis_ps_crct_y_wrong_xi %>% 
+                           filter(dim_x == 5 & protected == "Low" & xi %in% c(0.05, 0.1, 0.2)) )
 ############################################################################
 
 

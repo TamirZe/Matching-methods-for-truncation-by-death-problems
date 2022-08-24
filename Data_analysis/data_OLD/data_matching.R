@@ -57,7 +57,8 @@ matching_func_multiple_data = function(match_on=NULL,
   MATCH_PS_only  <- Match(Y=m_data[,Y], Tr=m_data[,A]
                           ,X = subset(m_data, select = match_on)
                           ,ties=FALSE
-                          ,M=M, replace = replace, estimand = estimand, Weight = mahal_match
+                          ,M=M, replace = replace, estimand = estimand
+                          #, Weight = mahal_match
   )
   only_ps_lst = arrange_dataset_after_matching_DATA(m_data=m_data, match_obj=MATCH_PS_only, 
                           replace_bool=replace, X_sub_cols=X_sub_cols)

@@ -48,6 +48,7 @@ matching_all_measures_func = function(m_data, match_on, covariates_mahal, reg_BC
          ,caliper = vec_caliper 
          ,Weight = 3, Weight.matrix = w_mat_mahal_cal
   )
+  
   mahal_cal_lst = arrange_dataset_after_matching(match_obj=mahal_cal_obj, m_data=m_data, replace_bool=replace, X_sub_cols=X_sub_cols)
   mean_by_subset_mahal_cal = mean_x_summary(m_data=m_data, matched_data=mahal_cal_lst$matched_data, X_sub_cols=X_sub_cols)
   

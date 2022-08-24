@@ -238,6 +238,7 @@ plot_tables_func_by_dimx_paperStyle_flex = function(small_large_pro, param_n, mi
                estimators_vec, legend_labels, colors_arg, shapes_arg, measure_to_plot){
   
   #small_large_pro$shape = mgsub(small_large_pro$Estimator, c("OLS|WLS|BC", " inter| caliper"), c("Model-based", ""))
+  if(measure_to_plot == "Coverage"){ y_intercept = c(0, 0.95) }else{ y_intercept = 0 }
   
   # TODO plot # ggpubr::show_point_shapes()
   plot_general = small_large_pro %>% filter(Estimator %in% estimators_vec) %>% 
@@ -251,8 +252,8 @@ plot_tables_func_by_dimx_paperStyle_flex = function(small_large_pro, param_n, mi
     scale_shape_manual(name="", breaks = estimators_vec, labels = legend_labels, values = shapes_arg) +
     guides(col=guide_legend(nrow=2,byrow=TRUE)) + 
     #guides(colour = guide_legend(order = 1, override.aes = list(size=7)), shape = guide_legend(title = "F"), size = FALSE) +
-    geom_hline(yintercept = 0) + 
-    #geom_hline(yintercept = 0.95) +
+    #geom_hline(yintercept = 0) + 
+    geom_hline(yintercept = y_intercept) +
     #ylim(c(-0.75, 0.75)) + 
     facet_grid(glue::glue('pi[pro]*" : {protected}"') ~ glue::glue('pi[as]*" = {pi_as}"'), 
                labeller = label_parsed) +
@@ -279,6 +280,7 @@ plot_tables_func_by_xi_paperStyle_flex = function(small_large_pro, param_n, mis_
                estimators_vec, legend_labels, colors_arg, shapes_arg, measure_to_plot){
   
   #small_large_pro$shape = mgsub(small_large_pro$Estimator, c("OLS|WLS|BC", " inter| caliper"), c("Model-based", ""))
+  if(measure_to_plot == "Coverage"){ y_intercept = c(0, 0.95) }else{ y_intercept = 0 }
   
   # TODO plot # ggpubr::show_point_shapes()
   small_large_pro$xi = as.factor(small_large_pro$xi)
@@ -292,8 +294,8 @@ plot_tables_func_by_xi_paperStyle_flex = function(small_large_pro, param_n, mis_
     scale_shape_manual(name="", breaks = estimators_vec, labels = legend_labels, values = shapes_arg) +
     guides(col=guide_legend(nrow=2,byrow=TRUE)) + 
     #guides(colour = guide_legend(order = 1, override.aes = list(size=7)), shape = guide_legend(title = "F"), size = FALSE) +
-    geom_hline(yintercept = 0) + 
-    #geom_hline(yintercept = 0.95) + 
+    #geom_hline(yintercept = 0) + 
+    geom_hline(yintercept = y_intercept) + 
     #ylim(c(-0.75, 0.75)) + 
     facet_grid(glue::glue('pi[pro]*" : {protected}"') ~ glue::glue('pi[as]*" = {pi_as}"'), 
                labeller = label_parsed) +

@@ -50,7 +50,7 @@ reg_BC =           c("intercept", "age", "education", "black", "hispanic", "marr
 
 # parameters and variables for matching and regressions ####
 caliper_variable = "pi_tilde_as1"  
-caliper = 0.25 
+caliper = 0.4
 ######################################################################## 
 
 ######################################################################## 
@@ -127,7 +127,8 @@ data_with_PS$pi_tilde_as1 = data_with_PS$EMest_p_as / (data_with_PS$EMest_p_as +
 # Ding and Lu estimators ####
 DL_est = c(DL_est = est_ding_lst$AACE, DL_MA_est = est_ding_lst$AACE.reg)
 # bootstrap for SE estimate of DL estimator
-#boosting_results = run_boosting(data, BS=500, seed=19, iter.max=iterations, error0=epsilon_EM)
+boosting_results = run_boosting(data=data, BS=500, seed=101, iterations_EM=iterations_EM, epsilon_EM=epsilon_EM,
+                                two_log_est_EM=two_log_est_EM, covariates_PS=covariates_PS)
 ######################################################################## 
 
 ######################################################################## 
@@ -183,6 +184,15 @@ DL_na = -101 # DL estimators do not include SE and CI
 SE = c(naive_estimators_SE, c(DL_est=DL_na, DL_MA_est=DL_na), matching_estimators_SE)
 # CI of matching estimators
 CI = c(unlist(naive_estimators_CI), c(DL_est=DL_na, DL_MA_est=DL_na), matching_estimators_CI)
+
+arrange_estimators_tab = function(estimators_res){
+  estimators_res = data.frame(paste0(rep(c("PS", "Mahal", "Mahal cal"), times=2), rep(c( "_Wout", "_With"), each=3)),
+                  t(matrix(estimators_res[-c(1:4)], ncol = 6)) %>% round(0))
+  colnames(estimators_res) = c("", "Crude", "BC", "Wilc", "LS", "LS_int")
+  return(estimators_res)
+}
+View(arrange_estimators_tab(estimators))
+View(arrange_estimators_tab(SE))
 ######################################################################## 
 
 ######################################################################## 
@@ -194,10 +204,6 @@ for (measure in names(data_pairs_lst)) {
   sum(1 - data_new_grp$A) 
   aligned_ranktets_lst[[measure]] = alignedranktest(outcome=data_new_grp$Y, matchedset=data_new_grp$trt_grp, treatment=data_new_grp$A)
 }
-#library(arsenal)
-#summary(comparedf(data_pairs_lst$ps_lst %>% arrange(pair,A), data_pairs_lst_first_ver$data_pairs_only_ps %>% arrange(pair,A))) 
-#summary(comparedf(data_pairs_lst$mahal_lst %>% arrange(pair,A), data_pairs_lst_first_ver$data_pairs_maha_wout_cal %>% arrange(pair,A))) 
-#summary(comparedf(data_pairs_lst$mahal_cal_lst %>% arrange(pair,A), data_pairs_lst_first_ver$data_pairs_maha_cal_PS %>% arrange(pair,A)))  
 ######################################################################## 
 
 ######################################################################## 
@@ -241,6 +247,9 @@ BALANCE_TABLE_wout = arrange_balance_table(balance_before_matching=balance_befor
                              variables_balance_match=variables_balance_match, matching_measures=matching_measures)
 BALANCE_TABLE_with = arrange_balance_table(balance_before_matching=balance_before_matching, balance_match=balance_match_with,
                              variables_balance_match=variables_balance_match, matching_measures=matching_measures)
+
+balance_match_wout_measures = balance_match_wout[match(variables_names_balance, balance_match_wout$Variable), ] %>% na.omit
+balance_match_with_measures = balance_match_with[match(variables_names_balance, balance_match_with$Variable), ] %>% na.omit
 
 print(BALANCE_TABLE_wout %>% xtable(caption = paste0("Matched data-set means, ", data_bool ," Sample.")), size="\\fontsize{6pt}{6pt}\\selectfont", include.rownames=F)
 print(BALANCE_TABLE_with %>% xtable(caption = paste0("Matched data-set means, ", data_bool ," Sample.")), size="\\fontsize{6pt}{6pt}\\selectfont", include.rownames=F)

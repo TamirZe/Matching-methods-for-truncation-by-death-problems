@@ -110,6 +110,7 @@ crude_estimator_inference = function(match_lst, replace_bool){
     }
   }
   # CI
+  #Z_value = qnorm(0.975)
   CI = round(SACE_matching_est + c(-1,1) * 1.96 * SACE_matching_SE, 3)
   CI = paste(CI, sep = ' ', collapse = " , ")
   return(list(diff_per_pair=diff_per_pair
@@ -123,6 +124,7 @@ BC_estimator_inference = function(match_obj, m_data){
   # SE 
   SACE_matching_SE = match_obj$se
   # CI
+  #Z_value = qnorm(0.975)
   CI = round(SACE_matching_est + c(-1,1) * 1.96 * SACE_matching_SE, 3)
   CI = paste(CI, sep = ' ', collapse = " , ")
   

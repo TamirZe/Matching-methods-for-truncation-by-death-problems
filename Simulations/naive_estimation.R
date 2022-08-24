@@ -1,4 +1,5 @@
 naive_sace_estimation_func = function(data_for_EM){
+  #Z_value = qnorm(0.975)
   # naive
   composite_naive_est = mean(data_for_EM[A==1, Y]) - mean(data_for_EM[A==0, Y]) 
   composite_naive_se = sqrt(  ( var(data_for_EM[A==1, Y])  / nrow(data_for_EM[A==1, ]) ) + 

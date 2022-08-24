@@ -10,8 +10,8 @@ file.exists("balance_lst_0.05_0.05.Rdata"); file.exists("results_table_0.05_0.05
 param_n = 2000
 AX_interactions = T
 misspec_PS = 0 # no misspec (misspec_PS=0) # Func Form misspec (misspec_PS=2)
-misspec_outcome = 2 # no misspec (misspec_PS=0) # Func Form misspec (misspec_PS=2)
-mis_xi = 2
+misspec_outcome = 0 # no misspec (misspec_PS=0) # Func Form misspec (misspec_PS=2)
+mis_xi = 0
 xi_values = c(0, 0.05, 0.1, 0.2) # sort(unique(full_results_table$xi)) # c(0, 0.05, 0.1, 0.2)
 #xi_assm_values = c(0, 0.05, 0.1, 0.2)
 

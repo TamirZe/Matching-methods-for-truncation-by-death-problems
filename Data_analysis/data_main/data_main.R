@@ -155,7 +155,8 @@ for (measure in names(data_pairs_lst)) {
   data_new_grp = adjust_pairs_to_new_grp(data_pairs_lst[[measure]])
   aligned_ranktets_lst[[measure]] = alignedranktest(outcome=data_new_grp$Y, matchedset=data_new_grp$trt_grp, treatment=data_new_grp$A)
 }
-data_pairs_lst_first_ver=data_pairs_lst
+data_pairs_lst_first_ver = data_pairs_lst
+aligned_ranktets_lst_first_ver = aligned_ranktets_lst
 #save(data_pairs_lst_first_ver, file = 'data_pairs_lst_first_ver.Rdata')
 #lst_matching_estimators_first_ver=lst_matching_estimators
 #save(lst_matching_estimators_first_ver, file = 'lst_matching_estimators_first_ver.Rdata')
