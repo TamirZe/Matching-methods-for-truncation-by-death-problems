@@ -13,7 +13,8 @@ Results of the simulation study are presnsted in Figure 1 and Table 2 in the mai
 Information regarding the parameters we have used in each of the Scenarios is given in Tables 1,2,3,4 in the online Supplementary.
 
 The simulations can be ran through the scripts in the main_run folder.
-Every script contains the main code for a given number of covariates and strata proportions ($$\pi_{as} = 0.5,0.75$$, and low/high $$\pi_{pro}$$).
+Every script contains the main code for a given number of covariates and strata proportions 
+$\pi_{as} = 0.5,0.75$, and low/high $\pi_{pro}$.
 Different parameters per each Scenario are the number of covariates,
 betas_GPI (changing according to the number of covariates and whether or not interactions are included in the true outcome model), gamma_ah, gamma_pro (changing according to the number of covariates and strata proportions).
 The parameters misspec_PS and misspec_outcome equals zero (two) for a correct specification (misspecification) of the principal score model and the outcome model.
