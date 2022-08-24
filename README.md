@@ -2,10 +2,11 @@ A matching framework for truncation by death problems
 ================
 
 
-
-Reproducibility of simulation results and data analysis associated with the paper "A matching framework for truncation by death problems" by Zehavi and Nevo.
+Reproducibility of simulations results and data analysis associated with the paper "A matching framework for truncation by death problems" by Zehavi and Nevo.
 
 This repository includes two main parts, and an two additional folders:
+
+(a) Main folders:
 
 1. Simulations: the main scripts for running the simulation study.
 Results of the simulation study are presnsted in Figure 1 and Table 2 in the main text, and Figures 1,2,3,4,5 and Tables 5 and 6 in the online Supplementary).
@@ -22,10 +23,12 @@ The parameters misspec_PS and misspec_outcome equals zero (two) for a correct sp
 The main data analysis can be ran through "data_main_newWF" file.
 The sensitivity analyses procedures for Monotonicity and PPI can be ran through through data_SA_mono and data_SA_PPI files, respectively.
 
-3. EM: files for three different EM procedures, for each of the following situations: 
+(a) Additional folders:
+
+1. EM: files for three different EM procedures, for each of the following situations: 
 (1) DGM-seq, (2) DGM-multi, when monotonicity is assumed, and (3) DGM-multi, when monotonicity is not assumed.
 
-4. Simulations_figures: visualizing the simulations results, using figures and tables.
+2. Simulations_figures: visualizing the simulations results, using figures and tables.
 Contains the scripts for creating the figures and the tables presented in the main text and in the online Supplementary.
 
 ### Simulations
