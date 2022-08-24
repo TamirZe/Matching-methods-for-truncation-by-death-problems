@@ -8,13 +8,12 @@ file.exists("balance_lst_0.05_0.05.Rdata"); file.exists("results_table_0.05_0.05
 
 param_n = 2000
 AX_interactions = T
-misspec_PS = 0 # no misspec (misspec_PS=0) # Func Form misspec (misspec_PS=2)
-misspec_outcome = 0 # no misspec (misspec_PS=0) # Func Form misspec (misspec_PS=2)
+misspec_PS = 2 # no misspec (misspec_PS=0) # Func Form misspec (misspec_PS=2)
+misspec_outcome = 2 # no misspec (misspec_PS=0) # Func Form misspec (misspec_PS=2)
 mis_xi = 0
 xi_values = c(0, 0.05, 0.1, 0.2) # sort(unique(full_results_table$xi)) # c(0, 0.05, 0.1, 0.2)
 #xi_assm_values = c(0, 0.05, 0.1, 0.2)
 
-#figure_name = paste0(ifelse(mis_xi, "Mis_xi", "Crct_xi"), "_Yinteractions=", AX_interactions, "_misY=", misspec_outcome, "_misPS=", misspec_PS, "_N", param_n)
 figure_name = paste0(ifelse(mis_xi, "Mis_xi", "Crct_xi"), "_Yinteractions=", AX_interactions, "_misY=", misspec_outcome, "_misPS=", misspec_PS, "_N", param_n)
 
 ##################################################################################################
@@ -68,12 +67,12 @@ legend_labels_crude = c("Mahalanobis with caliper", "Mahalanobis", "PS", "Weight
 colors_arg_crude = c("palevioletred3","dodgerblue3", "yellow", "forestgreen")
 shapes_arg_crude = c(15, 16, 17, 18)
 
-estimators_vec_crude = c("mahal_cal_crude_Yes_rep", "mahal_crude_Yes_rep", "PS_crude_Yes_rep",
+'''estimators_vec_crude = c("mahal_cal_crude_Yes_rep", "mahal_crude_Yes_rep", "PS_crude_Yes_rep",
                          "mahal_cal_WLS_int", "mahal_WLS_int", "PS_WLS_int", "DL_MA_est")
 legend_labels_crude = c("Mahal caliper: Crude", "Mahal: Crude", "PS: Crude",
                        "Mahal caliper: WLS", "Mahal: WLS", "PS: WLS", "Weighting")
 colors_arg_crude = c("darkblue", "#330033", "gray", "red4", "darkorange2", "dodgerblue3", "forestgreen")
-shapes_arg_crude = c(20, 15, 15, 17, 6, 16, 18)
+shapes_arg_crude = c(20, 15, 15, 17, 6, 16, 18)'''
 
 full_results_table = combine_small_large_pro_func(param_n=param_n, xi_values=xi_values, mis_xi=mis_xi,
     AX_interactions=AX_interactions, misspec_outcome=misspec_outcome, misspec_PS=misspec_PS, estimators_vec=estimators_vec_crude)
