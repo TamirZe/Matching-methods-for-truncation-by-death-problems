@@ -16,7 +16,9 @@ xi_SA_mono_vec = seq(0, 0.5, 0.1)
 xi_SA_mono_vec[length(xi_SA_mono_vec)] = 0.48 #round(up_bound_xi,2)
 xi_SA_mono_names = paste0("xi_mono_", round(xi_SA_mono_vec, 2))
 # alpha0 values
-alpha0_SA_mono_vec = seq(0.5, 2, 0.25) 
+#alpha0_SA_mono_vec = seq(0.5, 2, 0.25) 
+alpha0_lower_bound = 0.32; alpha0_upper_bound = 3.11
+alpha0_SA_mono_vec = c(alpha0_lower_bound, seq(0.5, 2.75, 0.25), alpha0_upper_bound)
 alpha0_SA_mono_vec_names = paste0("alpha0_mono_", alpha0_SA_mono_vec)  
 
 # SA for each combinations of xi and alpha0, and for all distance metrics ####
@@ -133,12 +135,14 @@ plot_SA_mono <- ggplot(filter(reg_SA_mono, measure == "Mahal cal" & Estimator %i
   labs(colour = "Estimator"
        , size = 1) + 
   theme(plot.title = element_text(hjust = 0.5)) + 
-  ylim(-2600,4000) +
+  # max(filter(reg_SA_mono, measure == "Mahal cal" & Estimator %in% c("WLS"))$upper_CI)
+  #min(filter(reg_SA_mono, measure == "Mahal cal" & Estimator %in% c("WLS"))$lower_CI)
+  ylim(-3250,4700) +
   ylab(label="Estimate") + xlab(label = bquote(alpha[0])) + 
   guides(colour = guide_legend(order = 1, override.aes = list(size=5))
          , size=FALSE
   ) + 
-  scale_x_continuous(breaks=c(.5, 1, 1.5, 2), labels = c(".5", "1", "1.5", "2")) +  
+  scale_x_continuous(breaks=c(0.5, 1, 1.5, 2, 2.5, 3), labels = c("0.5", "1", "1.5", "2", "2.5", "3")) +  
   theme(
     axis.title.x = element_text(size = 18),
     axis.text.x = element_text(size = 12),

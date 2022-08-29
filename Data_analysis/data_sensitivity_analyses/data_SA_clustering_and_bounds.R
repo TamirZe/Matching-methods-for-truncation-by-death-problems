@@ -74,13 +74,21 @@ calculate_lower_alpha_per_clstr = function(data_per_clstr, Y_sort, as_amount){
 
 
 dataset = data_with_PS[data_with_PS$S == 1,]
-arm = 0
+arm = 1
 xi = 0
 variables_clstr = c("age", "education", "re75", "black", "hispanic", "married", "nodegree", "emp75")
+reg_after_match
 model_per_cluster = TRUE
 
 dataset_arm = dataset %>% filter(A==arm)
-Y_model = lm(as.formula(paste0("Y ~ ", paste(variables_clstr, collapse = " + "))), data = dataset_arm)
+
+data_reg = dataset %>% subset(select = 
+                     c("Y", "A", "education", "re75", "re74", "emp75", "emp74"))
+Y_model = lm(Y ~ (.)^2, data_reg)
+summary(Y_model)
+
+Y_model = lm(as.formula(paste0("Y ~ ", paste(reg_after_match[-1], collapse = " + "))), 
+             data = dataset_arm)
 Y_hat = predict(Y_model)
 print(min(Y_hat))
 Y_hat_sort = sort(Y_hat) 

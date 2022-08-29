@@ -127,7 +127,7 @@ data_with_PS$pi_tilde_as1 = data_with_PS$EMest_p_as / (data_with_PS$EMest_p_as +
 # Ding and Lu estimators ####
 DL_est = c(DL_est = est_ding_lst$AACE, DL_MA_est = est_ding_lst$AACE.reg)
 # bootstrap for SE estimate of DL estimator
-boosting_results = run_boosting(data=data, BS=500, seed=101, iterations_EM=iterations_EM, epsilon_EM=epsilon_EM,
+bootstrap_results = run_bootstrap(data=data, BS=500, seed=101, iterations_EM=iterations_EM, epsilon_EM=epsilon_EM,
                                 two_log_est_EM=two_log_est_EM, covariates_PS=covariates_PS)
 ######################################################################## 
 
@@ -180,19 +180,29 @@ BC_ties = c(unlist(post_matching_analysis_lst[[2]]$ps_estimators$BC_inference_ls
 ######################################################################## 
 estimators = c(naive_estimators, DL_est, matching_estimators)
 # estimated SE of matching estimators
-DL_na = -101 # DL estimators do not include SE and CI
-SE = c(naive_estimators_SE, c(DL_est=DL_na, DL_MA_est=DL_na), matching_estimators_SE)
+DL_na = -101 # DL estimators do not include SE and CI #
+SE = unlist(c(naive_estimators_SE, c(DL_est= ifelse(is_empty(bootstrap_results), DL_na, bootstrap_results$DL_est[2, "SD"]), 
+    DL_MA_est=ifelse(is_empty(bootstrap_results), DL_na, bootstrap_results$DL_est[1, "SD"])), 
+    matching_estimators_SE))
 # CI of matching estimators
 CI = c(unlist(naive_estimators_CI), c(DL_est=DL_na, DL_MA_est=DL_na), matching_estimators_CI)
+# DL and CI
+bootstrap_results$DL_est[, c("CI_low_q", "CI_up_q")]
+bootstrap_results$DL_est[, c("CI_low", "CI_up")]
 
 arrange_estimators_tab = function(estimators_res){
-  estimators_res = data.frame(paste0(rep(c("PS", "Mahal", "Mahal cal"), times=2), rep(c( "_Wout", "_With"), each=3)),
-                  t(matrix(estimators_res[-c(1:4)], ncol = 6)) %>% round(0))
-  colnames(estimators_res) = c("", "Crude", "BC", "Wilc", "LS", "LS_int")
-  return(estimators_res)
+  estimators_res_tab = data.frame(paste0(rep(c("PS", "Mahal", "Mahal cal"), times=2), rep(c( "_Wout", "_With"), each=3)),
+                  t(matrix(estimators_res[-c(1:4)], ncol = 6)))
+  colnames(estimators_res_tab) = c("Measure", "Crude", "BC", "Wilc", "LS", "LS_int")
+  estimators_res_tab = estimators_res_tab[, c("Measure", "Crude", "LS", "LS_int", "BC", "Wilc")]
+  return(estimators_res_tab)
 }
-View(arrange_estimators_tab(estimators))
+
 View(arrange_estimators_tab(SE))
+CI_round = lapply(strsplit(CI, ",", fixed = TRUE), function(x) paste(round(as.numeric(x), 0), collapse=", ")) 
+est_res_tab = arrange_estimators_tab(paste0(round(estimators, 0), " (", CI_round, ")"))
+print(est_res_tab %>% xtable(), size="\\fontsize{9pt}{9pt}\\selectfont", include.rownames=F)
+# mutate_at(vars(-1), funs(round(., 0))) %>%
 ######################################################################## 
 
 ######################################################################## 
@@ -253,6 +263,9 @@ balance_match_with_measures = balance_match_with[match(variables_names_balance, 
 
 print(BALANCE_TABLE_wout %>% xtable(caption = paste0("Matched data-set means, ", data_bool ," Sample.")), size="\\fontsize{6pt}{6pt}\\selectfont", include.rownames=F)
 print(BALANCE_TABLE_with %>% xtable(caption = paste0("Matched data-set means, ", data_bool ," Sample.")), size="\\fontsize{6pt}{6pt}\\selectfont", include.rownames=F)
+
+print(balance_match_wout_measures %>% xtable(), size="\\fontsize{7pt}{7pt}\\selectfont", include.rownames=F)
+print(balance_match_with_measures %>% xtable(), size="\\fontsize{7pt}{7pt}\\selectfont", include.rownames=F)
 ######################################################################## 
 
 

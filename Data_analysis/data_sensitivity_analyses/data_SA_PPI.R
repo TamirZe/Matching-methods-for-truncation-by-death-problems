@@ -10,7 +10,9 @@ matching_lst = matching_all_measures_func(m_data=m_data, match_on=caliper_variab
 reg_matched_lst = lapply(matching_lst[1:3], "[[", "matched_data")
 #################################################################################################################
 
-alpha1_SA_PPI_vec = seq(0.5,2,0.25)
+#alpha1_SA_PPI_vec = seq(0.5,2,0.25)
+alpha1_lower_bound = 0.35; alpha1_upper_bound = 2.88
+alpha1_SA_PPI_vec = c(alpha1_lower_bound, seq(0.5, 2.75, 0.25), alpha1_upper_bound)
 eps_SA_PPI_names = paste0("alpha1_",alpha1_SA_PPI_vec)
 reg_SA_PPI <- NULL
 
@@ -73,7 +75,7 @@ ggplot(aes(x = alpha1, y = Estimate)) +
   labs(colour = "Estimator"
        , size = 1
   ) + 
-  ylim(-2600,4000) + 
+  ylim(-3250,4700) +
   ylab(label="Estimate") +
   xlab(label = bquote(alpha[1])) + # epsilon[PPI]
   #labs( y="Estimate", x=glue('esp[PPI]*" : {protected}"')) +
@@ -88,18 +90,17 @@ ggplot(aes(x = alpha1, y = Estimate)) +
 #########################################################################################
 
 #########################################################################################
-#plot all measure####
+#plot by measure####
 plot_SA_PPI_by_measure = reg_SA_PPI %>% filter(Estimator %in% c("WLS")) %>%
   ggplot(aes(x = alpha1, y = Estimate)) + 
   geom_point(aes(col = measure, size = 7), size = 4) + theme_bw() + 
-  scale_color_manual(name="Measure", breaks = unique(reg_SA_PPI$measure), 
-   labels = unique(reg_SA_PPI$measure), values = c("orangered2", "green3", "cornflowerblue")) +
+  scale_color_manual(name="Measure", breaks = c("Mahal", "Mahal cal", "PS"),
+                     labels = c("Mahal", "Mahal caliper", "PS"),
+                     values = c("green3","orangered2", "cornflowerblue")) +
    #values = c("Mahal cal" = "orangered2", "Mahal" = "green3", "PS" = "cornflowerblue")) + 
   geom_line(aes(col = measure, size = 2.5), size=2.5) + 
-  labs(colour = "Estimator"
-       , size = 1
-  ) + 
-  ylim(-2600,4000) + 
+  #labs(colour = "Estimator", size = 1) + 
+  ylim(-1200,2500) +
   ylab(label="Estimate") +
   xlab(label = bquote(alpha[1])) + # epsilon[PPI]
   #labs( y="Estimate", x=glue('esp[PPI]*" : {protected}"')) +
@@ -112,3 +113,5 @@ plot_SA_PPI_by_measure = reg_SA_PPI %>% filter(Estimator %in% c("WLS")) %>%
   ) + 
   geom_hline(yintercept = 0)
 #########################################################################################
+
+

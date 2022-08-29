@@ -50,7 +50,7 @@ calculate_SE_CI = function(mat, BS){
 }
 
 #BS = 1000
-run_boosting = function(data, BS, seed, iterations_EM, epsilon_EM, two_log_est_EM, covariates_PS){
+run_bootstrap = function(data, BS, seed, iterations_EM, epsilon_EM, two_log_est_EM, covariates_PS){
   boots_EM_DL_lst = boots_EM_and_DL(data=data, BS=BS, seed=seed, iterations_EM=iterations_EM, epsilon_EM=epsilon_EM,
                                     two_log_est_EM=two_log_est_EM, covariates_PS=covariates_PS)
   #DL
