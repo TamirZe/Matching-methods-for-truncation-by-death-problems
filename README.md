@@ -11,6 +11,7 @@ This repository includes two main parts, and an two additional folders:
 -----------------
 
 1. Simulations:
+-----------------
 
 The main scripts for running the simulation study.
 Details regarding the simulation parameters and strata proportions in each of the Scenarios, is given in Tables C2--C8 in the Web Appendix.
@@ -32,6 +33,7 @@ The sensitivity analyses procedures for monotonicity and PPI can be ran through 
 
 
 (b) Additional folders:
+-----------------
 
 1. EM:
 Files for three EM procedures, for each of the following situations: 
