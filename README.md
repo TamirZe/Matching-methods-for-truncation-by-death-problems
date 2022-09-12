@@ -30,15 +30,15 @@ This folder contains the scripts for creating the figures and the tables present
 (3) EM:
 ----------------------------------
 
-Files for three EM procedures, for each of the following situations: 
+Separate scripts for the EM procedures, each under one of the following situations: 
 (1) DGM-seq, (2) DGM-multi, when monotonicity is assumed, and (3) DGM-multi, when monotonicity is not assumed.
 Information is given in Section B of the Web Appendix.
 
 
-(4). Data analysis:
+(4). Data_analysis:
 ----------------------------------
 
-Analysis of the National Supported Work Demonstration (Figure 3 and Tables 3 and 4 in the main text, and Figures 3 and 3, and Tables 8,9,10 in the Supplementary).
+Analysis of the National Supported Work Demonstration (Table 3 and Figure 2 in the main text, and Tables D14--D19 and Figures D7--D8 of the Web Appendix).
 
 The main data analysis can be ran through "data_main_newWF" file.
 The sensitivity analyses procedures for monotonicity and PPI can be ran through through data_SA_mono and data_SA_PPI files, respectively.
