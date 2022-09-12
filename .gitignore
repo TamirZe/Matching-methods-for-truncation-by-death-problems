@@ -12,7 +12,7 @@ Figures_pdf_files/
 Data_new/
 
 # Simulations
-true_SACE_verif.R
+true_SACE_ver.R
 Main_run_old/
 
 
@@ -25,7 +25,7 @@ data_old_scripts/
 data_files/
 
 
-C:/Users/tamir/Documents/A matching framework for truncation by death problems/Simulations/true_SACE_verif.R
+C:/Users/tamir/Documents/A matching framework for truncation by death problems/Simulations/true_SACE_ver.R
 #C:/Users/tamir/Documents/A matching framework for truncation by death problems/Data_cluster/
 #C:/Users/tamir/Documents/A matching framework for truncation by death problems/Data_new/
 #C:/Users/tamir/Documents/A matching framework for truncation by death problems/Simulations/Main_run_old/
