@@ -19,6 +19,7 @@ Main_run_old/
 # Simulations_figures
 old_code/
 first_run/
+plot_tables.R
 
 # Data_analsis
 data_old_scripts/
