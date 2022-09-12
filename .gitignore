@@ -14,7 +14,7 @@ Data_new/
 # Simulations
 true_SACE_verif.R/
 Main_run_old/
-true_SACE_ver/
+
 
 # Simulations_figures
 old_code/
@@ -25,7 +25,7 @@ data_old_scripts/
 data_files/
 
 
-C:/Users/tamir/Documents/A matching framework for truncation by death problems/Simulations/true_SACE_verif/
+C:/Users/tamir/Documents/A matching framework for truncation by death problems/Simulations/true_SACE_verif.R/
 #C:/Users/tamir/Documents/A matching framework for truncation by death problems/Data_cluster/
 #C:/Users/tamir/Documents/A matching framework for truncation by death problems/Data_new/
 #C:/Users/tamir/Documents/A matching framework for truncation by death problems/Simulations/Main_run_old/
