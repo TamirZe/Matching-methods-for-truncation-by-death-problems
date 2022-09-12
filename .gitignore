@@ -22,6 +22,7 @@ Main_run_old/
 old_code/
 first_run/
 plot_tables.R
+plot_tables_other_measures.R
 
 # Data_analsis
 data_old_scripts/

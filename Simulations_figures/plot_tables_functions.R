@@ -9,7 +9,7 @@ path_func = function(param_n, xi_assm, xi, AX_interactions, misspec_outcome, mis
   # local
   main_path = "~/A matching framework for truncation by death problems/"
   
-  path_data = paste0(main_path, "Results_data_files/")
+  path_data = paste0(main_path, "Simulation_results_files/")
   #path_data_docs = "C:/Users/tamir/Documents/תזה/cluster/MatchingSACE/Simulation_studies/Data/"
   path = paste0(path_data, "Data_DGM_seq/N=", param_n, "/",
         ifelse(AX_interactions==T, "True_outcome_with_interactions/", "True_outcome_wout_interactions/"),
