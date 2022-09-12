@@ -3,6 +3,8 @@
 #reg_matched_lst = lapply(matching_datasets_lst[[2]][1:3], "[[", "matched_data")
 #OR, (2) run matching_all_measures_func again, using m_data from th main script
 #seed because otherwise, when xi=0 in SA for monotonicity, results will not be similar to results when alpha_1=1 in SA for PPI (for mahalanobis measure)
+
+# m_data from data_main script
 set.seed(101) 
 matching_lst = matching_all_measures_func(m_data=m_data, match_on=caliper_variable, 
                            covariates_mahal=covariates_mahal, reg_BC=reg_BC, X_sub_cols=variables, 
@@ -10,7 +12,11 @@ matching_lst = matching_all_measures_func(m_data=m_data, match_on=caliper_variab
 reg_matched_lst = lapply(matching_lst[1:3], "[[", "matched_data")
 #################################################################################################################
 
-#alpha1_SA_PPI_vec = seq(0.5,2,0.25)
+# bounds for alpha1 
+alpha1_bounds = alpha_bounds(dataset_arm = m_data %>% filter(A==1), 
+                             reg_variables = reg_after_match[-1])
+
+# alpha1 values
 alpha1_lower_bound = 0.38; alpha1_upper_bound = 2.64
 alpha1_SA_PPI_vec = c(alpha1_lower_bound, seq(0.5, 2.5, 0.25), alpha1_upper_bound)
 eps_SA_PPI_names = paste0("alpha1_",alpha1_SA_PPI_vec)

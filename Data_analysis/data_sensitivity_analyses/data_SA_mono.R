@@ -1,22 +1,20 @@
-#set.seed(101) 
-#########################################################################################
-# EM parameters, as in the main script ####
-two_log_est_EM = FALSE; iterations_EM = 500; epsilon_EM = 1e-06
-#########################################################################################
-
 #########################################################################################
 # sensitivity parameters ####
-# data from data_main script
-
+# data and m_data from data_main script
 # bounds for xi
 p1 = mean(data[A==1,S]); p0 = mean(data[A==0,S])
 up_bound_xi = (1 - p1) / (p0 - (1 - p1))
+
 # xi values
 xi_SA_mono_vec = seq(0, 0.5, 0.1)
 xi_SA_mono_vec[length(xi_SA_mono_vec)] = 0.48 #round(up_bound_xi,2)
 xi_SA_mono_names = paste0("xi_mono_", round(xi_SA_mono_vec, 2))
+
+# bounds for alpha0 
+alpha0_bounds = alpha_bounds(dataset_arm = m_data %>% filter(A==0), 
+                             reg_variables = reg_after_match[-1])
+
 # alpha0 values
-#alpha0_SA_mono_vec = seq(0.5, 2, 0.25) 
 alpha0_lower_bound = 0.32; alpha0_upper_bound = 3.14
 alpha0_SA_mono_vec = c(alpha0_lower_bound, seq(0.5, 3, 0.25), alpha0_upper_bound)
 alpha0_SA_mono_vec_names = paste0("alpha0_mono_", alpha0_SA_mono_vec)  
