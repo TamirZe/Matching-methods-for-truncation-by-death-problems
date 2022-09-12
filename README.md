@@ -9,8 +9,8 @@ This repository includes two main parts, and an two additional folders:
 
 (a) Main folders:
 
-\begin{itemize}
-\item $\textbf{Simulations}$: the main scripts for running the simulation study.
+$\begin{itemize}
+\item \textbf{Simulations}: the main scripts for running the simulation study.
 Details regarding the simulation parameters and strata proportions in each of the Scenarios, is given in Tables C2--C8 in the Web Appendix.
 Results of the simulation study are presented in Figure 1 and Table 2 in the main text, and in Tables C9--C13 and Figures C1--C6 of the Web Appendix).
 
@@ -25,7 +25,7 @@ The parameters misspec_PS and misspec_outcome equal zero under a correctly speci
 
 The main data analysis can be ran through "data_main_newWF" file.
 The sensitivity analyses procedures for monotonicity and PPI can be ran through through data_SA_mono and data_SA_PPI files, respectively.
-\end{itemize}
+\end{itemize}$
 
 (b) Additional folders:
 
