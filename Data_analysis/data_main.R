@@ -18,6 +18,7 @@ source("Simulations/sim_post_matching_analysis.R")
 source("Simulations/sim_regression_estimators.R")
 source("Data_analysis/data_aligned_ranktest.R")
 source("Data_analysis/data_sensitivity_analyses/data_SA_regression_funcs.R")
+source("Data_analysis/data_sensitivity_analyses/data_SA_parameters_bounds.R")
 source("EM/EM_seq.R")
 #source("Simulations/PS_M_weighting.R")
 #source("Simulations/PS_M_weighting_SA_CPSR")
@@ -121,6 +122,14 @@ PS_est = data.frame(est_ding_lst$ps.score)
 # add the principal scores to the data
 data_with_PS = data.table(data, PS_est)
 data_with_PS$pi_tilde_as1 = data_with_PS$EMest_p_as / (data_with_PS$EMest_p_as + data_with_PS$EMest_p_pro)
+######################################################################## 
+
+######################################################################## 
+# bounds for alpha1 na dalpha0 in SA
+alpha1_bounds = alpha_bounds(dataset_arm = data_with_PS[S==1] %>% filter(A==1), 
+                             reg_variables = reg_after_match[-1])
+alpha0_bounds = alpha_bounds(dataset_arm = data_with_PS[S==1] %>% filter(A==0), 
+                             reg_variables = reg_after_match[-1])
 ######################################################################## 
 
 ######################################################################## 

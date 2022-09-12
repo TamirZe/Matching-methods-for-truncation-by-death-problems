@@ -12,10 +12,3 @@ alpha_bounds = function(dataset_arm, reg_variables){
 }
 
 
-reg_variables = c("age", "education", "re75", "black", "hispanic", "married", "nodegree", "emp75")
-reg_variables = reg_after_match[-1]
-
-alpha1_bounds = alpha_bounds(dataset_arm = data_with_PS[data_with_PS$S == 1,] %>% filter(A==1), 
-                             reg_variables = reg_after_match[-1])
-alpha0_bounds = alpha_bounds(dataset_arm = data_with_PS[data_with_PS$S == 1,] %>% filter(A==0), 
-                             reg_variables = reg_after_match[-1])
