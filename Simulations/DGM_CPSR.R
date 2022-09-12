@@ -15,12 +15,17 @@ simulate_data_func = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns,
   # x are the true outcome's (Y) covariates 
   x = x_obs
   # x_misspec for PS misspec
-  x_misspec = data.frame(          X_int = x_obs[,(dim_x-2)] * x_obs[,(dim_x - 1)] 
-                                  ,X_exp = exp(x_obs[,(dim_x - 1)])
-                                  ,X_sqr = x_obs[,(dim_x)]^2 
-                                  #,X_sqr = x_obs[,(dim_x - 1)]^2 * x_obs[,(dim_x - 2)] 
-                                  #,X_log = log(x_obs[,dim_x] - (min(x_obs[,dim_x]) - 0.1))
-                         )
+  if(DGM_seq_bool == TRUE){
+    x_misspec = data.frame(X_int = x_obs[,(dim_x-2)] * x_obs[,(dim_x - 1)] 
+                          ,X_exp = exp(x_obs[,(dim_x - 1)])
+                          ,X_sqr = x_obs[,(dim_x)]^2 
+                         #,X_log = log(x_obs[,dim_x] - (min(x_obs[,dim_x]) - 0.1))
+    )
+  }else{
+    x_misspec = data.frame(X_sqr = x_obs[,(ncol(x_obs) - 1)]^2
+                          ,X_log = log(x_obs[,ncol(x_obs)] - (min(x_obs[,ncol(x_obs)]) - 0.1))
+    )
+  }
   
   if(cont_x<3){ # only one misspecified covariate
     x_misspec = as.matrix(data.frame(X_sqr = x_obs[,dim_x]^2)) %>% as.data.frame
@@ -42,11 +47,18 @@ simulate_data_func = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns,
       gamma_ah_adj =  c(head(gamma_ah, (dim_x-1)), funcform_factor1*gamma_ah[2])
       gamma_pro_adj = c(head(gamma_pro, (dim_x-1)), funcform_factor1*gamma_pro[2])
     }else{ # replace 3 misspecified covariate
-      gamma_ah_adj = c(head(gamma_ah, -3), 
-                       funcform_factor1*gamma_ah[2], funcform_factor1*gamma_ah[2], funcform_factor2*gamma_ah[2])
-      gamma_pro_adj = c(head(gamma_pro, -3), 
-                        funcform_factor1*gamma_pro[2], funcform_factor1*gamma_pro[2], funcform_factor2*gamma_pro[2])
-    }
+      if(DGM_seq_bool == TRUE){
+        gamma_ah_adj = c(head(gamma_ah, -3), 
+                         funcform_factor1*gamma_ah[2], funcform_factor1*gamma_ah[2], funcform_factor2*gamma_ah[2])
+        gamma_pro_adj = c(head(gamma_pro, -3), 
+                          funcform_factor1*gamma_pro[2], funcform_factor1*gamma_pro[2], funcform_factor2*gamma_pro[2])
+      }else{
+        gamma_ah_adj = c(head(gamma_ah, -2), 
+                         funcform_factor1*gamma_ah[2], funcform_factor2*gamma_ah[2])
+        gamma_pro_adj = c(head(gamma_pro, -2), 
+                          funcform_factor1*gamma_pro[2], funcform_factor2*gamma_pro[2])
+        }
+      }
   }
   
   # changing the obs x (for estimation), according to the transformation in the true x_PS
@@ -60,7 +72,6 @@ simulate_data_func = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns,
   # if misspec_outcome == 0 (default), Y on original (obs) X # if misspec_outcome == 2, Y on the transformation of X, as in x_misspec in the PS misspec
   if(misspec_outcome == 2){ 
     #x = as.matrix( data.frame( x_obs[,-tail(1:dim_x, n=ncol(x_misspec))], x_misspec ) )
-    #betas_GPI_adj
     if(cont_x<3){
       x = as.matrix( data.frame( x_obs[,-tail(1:dim_x, n=1)], x_misspec ) )
     }else{  

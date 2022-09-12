@@ -68,7 +68,7 @@ combine_small_large_pro_func = function(param_n, xi_values, mis_xi, AX_interacti
   for(i in 1:length(xi_values)){
     #print(i)
     xi = xi_values[i]
-    if(mis_xi==0){ xi_assm=xi }else{ xi_assm=0 }
+    if(mis_xi == 0){ xi_assm = xi }else{ xi_assm = 0 }
     ind = i-1
     all_path_lst = path_func(param_n=param_n, xi_assm=xi_assm, xi=xi,  
            AX_interactions=AX_interactions, misspec_outcome=misspec_outcome, misspec_PS=misspec_PS)
@@ -95,7 +95,7 @@ combine_small_large_pro_func = function(param_n, xi_values, mis_xi, AX_interacti
     
     ##################################################################################################
     # create a combined table for the figure ####
-    # l is actuallt k, but I used k for the row in mat_gamma
+    # l is actually k, but I used k for the row in mat_gamma
     small_pro = rbind(
       add_bias_tables(res_tab = data.frame(table_small_pro_small_as_3, pi_as=0.5, l = 1),  
                       estimators_vec = estimators_vec, N = param_n, num_of_x = 3),
@@ -139,10 +139,12 @@ combine_small_large_pro_func = function(param_n, xi_values, mis_xi, AX_interacti
     small_large_pro_xi = data.table(arrange(small_large_pro_xi, protected, pi_as, l))
     small_large_pro_xi$SE_rel_bias = (small_large_pro_xi$SE - small_large_pro_xi$sd) / small_large_pro_xi$sd
     small_large_pro_xi$SE_rel_bias[small_large_pro_xi$Estimator == "DL_MA_est"] = 0 # since SE were nor calculated for DL
+    
     # add label for the SACE, for each facet plot, per scenario
-    small_large_pro_xi[, label := paste0(unique(true_SACE), collapse=","), by = c("protected", "pi_as")] 
-    temp = apply(data.frame(list.rbind(strsplit(small_large_pro_xi$label, ","))), 2 , as.numeric) %>% round(2)
-    small_large_pro_xi$label = paste0("SACE: ", apply(temp, 1, function(x) paste(x, collapse=", ")))
+    #small_large_pro_xi[, label := paste0(unique(true_SACE), collapse=","), by = c("protected", "pi_as")] 
+    #temp = apply(data.frame(list.rbind(strsplit(small_large_pro_xi$label, ","))), 2 , as.numeric) %>% round(2)
+    #small_large_pro_xi$label = paste0("SACE: ", apply(temp, 1, function(x) paste(x, collapse=", ")))
+    
     small_large_pro = rbind( small_large_pro, data.frame(subset(small_large_pro_xi, select = c(true_SACE, xi, xi_assm)),
        subset(small_large_pro_xi, select = -c(true_SACE, xi, xi_assm))) )
   }
@@ -151,10 +153,21 @@ combine_small_large_pro_func = function(param_n, xi_values, mis_xi, AX_interacti
 }
 ##################################################################################################  
 
+# add label for the SACE, for each facet plot, per dim_x or xi
+SACE_values_by_dimx_or_xi = function(dat, x_axis){
+  dat = data.table(dat)
+  SACE_values_by = ifelse(x_axis == "dim_x", "dim_x", "xi")
+  dat[, SACE_values := paste0(unique(true_SACE), collapse=","), by = SACE_values_by] 
+  temp = apply(data.frame(list.rbind(strsplit(dat$SACE_values, ","))), 2 , as.numeric) %>% round(2)
+  dat$SACE_values = paste0("SACE: ", apply(temp, 1, function(x) paste(x, collapse=", ")))
+return(dat)
+}
+
+
 ##################################################################################################
 plot_tables_func_by_dimx_paperStyle = function(small_large_pro, param_n, mis_xi, AX_interactions, misspec_outcome, misspec_PS,
                estimators_vec, legend_labels, colors_arg, shapes_arg, measure_to_plot="Bias",
-               l_lim=-2.75, u_lim=1.75){
+               l_lim=-3, u_lim=2){
   
   #small_large_pro$shape = mgsub(small_large_pro$Estimator, c("OLS|WLS|BC", " inter| caliper"), c("Model-based", ""))
   
@@ -176,8 +189,8 @@ plot_tables_func_by_dimx_paperStyle = function(small_large_pro, param_n, mis_xi,
     facet_grid(glue::glue('pi[pro]*" : {protected}"') ~ glue::glue('pi[as]*" = {pi_as}"'), 
                labeller = label_parsed) +
     #ggtitle(paste0(measure_to_plot, ", ", 
-    # bquote(xi), "=", unique(small_large_pro$xi), "(", ifelse(mis_xi, "Mis xi", "crct xi") , "), interactions=", 
-    #               AX_interactions, ", mis_Y=", misspec_outcome, ", mis_PS=", misspec_PS, ", N=", param_n)) + 
+     #bquote(xi), "=", unique(small_large_pro$xi), "(", ifelse(mis_xi, "Mis xi", "crct xi") , "), interactions=", 
+     #             AX_interactions, ", mis_Y=", misspec_outcome, ", mis_PS=", misspec_PS, ", N=", param_n)) + 
     theme(legend.position = "bottom",
           legend.title = element_text(size = 12),
           legend.text = element_text(size = 12),
@@ -196,7 +209,7 @@ plot_tables_func_by_dimx_paperStyle = function(small_large_pro, param_n, mis_xi,
 ##################################################################################################
 plot_tables_func_by_xi_paperStyle = function(small_large_pro, param_n, mis_xi, AX_interactions, misspec_outcome, misspec_PS, 
                 estimators_vec, legend_labels, colors_arg, shapes_arg, measure_to_plot="Bias",
-                l_lim=-2.75, u_lim=1.75){
+                l_lim=-3, u_lim=2){
   
   #small_large_pro$shape = mgsub(small_large_pro$Estimator, c("OLS|WLS|BC", " inter| caliper"), c("Model-based", ""))
   
@@ -216,8 +229,8 @@ plot_tables_func_by_xi_paperStyle = function(small_large_pro, param_n, mis_xi, A
     facet_grid(glue::glue('pi[pro]*" : {protected}"') ~ glue::glue('pi[as]*" = {pi_as}"'), 
                labeller = label_parsed) +
     #ggtitle(paste0(measure_to_plot, ", ", 
-    # unique(small_large_pro$dim_x) ,"X, ", ifelse(mis_xi, "Mis xi", "Crct xi"), ", interactions=", 
-    #               AX_interactions, ", mis_Y=", misspec_outcome, ", mis_PS=", misspec_PS, ", N=", param_n)) + 
+     #unique(small_large_pro$dim_x) ,"X, ", ifelse(mis_xi, "Mis xi", "Crct xi"), ", interactions=", 
+     #              AX_interactions, ", mis_Y=", misspec_outcome, ", mis_PS=", misspec_PS, ", N=", param_n)) + 
     theme(legend.position = "bottom",
           legend.title = element_text(size = 12),
           legend.text = element_text(size = 12),

@@ -26,7 +26,7 @@ prob_A = 0.5
 
 # parameters for simulating X
 # @@@@@@@@@@@@ dim_x includes an intercept @@@@@@@@@@@@@@@
-dim_x = 6; cont_x = dim_x - 1
+dim_x = 11; cont_x = dim_x - 1
 mean_x = rep(0.5, cont_x); var_x = rep(1, cont_x)
 X_sub_cols = paste0("X", c(1:(dim_x)))
 #############################################################################################
@@ -35,13 +35,13 @@ X_sub_cols = paste0("X", c(1:(dim_x)))
 # CPSR parameter ####
 xi = 0
 xi_assm = xi # xi
-DGM_seq_bool = TRUE # TRUE DGM-seq # FALSE:DGM-multi 
+DGM_seq_bool = T # TRUE DGM-seq # FALSE:DGM-multi 
 #############################################################################################
 
 #############################################################################################
 # misspec parameters (for PS model and Y models) ####
 misspec_PS = 2 # 0: no misspec of PS model # 2: PS functional form misspecification
-funcform_factor1 = 2; funcform_factor2 = -2 # funcform_factor_sqr=-3; funcform_factor_log=3
+funcform_factor1 = 2; funcform_factor2 = -2 # funcform_factor_sqr=-3; funcform_factor_log=3 # funcform_factor1 = 2; funcform_factor2 = -2 
 transform_x = 0
 misspec_outcome = 2 # 0: no misspec of Y model # 2: Y functional form misspecification
 #############################################################################################
@@ -66,7 +66,7 @@ rho_GPI_PO = 0.4
 # beta_and_gamma ####
 # scenario is determined according to mat_gamma (and its row, scen) and betas_GPI
 #TODO Large_pi_pro = T/F, AX_interactions = T/F
-Large_pi_pro = TRUE
+Large_pi_pro = T
 AX_interactions = TRUE
 beta_and_gamma = set_parameters_func(dim_x=dim_x, high_pi_pro=Large_pi_pro, AX_interactions=AX_interactions, DGM_seq_bool=DGM_seq_bool) # high_pi_pro = T/F
 # beta
@@ -83,10 +83,10 @@ gamma_pro =  as.numeric(mat_gamma[scen, (dim_x+1): (2*dim_x)])
 
 ##################################################################################################################
 # extract pis, wout and with PS misspecification ####
-extract_pis_lst = extract_pis_from_scenarios(nn=200000, mat_gamma=mat_gamma, xi=xi, misspec_PS=0, DGM_seq_bool=DGM_seq_bool)
+extract_pis_lst = extract_pis_from_scenarios(nn=500000, mat_gamma=mat_gamma, xi=xi, misspec_PS=0, DGM_seq_bool=DGM_seq_bool)
 mat_pis_per_gamma = extract_pis_lst$mat_pis
 mat_pis_per_gamma
-extract_pis_lst_mis_PS = extract_pis_from_scenarios(nn=200000, mat_gamma=mat_gamma, xi=xi, misspec_PS=2, DGM_seq_bool=DGM_seq_bool)
+extract_pis_lst_mis_PS = extract_pis_from_scenarios(nn=500000, mat_gamma=mat_gamma, xi=xi, misspec_PS=2, DGM_seq_bool=DGM_seq_bool)
 mat_pis_per_gamma_mis_PS = extract_pis_lst_mis_PS$mat_pis
 mat_pis_per_gamma_mis_PS
 ##################################################################################################################

@@ -74,7 +74,7 @@ S_on_A_test = prop.test(x = c( sum(filter(data, A==1)$S), sum(filter(data, A==0)
 # naive estimators ####
 # composite naive
 # naive estimators
-naive_sace_estimation = naive_sace_estimation_func(data)
+naive_sace_estimation = naive_sace_estimation_func(data_for_EM=data)
 naive_estimators = c(composite_naive = naive_sace_estimation$composite_naive_est, surv_naive = naive_sace_estimation$sur_naive_est)
 naive_estimators_SE = c(composite_naive = naive_sace_estimation$composite_naive_se, surv_naive = naive_sace_estimation$sur_naive_se)
 naive_estimators_CI = naive_sace_estimation$CI_naive_before_matching
@@ -127,8 +127,8 @@ data_with_PS$pi_tilde_as1 = data_with_PS$EMest_p_as / (data_with_PS$EMest_p_as +
 # Ding and Lu estimators ####
 DL_est = c(DL_est = est_ding_lst$AACE, DL_MA_est = est_ding_lst$AACE.reg)
 # bootstrap for SE estimate of DL estimator
-bootstrap_results = run_bootstrap(data=data, BS=500, seed=101, iterations_EM=iterations_EM, epsilon_EM=epsilon_EM,
-                                two_log_est_EM=two_log_est_EM, covariates_PS=covariates_PS)
+#bootstrap_results = run_bootstrap(data=data, BS=500, seed=101, iterations_EM=iterations_EM, epsilon_EM=epsilon_EM,
+#                                two_log_est_EM=two_log_est_EM, covariates_PS=covariates_PS)
 ######################################################################## 
 
 ######################################################################## 

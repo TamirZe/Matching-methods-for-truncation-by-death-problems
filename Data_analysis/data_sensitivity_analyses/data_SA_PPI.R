@@ -11,8 +11,8 @@ reg_matched_lst = lapply(matching_lst[1:3], "[[", "matched_data")
 #################################################################################################################
 
 #alpha1_SA_PPI_vec = seq(0.5,2,0.25)
-alpha1_lower_bound = 0.35; alpha1_upper_bound = 2.88
-alpha1_SA_PPI_vec = c(alpha1_lower_bound, seq(0.5, 2.75, 0.25), alpha1_upper_bound)
+alpha1_lower_bound = 0.38; alpha1_upper_bound = 2.64
+alpha1_SA_PPI_vec = c(alpha1_lower_bound, seq(0.5, 2.5, 0.25), alpha1_upper_bound)
 eps_SA_PPI_names = paste0("alpha1_",alpha1_SA_PPI_vec)
 reg_SA_PPI <- NULL
 
@@ -60,6 +60,10 @@ reg_SA_PPI$Estimator = mgsub(reg_SA_PPI$Estimator,
           c("crude_est_adj", "SACE_1LEARNER_adj", "SACE_LEARNER_inter_adj"), legend_levels)
 reg_SA_PPI$measure = mgsub(reg_SA_PPI$measure, names(reg_matched_lst), c("PS", "Mahal", "Mahal cal"))
 reg_SA_PPI$set = data_bool
+
+# SACE bounds 
+min(filter(reg_SA_PPI, measure == "Mahal cal" & Estimator == "WLS")$Estimate)
+max(filter(reg_SA_PPI, measure == "Mahal cal" & Estimator == "WLS")$Estimate)
 #########################################################################################
 
 #########################################################################################
@@ -75,7 +79,8 @@ ggplot(aes(x = alpha1, y = Estimate)) +
   labs(colour = "Estimator"
        , size = 1
   ) + 
-  ylim(-3250,4700) +
+  #xlim(0, 3) +
+  ylim(-3250, 4750) +
   ylab(label="Estimate") +
   xlab(label = bquote(alpha[1])) + # epsilon[PPI]
   #labs( y="Estimate", x=glue('esp[PPI]*" : {protected}"')) +

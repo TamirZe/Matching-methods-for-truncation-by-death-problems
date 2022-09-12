@@ -7,10 +7,10 @@ wd<-getwd(); list.files(wd)
 file.exists("balance_lst_0.05_0.05.Rdata"); file.exists("results_table_0.05_0.05.Rdata")'''
 
 param_n = 2000
-AX_interactions = T
-misspec_PS = 2 # no misspec (misspec_PS=0) # Func Form misspec (misspec_PS=2)
+AX_interactions = F
+misspec_PS = 0 # no misspec (misspec_PS=0) # Func Form misspec (misspec_PS=2)
 misspec_outcome = 2 # no misspec (misspec_PS=0) # Func Form misspec (misspec_PS=2)
-mis_xi = 0
+mis_xi = 2
 xi_values = c(0, 0.05, 0.1, 0.2) # sort(unique(full_results_table$xi)) # c(0, 0.05, 0.1, 0.2)
 #xi_assm_values = c(0, 0.05, 0.1, 0.2)
 
@@ -18,16 +18,18 @@ figure_name = paste0(ifelse(mis_xi, "Mis_xi", "Crct_xi"), "_Yinteractions=", AX_
 
 ##################################################################################################
 # paperStyle GENERAL####
-'''estimators_vec_gnrl = c("maha_cal_rep_TRUE", "maha_cal_rep_FALSE", "PS_rep_TRUE", "OLS_int", "WLS_int", "BC_cal_rep_TRUE", "DL_MA_est")
-legend_labels_gnrl = c("Matching:Crude", "Matching:CrudeWout", "Matching:PS", 
-                       "Matching:RegressionOLS",  "Matching:RegressionWLS", "Matching:BC", "Weighting")
-colors_arg_gnrl = c("palevioletred3", "yellow", "yellow", "dodgerblue3", "red4", "forestgreen", "forestgreen")
-shapes_arg_gnrl = c(15, 15, 15, 16, 17, 18, 18)'''
+# estimators_vec_gnrl = c("mahal_crude_Yes_rep", "mahal_OLS_int", "mahal_WLS_int", "PS_OLS_int",  "PS_WLS_int",  "DL_MA_est")
+# legend_labels_gnrl = c("Mahal", "Mahal:OLS", "Mahal:WLS", "PS:OLS", "PS:WLS", "DL")
+# colors_arg_gnrl = c("palevioletred3", "yellow", "yellow", "dodgerblue3", "red4", "forestgreen")
+# shapes_arg_gnrl = c(0, 15, 15, 16, 16, 18)
 
-estimators_vec_gnrl = c("mahal_crude_Yes_rep", "mahal_OLS_int", "mahal_WLS_int", "PS_OLS_int",  "PS_WLS_int",  "DL_MA_est")
-legend_labels_gnrl = c("Mahal", "Mahal:OLS", "Mahal:WLS", "PS:OLS", "PS:WLS", "DL")
-colors_arg_gnrl = c("palevioletred3", "yellow", "yellow", "dodgerblue3", "red4", "forestgreen")
-shapes_arg_gnrl = c(0, 15, 15, 16, 16, 18)
+estimators_vec_gnrl = c("mahal_cal_crude_Yes_rep", "mahal_crude_Yes_rep", "PS_crude_Yes_rep",
+    "mahal_cal_OLS_int", "mahal_cal_WLS_int", "mahal_WLS_int", "PS_WLS_int", "DL_MA_est")
+legend_labels_gnrl = c("Mahal cal", "Mahal", "PS", "Mahal cal:OLS",
+                       "Mahal cal:WLS", "Mahal:WLS", "PS:WLS", "DL")
+colors_arg_gnrl = c("darkblue", "red4", "dodgerblue3", "darkorange2", 
+                    "red4",  "purple", "yellow", "forestgreen")
+shapes_arg_gnrl = c(6, 2, 7, 19, 19, 15, 17, 18)
 
   
 full_results_table = combine_small_large_pro_func(param_n=param_n, xi_values=xi_values, mis_xi=mis_xi,

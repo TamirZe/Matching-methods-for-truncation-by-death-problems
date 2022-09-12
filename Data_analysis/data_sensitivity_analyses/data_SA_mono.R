@@ -17,8 +17,8 @@ xi_SA_mono_vec[length(xi_SA_mono_vec)] = 0.48 #round(up_bound_xi,2)
 xi_SA_mono_names = paste0("xi_mono_", round(xi_SA_mono_vec, 2))
 # alpha0 values
 #alpha0_SA_mono_vec = seq(0.5, 2, 0.25) 
-alpha0_lower_bound = 0.32; alpha0_upper_bound = 3.11
-alpha0_SA_mono_vec = c(alpha0_lower_bound, seq(0.5, 2.75, 0.25), alpha0_upper_bound)
+alpha0_lower_bound = 0.32; alpha0_upper_bound = 3.14
+alpha0_SA_mono_vec = c(alpha0_lower_bound, seq(0.5, 3, 0.25), alpha0_upper_bound)
 alpha0_SA_mono_vec_names = paste0("alpha0_mono_", alpha0_SA_mono_vec)  
 
 # SA for each combinations of xi and alpha0, and for all distance metrics ####
@@ -122,6 +122,11 @@ reg_SA_mono$Estimator = mgsub(reg_SA_mono$Estimator,
 reg_SA_mono$measure = mgsub(reg_SA_mono$measure, names(reg_matched_lst), c("PS", "Mahal", "Mahal cal"))
 #reg_SA_mono$measure = factor(reg_SA_mono$measure, levels = c("Mahal_PS_cal", "Mahal", "PS"))
 reg_SA_mono$set = data_bool
+reg_SA_mono = filter(reg_SA_mono, xi != 0)
+
+# SACE bounds 
+min(filter(reg_SA_mono, measure == "Mahal cal" & Estimator == "WLS")$Estimate)
+max(filter(reg_SA_mono, measure == "Mahal cal" & Estimator == "WLS")$Estimate)
 #########################################################################################
 
 #########################################################################################
@@ -137,12 +142,12 @@ plot_SA_mono <- ggplot(filter(reg_SA_mono, measure == "Mahal cal" & Estimator %i
   theme(plot.title = element_text(hjust = 0.5)) + 
   # max(filter(reg_SA_mono, measure == "Mahal cal" & Estimator %in% c("WLS"))$upper_CI)
   #min(filter(reg_SA_mono, measure == "Mahal cal" & Estimator %in% c("WLS"))$lower_CI)
-  ylim(-3250,4700) +
+  ylim(-3250,4750) +
   ylab(label="Estimate") + xlab(label = bquote(alpha[0])) + 
   guides(colour = guide_legend(order = 1, override.aes = list(size=5))
          , size=FALSE
   ) + 
-  scale_x_continuous(breaks=c(0.5, 1, 1.5, 2, 2.5, 3), labels = c("0.5", "1", "1.5", "2", "2.5", "3")) +  
+  #scale_x_continuous(breaks=c(0.5, 1, 1.5, 2, 2.5, 3), labels = c("0.5", "1", "1.5", "2", "2.5", "3")) +  
   theme(
     axis.title.x = element_text(size = 18),
     axis.text.x = element_text(size = 12),

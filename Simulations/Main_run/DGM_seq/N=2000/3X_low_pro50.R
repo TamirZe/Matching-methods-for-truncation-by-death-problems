@@ -371,7 +371,6 @@ if( job_id >= 0 & job_id <= (nrow(arguments_mat) - 1) ){
   mean_list_by_g_sum = results_summary$mean_list_by_g_sum
   balance_lst = results_summary$balance_lst
   num_iterations_EM_not_conv = results_summary$num_iterations_EM_not_conv
-  
   ########################################################################
   # save ####
   path_data = paste0(main_path, "Data/") 
