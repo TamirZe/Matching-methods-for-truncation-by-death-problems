@@ -40,7 +40,6 @@ Information is given in Section B of the Web Appendix.
 ----------------------------------
 
 Analysis of the National Supported Work Demonstration (Table 3 and Figure 2 in the main text, and Tables D14--D19 and Figures D7--D8 of the Web Appendix).
-The data file can be found in the data_files folder, withing the Data_analysis_folder
 
 The main data analysis can be ran through "data_main" file.
 The sensitivity analyses procedures for monotonicity and PPI can be ran through through data_SA_mono and data_SA_PPI files, respectively.

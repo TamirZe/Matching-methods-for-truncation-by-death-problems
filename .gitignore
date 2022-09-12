@@ -18,6 +18,7 @@ true_SACE_ver/
 
 # Data_analsis
 data_old_scripts/
+data_files/
 
 # Simulations_figures
 old_code/
