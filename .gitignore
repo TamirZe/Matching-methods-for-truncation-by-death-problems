@@ -4,12 +4,14 @@
 .Ruserdata
 
 Data_cluster/
+Simulation_results_files/
+#Data_new/
 Extra_code/
 Simulations_studies/
 NSW_data_analysis/
 Ding_Lu_EM/
 Figures_pdf_files/
-Data_new/
+
 
 # Simulations
 true_SACE_ver.R

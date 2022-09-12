@@ -45,7 +45,7 @@ The main data analysis can be ran through "data_main" file.
 The sensitivity analyses procedures for monotonicity and PPI can be ran through through data_SA_mono and data_SA_PPI files, respectively.
 
 
-(5). Data_new:
+(5). Simulation_results_files:
 ----------------------------------
 A folder containing Rdata files the simulation results.
  
