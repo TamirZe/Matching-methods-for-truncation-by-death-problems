@@ -47,7 +47,7 @@ The sensitivity analyses procedures for monotonicity and PPI can be ran through 
 
 (5). Data_new:
 ----------------------------------
-A folder containing the simulation results.
+A folder containing Rdata files the simulation results.
  
 
 
