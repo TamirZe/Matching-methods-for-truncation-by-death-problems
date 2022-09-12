@@ -11,14 +11,20 @@ Ding_Lu_EM/
 Figures_pdf_files/
 Data_new/
 
+# Simulations
+true_SACE_verif.R/
+Main_run_old_files/
 true_SACE_ver/
+
+# Data_analsis
 data_old_scripts/
+
+# Simulations_figures
 old_code/
 first_run/
-true_SACE_verif.R/
-new/
 
-C:/Users/tamir/Documents/A matching framework for truncation by death problems/Simulations/new/
+
+C:/Users/tamir/Documents/A matching framework for truncation by death problems/Simulations/true_SACE_verif/
 C:/Users/tamir/Documents/A matching framework for truncation by death problems/Data_cluster/
 C:/Users/tamir/Documents/A matching framework for truncation by death problems/Data_new/
 C:/Users/tamir/Documents/A matching framework for truncation by death problems/Simulations/Main_run_old/
