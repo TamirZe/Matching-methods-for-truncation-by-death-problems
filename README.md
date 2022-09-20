@@ -12,13 +12,14 @@ This repository includes four main folders, and an additional folders with files
 
 The main scripts for running the simulation study.
 Details regarding the simulation parameters and strata proportions in each of the Scenarios, is given in Tables C2--C8 in the Web Appendix.
-Results of the simulation study are presented in Figure 1 and Table 2 in the main text, and in Tables C9--C13 and Figures C1--C6 of the Web Appendix).
+Results of the simulation study are presented in Figure 1 and Table 2 of the main text, and in Tables C9-C13 and Figures C1-C6 of the Web Appendix).
 
 The simulations can be ran through the scripts in the main_run folder.
 Every script contains the main code for a given number of covariates and strata proportions 
 $(\pi_{as} = 0.5,0.75$, and low/high $\pi_{pro})$.
 Different parameters per each Scenario are the number of covariates,
 betas_GPI (changing according to the number of covariates and whether or not interactions are included in the true outcome model), gamma_ah, gamma_pro (changing according to the number of covariates and strata proportions).
+One example script is ???.R file, which contains one set of arguments, the first row of argument_mat, for $k=5$, $(\pi_{as} = 0.5$, and low $\pi_{pro})$, as in the first part of Table 2 of the main text.
 
 The parameters misspec_PS and misspec_outcome equal zero under a correctly specification of the principal score model and the outcome models, and two for misspecification of the principal score model and the outcome models.
 

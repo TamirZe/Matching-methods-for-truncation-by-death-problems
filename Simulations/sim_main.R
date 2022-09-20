@@ -26,7 +26,7 @@ prob_A = 0.5
 
 # parameters for simulating X
 # @@@@@@@@@@@@ dim_x includes an intercept @@@@@@@@@@@@@@@
-dim_x = 11; cont_x = dim_x - 1
+dim_x = 6; cont_x = dim_x - 1
 mean_x = rep(0.5, cont_x); var_x = rep(1, cont_x)
 X_sub_cols = paste0("X", c(1:(dim_x)))
 #############################################################################################
@@ -41,7 +41,7 @@ DGM_seq_bool = T # TRUE DGM-seq # FALSE:DGM-multi
 #############################################################################################
 # misspec parameters (for PS model and Y models) ####
 misspec_PS = 2 # 0: no misspec of PS model # 2: PS functional form misspecification
-funcform_factor1 = 2; funcform_factor2 = -2 # funcform_factor_sqr=-3; funcform_factor_log=3 # funcform_factor1 = 2; funcform_factor2 = -2 
+funcform_factor1 = 2; funcform_factor2 = -2 # funcform_factor1 = 2; funcform_factor2 = -2  # funcform_factor_sqr=-3; funcform_factor_log=3 
 transform_x = 0
 misspec_outcome = 2 # 0: no misspec of Y model # 2: Y functional form misspecification
 #############################################################################################

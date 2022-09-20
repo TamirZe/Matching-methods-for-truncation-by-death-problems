@@ -62,11 +62,11 @@ simulate_data_func = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns,
   # x are the true outcome's (Y) covariates 
   # if misspec_outcome == 0 (default), Y on original (obs) X # if misspec_outcome == 2, Y on the transformation of X, as in x_misspec in the PS misspec
   if(misspec_outcome == 2){ 
-    #x = as.matrix( data.frame( x_obs[,-tail(1:dim_x, n=ncol(x_misspec))], x_misspec ) )
-    #x = as.matrix( data.frame( x_obs[,-tail(1:dim_x, n=2)], x_misspec[,c("X_sqr", "X_log")] ) )
-    x = as.matrix( data.frame( x_obs[,-tail(1:dim_x, n=2)], x_misspec[,c("X_exp", "X_sqr")] ) ) 
-    #x=x_PS
-    
+    if(DGM_seq_bool == TRUE){
+      x = as.matrix( data.frame( x_obs[,-tail(1:dim_x, n=2)], x_misspec[,c("X_exp", "X_sqr")] ) ) 
+    }else{
+      x = as.matrix( data.frame( x_obs[,-tail(1:dim_x, n=2)], x_misspec[,c("X_sqr", "X_log")] ) ) 
+    }
   } 
   
   if(DGM_seq_bool==TRUE){ # two logistic models for s(0) and S(1) given S(0)=1
@@ -91,7 +91,7 @@ simulate_data_func = function(seed_num=NULL, gamma_ah, gamma_pro, gamma_ns,
     prob = data.frame(prob_har = prob_S0*(xi/(1+xi)), prob_as = prob_S0*(1/(1+xi)), 
                       prob_ns = (1-prob_S0)*(1-prob_S1), prob_pro = (1-prob_S0)*prob_S1)
   }else{ # single multinomial model for G
-    #TODO n DGM-MULTI, pro is the basic stratum
+    #TODO DGM-MULTI, pro is the basic stratum
     gamma_ns_adj = gamma_pro_adj
     gamma_pro_adj = rep(0, dim_x)
     # vector of probabilities
