@@ -19,7 +19,7 @@ Every script contains the main code for a given number of covariates and strata 
 $(\pi_{as} = 0.5,0.75$, and low/high $\pi_{pro})$.
 Different parameters per each Scenario are the number of covariates,
 betas_GPI (changing according to the number of covariates and whether or not interactions are included in the true outcome model), gamma_ah, gamma_pro (changing according to the number of covariates and strata proportions).
-The script is run_3X_low_pro_50.R file contains one set of arguments, the first row of argument_mat, for $k=5$, $(\pi_{as} = 0.5$, and low $\pi_{pro})$. It can be ran to obtain the results of Table 2 (Scenario A) of the main text.
+The script run_3X_low_pro_50.R file contains one set of arguments, the first row of argument_mat, for $k=5$, $(\pi_{as} = 0.5$, and low $\pi_{pro})$. It can be ran to obtain the results of Table 2 (Scenario A) of the main text.
 It is possible to change the arguments to obtain other scenarios.
 
 The parameters misspec_PS and misspec_outcome equal zero under a correctly specification of the principal score model and the outcome models, and two for misspecification of the principal score model and the outcome models.
