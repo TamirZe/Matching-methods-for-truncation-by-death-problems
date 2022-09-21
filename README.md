@@ -14,15 +14,21 @@ The main scripts for running the simulation study.
 Details regarding the simulation parameters and strata proportions in each of the Scenarios, is given in Tables C2--C8 in the Web Appendix.
 Results of the simulation study are presented in Figure 1 and Table 2 of the main text, and in Tables C9-C13 and Figures C1-C6 of the Web Appendix).
 
-The simulations can be ran through the scripts in the main_run folder.
-Every script contains the main code for a given number of covariates and strata proportions 
-$(\pi_{as} = 0.5,0.75$, and low/high $\pi_{pro})$.
-Different parameters per each Scenario are the number of covariates,
-betas_GPI (changing according to the number of covariates and whether or not interactions are included in the true outcome model), gamma_ah, gamma_pro (changing according to the number of covariates and strata proportions).
-The script run_3X_low_pro_50.R file contains one set of arguments, the first row of argument_mat, for $k=5$, $(\pi_{as} = 0.5$, and low $\pi_{pro})$. It can be ran to obtain the results of Table 2 (Scenario A) of the main text.
-It is possible to change the arguments to obtain other scenarios.
+The script run_5X_low_pro_50.R in the Main_run folder, contains one set of arguments, for running the first row of argument_mat, for $k=5$, $(\pi_{as} = 0.5$, and low $\pi_{pro})$ as in Table 2 (Scenario A) of the main text,
+where both the principal score and the outcome model are correctly specified.
+It is possible to change the arguments and the other parameters, to obtain other scenarios.
+For instance, choosing row 49 of argument_mat will enable running of the same Scenario,
+where the principal score and the outcome model are misspecified, 
+while Changing the parameter scen to be equal to 2 (high $\pi_{pro})$), will enable to obtain the results in in Table 2 (Scenario B) of the main text.
+
+%The simulations can be ran through the scripts in the Main_run folder.
+%Every script contains the main code for a given number of covariates and strata proportions 
+%(\pi_{as} = 0.5,0.75$, and low/high $\pi_{pro})$.
+%Different parameters per each Scenario are the number of covariates,
+%betas_GPI (changing according to the number of covariates and whether or not interactions are included in the true %outcome model), gamma_ah, gamma_pro (changing according to the number of covariates and strata proportions).
 
 The parameters misspec_PS and misspec_outcome equal zero under a correctly specification of the principal score model and the outcome models, and two for misspecification of the principal score model and the outcome models.
+
 
 (2) Simulations_figures:
 ----------------------------------

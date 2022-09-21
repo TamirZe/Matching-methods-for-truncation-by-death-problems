@@ -126,10 +126,10 @@ data_with_PS$pi_tilde_as1 = data_with_PS$EMest_p_as / (data_with_PS$EMest_p_as +
 
 ######################################################################## 
 # bounds for alpha1 and alpha0 in SA
-alpha1_bounds = alpha_bounds(dataset_arm = data_with_PS[S==1] %>% filter(A==1), 
-                             reg_variables = reg_after_match[-1])
-alpha0_bounds = alpha_bounds(dataset_arm = data_with_PS[S==1] %>% filter(A==0), 
-                             reg_variables = reg_after_match[-1])
+# alpha1_bounds = alpha_bounds(dataset_arm = data_with_PS[S==1] %>% filter(A==1), 
+#                              reg_variables = reg_after_match[-1])
+# alpha0_bounds = alpha_bounds(dataset_arm = data_with_PS[S==1] %>% filter(A==0), 
+#                              reg_variables = reg_after_match[-1])
 ######################################################################## 
 
 ######################################################################## 
