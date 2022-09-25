@@ -14,13 +14,13 @@ The scripts that were used for running the simulation study.
 Details regarding the simulation parameters and strata proportions of each Scenario are given in Tables C2-C8 in the Web Appendix.
 Results of the simulation study are presented in Figure 1 and Table 2 of the main text, and in Tables C9-C13 and Figures C1-C6 of the Web Appendix.
 
-The script 'run_5X_low_pro_50.R' in the Main_run folder, contains one set of arguments, and can be used for running the first row of argument_mat, with $k=5$, $\pi_{as} = 0.5$, and low $\pi_{pro}$, (Scenario A) of the main text, where both the principal score and the outcome model are correctly specified (as in the left side of Table 2).
-It is possible to change the arguments and the other parameters, to obtain other scenarios.
+The script 'run_5X_low_pro_50.R' in the Main_run folder, contains one set of arguments, and can be used for running the first row of argument_mat, with $k=5$, $\pi_{as} = 0.5$, and low $\pi_{pro}$, (Scenario A) of the main text, where both the principal score and the outcome model are correctly specified (as in the left side of Table 2 of the main text).
+The arguments in argument_mat and the other parameters can be changed, to obtain other scenarios.
 For instance, choosing row 49 of argument_mat enables running the same Scenario,
-where both the principal score and the outcome model are misspecified, 
-while changing the parameter scen to be equal to 2 (high $\pi_{pro})$), will enable to obtain the results as in Table 2 (Scenario B) of the main text.
+where both the principal score and the outcome model are misspecified (as in the right side of Table 2), 
+while setting the parameter scen to 2 ($\pi_{as} = 0.75$) enables to obtain results for Scenario B of Table 2 when both models are correctly specified.
 
-Argument_mat includes the following arguments: AX_interactions, misspec_PS, misspec_outcome, xi, and xi_assm. 
+The matrix argument_mat includes the following arguments: AX_interactions, misspec_PS, misspec_outcome, xi, and xi_assm. 
 AX_interactions equals TRUE if the outcome model includes all A-X interactions, and FALSE otherwise.
 The parameters misspec_PS and misspec_outcome equal zero under a correctly specified model,
 and two under a misspecified model.
