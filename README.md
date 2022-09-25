@@ -12,7 +12,7 @@ This repository includes four main folders, and an additional folder with simula
 
 The scripts that were used for running the simulation study.
 Details regarding the simulation parameters and strata proportions of each Scenario are given in Tables C2-C8 in the Web Appendix.
-Results of the simulation study are presented in Figure 1 and Table 2 of the main text, and in Tables C9-C13 and Figures C1-C6 of the Web Appendix).
+Results of the simulation study are presented in Figure 1 and Table 2 of the main text, and in Tables C9-C13 and Figures C1-C6 of the Web Appendix.
 
 The script 'run_5X_low_pro_50.R' in the Main_run folder, contains one set of arguments, and can be usef running the first row of argument_mat, with $k=5$, $(\pi_{as} = 0.5$, and low $\pi_{pro})$ - as in Table 2 (Scenario A) of the main text, where both the principal score and the outcome model are correctly specified (left side).
 It is possible to change the arguments and the other parameters, to obtain other scenarios.
@@ -30,15 +30,17 @@ and two under a misspecified model.
 ----------------------------------
 
 This folder contains the scripts for creating the figures and the tables presented in Section 7 of the main text and in Section C of the Web Appendix.
-The script 'plot_tables_bias_paper_version.R' van be ran to create the figures appear in the paper,
-and to save the figures as pdf files in the folder Figures_pdf which is located in Simulations_figures.
+The script 'plot_tables_bias_paper_version.R' was used to create the figures appear in the paper,
+and to save the figures as pdf files within the folder Figures_pdf.
 
 (3) EM:
 ----------------------------------
 
 Separate scripts for the EM procedures, each under one of the following situations: 
-(1) DGM-seq, (2) DGM-multi, when monotonicity is assumed, and (3) DGM-multi, when monotonicity is not assumed.
-Information is given in Section B of the Web Appendix.
+(1) EM algorithm for the sequential logistic regression model for the principal strata (DGM-seq);
+(2) EM algorithm for the multinomial logistic regression model for the principal strata (DGM-multi) under monotonicity , and  
+(3) EM algorithm for the multinomial logistic regression model for the principal strata without monotonicity.
+Details are provided in Section B of the Web Appendix.
 
 
 (4). Data_analysis:
