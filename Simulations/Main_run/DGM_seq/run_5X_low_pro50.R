@@ -333,7 +333,6 @@ raw_results_lst = list(true_SACE=true_SACE, param_n_sim=param_n_sim,
                        balance_mahal_wout_rep_lst=balance_mahal_wout_rep_lst, balance_mahal_with_rep_lst=balance_mahal_with_rep_lst, 
                        balance_mahal_cal_wout_rep_lst=balance_mahal_cal_wout_rep_lst, balance_mahal_cal_with_rep_lst=balance_mahal_cal_with_rep_lst)
 
-#TODO summaries of all iterations of one scenario (according to mat_gamma and its row, k) from the simulations in summaries_newWF.R
 # summaries of all iterations of one scenario (according to mat_gamma and its row, k) from the simulations in summaries_newWF.R
 results_summary = summary_func(true_SACE=true_SACE, 
                                param_n_sim=param_n_sim, param_n=param_n, cont_x=cont_x, xi=xi, xi_assm=xi_assm,

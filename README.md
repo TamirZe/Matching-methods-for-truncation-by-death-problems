@@ -10,8 +10,8 @@ This repository includes four main folders, and an additional folders with files
 (1) Simulations:
 -----------------
 
-The main scripts for running the simulation study.
-Details regarding the simulation parameters and strata proportions in each of the Scenarios, is given in Tables C2--C8 in the Web Appendix.
+The scripts that were used for running the simulation study.
+Details regarding the simulation parameters and strata proportions in each of the Scenarios, is given in Tables C2-C8 in the Web Appendix.
 Results of the simulation study are presented in Figure 1 and Table 2 of the main text, and in Tables C9-C13 and Figures C1-C6 of the Web Appendix).
 
 The script run_5X_low_pro_50.R in the Main_run folder, contains one set of arguments, for running the first row of argument_mat, for $k=5$, $(\pi_{as} = 0.5$, and low $\pi_{pro})$ as in Table 2 (Scenario A) of the main text, where both the principal score and the outcome model are correctly specified (left side).
@@ -20,19 +20,15 @@ For instance, choosing row 49 of argument_mat will enable running of the same Sc
 where both the principal score and the outcome model are misspecified, 
 while changing the parameter scen to be equal to 2 (high $\pi_{pro})$), will enable to obtain the results in in Table 2 (Scenario B) of the main text.
 
-%The simulations can be ran through the scripts in the Main_run folder.
-%Every script contains the main code for a given number of covariates and strata proportions 
-%(\pi_{as} = 0.5,0.75$, and low/high $\pi_{pro})$.
-%Different parameters per each Scenario are the number of covariates,
-%betas_GPI (changing according to the number of covariates and whether or not interactions are included in the true %outcome model), gamma_ah, gamma_pro (changing according to the number of covariates and strata proportions).
-
-The parameters misspec_PS and misspec_outcome equal zero under a correctly specification of the principal score model and the outcome models, and two for misspecification of the principal score model and the outcome models.
+Argument_mat includes the followeing arguments: AX_interactions, misspec_PS, misspec_outcome, xi, and xi_assm. 
+AX_interactions equals TRUE if the outcome model includes all A-X interactions, and FALSE otherwise.
+The parameters misspec_PS and misspec_outcome equal zero under a correctly specified model,
+and two under a misspecified model.
 
 
 (2) Simulations_figures:
 ----------------------------------
 
-Visualizing the simulation results, using figures and tables.
 This folder contains the scripts for creating the figures and the tables presented in Section 7 of the main text and in Section C of the Web Appendix.
 
 (3) EM:
