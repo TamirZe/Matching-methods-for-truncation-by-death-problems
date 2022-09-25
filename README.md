@@ -18,7 +18,7 @@ The script 'run_5X_low_pro_50.R' in the Main_run folder, contains one set of arg
 The arguments in argument_mat and the other parameters can be changed, to obtain other scenarios.
 For instance, choosing row 49 of argument_mat enables running the same Scenario,
 where both the principal score and the outcome model are misspecified (as in the right side of Table 2), 
-while setting the parameter scen to 2 ($\pi_{as} = 0.75$) enables to obtain results for Scenario B of Table 2 when both models are correctly specified.
+while setting the parameter scen to 2, i.e. $\pi_{as} = 0.75$, enables to obtain results for Scenario B of Table 2 when both models are correctly specified.
 
 The matrix argument_mat includes the following arguments: AX_interactions, misspec_PS, misspec_outcome, xi, and xi_assm. 
 AX_interactions equals TRUE if the outcome model includes all A-X interactions, and FALSE otherwise.
