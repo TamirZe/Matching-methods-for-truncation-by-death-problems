@@ -1,9 +1,8 @@
 # libraries for data analysis
 ########################################################################
-library(readstata13); library(cem) # reading NSW datasets
+library(cem) # reading NSW datasets
 library(rlist); library(locfit); library(plyr); library(dplyr); library(tidyr); library(data.table)
-library(nnet); library(xtable); library(rlang);library(gridExtra); library(tableone); library(expm)
-library(ggplot2); library(rockchalk); library(nnet); library(stats); library(mgsub); library(reshape2)
+library(nnet); library(xtable); library(rlang);library(gridExtra); library(tableone); library(eeshape2)
 library(Matching); library(sandwich); library(clubSandwich); library(lmtest); library(splitstackshape)
 library(glue)
 ########################################################################
@@ -20,32 +19,25 @@ source("Data_analysis/data_aligned_ranktest.R")
 source("Data_analysis/data_sensitivity_analyses/data_SA_regression_funcs.R")
 source("Data_analysis/data_sensitivity_analyses/data_SA_parameters_bounds.R")
 source("EM/EM_seq.R")
-#source("Simulations/PS_M_weighting.R")
-#source("Simulations/PS_M_weighting_SA_CPSR")
 source("Data_analysis/DL_SE_boot.R")
 ########################################################################
 
-# data files
 ########################################################################
-#nsw <- read.dta13("Data_analysis/data_files/LL_DW_datasets/nsw_dw.dta") # dehejia and wahba dataset
+# data file
 data(LL, package = "cem") # LaLonde dataset 
 ########################################################################
 
 set.seed(101)
 ########################################################################
-data_bool = "LL" # "DW" for dehejia and wahba dataset # "LL" for LaLonde dataset 
+data_bool = "LL" 
 # EM parameters
-# EM-seq or EM-multi
-EM_est_seq = TRUE
 # two_log_est_EM=FALSE: S(0)=1, is estimated within A=0, with label according to S, before the EM process.
 two_log_est_EM = FALSE
-iterations_EM = 500; epsilon_EM = 1e-06
+iterations_EM = 500; epsilon_EM = 5e-06
 
-covariates_PS =    c("age", "black", "hispanic", "married", "re75", "emp75") # "re75_square", # age_square
+covariates_PS =    c("age", "black", "hispanic", "married", "re75", "emp75") 
 # adding intercept is for keeping the format of vars_names[-1] as in the simulations, since X1 in the simulations is the intercept
 covariates_mahal = c("intercept", "age", "education", "re75")
-#covariates_mahal = c("intercept", "age", "education", "married", "re75")
-#covariates_mahal = c("intercept", "age", "education", "re75", "black", "hispanic", "married", "nodegree", "emp75")
 reg_after_match =  c("intercept", "age", "education", "black", "hispanic", "married", "re75")
 reg_BC =           c("intercept", "age", "education", "black", "hispanic", "married", "re75") 
 
@@ -57,8 +49,7 @@ caliper = 0.4
 ######################################################################## 
 # adjust data  ####
 data = LL
-data = adjust_data(data=data, divide_salary=1000, data_bool=data_bool) #DW #LL
-#data$re75_square = data$re75^2; data$age_square = data$age^2
+data = adjust_data(data=data, divide_salary=1000, data_bool=data_bool) 
 variables = setdiff(colnames(data), c("id", "A", "S", "Y", "OBS", "emp_74_75", "g"))
 table(data$A); table(filter(data, S==1)$A)
 ######################################################################## 
@@ -85,51 +76,31 @@ colnames(CI_naives_before_matching) = c("naive_without_matching", "survivors_nai
 
 ######################################################################## 
 # EM algorithm ####
-
-if(EM_est_seq == TRUE){ # EM-seq
-  if(two_log_est_EM == FALSE){
-    #S(0)=1: Logistic regression S(0)=1 on X, using S|A=0
-    fit_S0_in_A0 =
-      glm(as.formula(paste0("S ~ ",paste(covariates_PS, collapse="+"))), data=filter(data, A==0), family="binomial")
-    beta_S0 = fit_S0_in_A0$coefficients
-  }else{beta_S0=NULL}
-  est_ding_lst = xi_2log_PSPS_M_weighting(Z=data$A, D=data$S,
-                                          X=as.matrix(subset(data, select = covariates_PS)), Y=data$Y,
-                                          xi_est=0, beta.S0=beta_S0, beta.ah=NULL, beta.c=NULL,
-                                          iter.max=iterations_EM, error0=epsilon_EM)
-}else{ # EM-multi
-  # est_ding_lst = PSPS_M_weighting(Z=data$A, D=data$S,
-  #   X=as.matrix(subset(data, select = covariates_PS)), Y=data$Y, trc = TRUE, ep1 = 1, ep0 = 1, 
-  #   beta.a = NULL, beta.n = NULL, iter.max = iterations_EM, error0 = epsilon_EM)
-  
-  # est_ding_lst = xi_PSPS_M_weighting_SA(Z=data_for_EM$A, D=data_for_EM$S,
-  #   X=as.matrix(subset(data_for_EM, select = grep(paste(paste0("^",X_sub_cols[-1], "$"), collapse="|"), colnames(data_for_EM)))),
-  #   Y=data_for_EM$Y, eta=xi_assm, iter.max=iterations_EM, error0=epsilon_EM)  
-}
+if(two_log_est_EM == FALSE){
+  #S(0)=1: Logistic regression S(0)=1 on X, using S|A=0
+  fit_S0_in_A0 =
+    glm(as.formula(paste0("S ~ ",paste(covariates_PS, collapse="+"))), data=filter(data, A==0), family="binomial")
+  beta_S0 = fit_S0_in_A0$coefficients
+}else{beta_S0=NULL}
+est_ding_lst = xi_2log_PSPS_M_weighting(Z=data$A, D=data$S,
+                                        X=as.matrix(subset(data, select = covariates_PS)), Y=data$Y,
+                                        xi_est=0, beta.S0=beta_S0, beta.ah=NULL, beta.c=NULL,
+                                        iter.max=iterations_EM, error0=epsilon_EM)
 ######################################################################## 
 
 ######################################################################## 
 #EM error
 error = est_ding_lst$error
 #EM coeffs
-coeff_as = est_ding_lst$beta.a
+coeff_ah = est_ding_lst$beta.a
 coeff_pro = est_ding_lst$beta.c
-EM_coeffs = rbind(coeff_as, coeff_pro)
+EM_coeffs = rbind(coeff_ah, coeff_pro)
 colnames(EM_coeffs)[-1] = sub(".*]", "", colnames(EM_coeffs)[-1])
 
-# adjust the cols the same order as in myEM: my order is: as, ns, pro. Ding order: c(prob.c, prob.a, prob.n)
 PS_est = data.frame(est_ding_lst$ps.score)
 # add the principal scores to the data
 data_with_PS = data.table(data, PS_est)
 data_with_PS$pi_tilde_as1 = data_with_PS$EMest_p_as / (data_with_PS$EMest_p_as + data_with_PS$EMest_p_pro)
-######################################################################## 
-
-######################################################################## 
-# bounds for alpha1 and alpha0 in SA
-# alpha1_bounds = alpha_bounds(dataset_arm = data_with_PS[S==1] %>% filter(A==1), 
-#                              reg_variables = reg_after_match[-1])
-# alpha0_bounds = alpha_bounds(dataset_arm = data_with_PS[S==1] %>% filter(A==0), 
-#                              reg_variables = reg_after_match[-1])
 ######################################################################## 
 
 ######################################################################## 
@@ -141,7 +112,7 @@ DL_est = c(DL_est = est_ding_lst$AACE, DL_MA_est = est_ding_lst$AACE.reg)
 ######################################################################## 
 
 ######################################################################## 
-# matching newWF ####
+# matching ####
 m_data=data_with_PS[S==1]
 matching_datasets_lst = list()
 replace_vec = c(FALSE, TRUE)
@@ -166,7 +137,7 @@ for(j in c(1:length(replace_vec))){
     SE_tmp = unlist(lapply(post_matching_analysis_lst[[j]][[l]][1:3], "[[", "SACE_matching_SE"))
     CI_tmp = unlist(lapply(post_matching_analysis_lst[[j]][[l]][1:3], "[[", "CI"))       
     names(est_tmp) = names(SE_tmp) = names(CI_tmp) = 
-      paste0(matching_measures[l], c("_crude", "_BC", "_wilcox"), c("_No", "_Yes")[j], "_rep") # replace_vec[j]
+      paste0(matching_measures[l], c("_crude", "_BC", "_wilcox"), c("_No", "_Yes")[j], "_rep") 
     
     reg_estimator_tmp_lst = reg_estimator_per_measure(lst_one_measure=post_matching_analysis_lst[[j]][[l]], 
                                                       measure_name=matching_measures[l], replace=replace)
@@ -207,7 +178,6 @@ arrange_estimators_tab = function(estimators_res){
   return(estimators_res_tab)
 }
 
-View(arrange_estimators_tab(SE))
 CI_round = lapply(strsplit(CI, ",", fixed = TRUE), function(x) paste(round(as.numeric(x), 0), collapse=", ")) 
 est_res_tab = arrange_estimators_tab(paste0(round(estimators, 0), " (", CI_round, ")"))
 print(est_res_tab %>% xtable(), size="\\fontsize{9pt}{9pt}\\selectfont", include.rownames=F)
@@ -276,7 +246,4 @@ print(BALANCE_TABLE_with %>% xtable(caption = paste0("Matched data-set means, ",
 print(balance_match_wout_measures %>% xtable(), size="\\fontsize{7pt}{7pt}\\selectfont", include.rownames=F)
 print(balance_match_with_measures %>% xtable(), size="\\fontsize{7pt}{7pt}\\selectfont", include.rownames=F)
 ######################################################################## 
-
-
-
 

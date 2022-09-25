@@ -14,12 +14,11 @@ The main scripts for running the simulation study.
 Details regarding the simulation parameters and strata proportions in each of the Scenarios, is given in Tables C2--C8 in the Web Appendix.
 Results of the simulation study are presented in Figure 1 and Table 2 of the main text, and in Tables C9-C13 and Figures C1-C6 of the Web Appendix).
 
-The script run_5X_low_pro_50.R in the Main_run folder, contains one set of arguments, for running the first row of argument_mat, for $k=5$, $(\pi_{as} = 0.5$, and low $\pi_{pro})$ as in Table 2 (Scenario A) of the main text,
-where both the principal score and the outcome model are correctly specified.
+The script run_5X_low_pro_50.R in the Main_run folder, contains one set of arguments, for running the first row of argument_mat, for $k=5$, $(\pi_{as} = 0.5$, and low $\pi_{pro})$ as in Table 2 (Scenario A) of the main text, where both the principal score and the outcome model are correctly specified (left side).
 It is possible to change the arguments and the other parameters, to obtain other scenarios.
 For instance, choosing row 49 of argument_mat will enable running of the same Scenario,
-where the principal score and the outcome model are misspecified, 
-while Changing the parameter scen to be equal to 2 (high $\pi_{pro})$), will enable to obtain the results in in Table 2 (Scenario B) of the main text.
+where both the principal score and the outcome model are misspecified, 
+while changing the parameter scen to be equal to 2 (high $\pi_{pro})$), will enable to obtain the results in in Table 2 (Scenario B) of the main text.
 
 %The simulations can be ran through the scripts in the Main_run folder.
 %Every script contains the main code for a given number of covariates and strata proportions 

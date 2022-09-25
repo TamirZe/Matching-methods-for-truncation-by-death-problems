@@ -1,3 +1,53 @@
+## libraries for SA
+########################################################################
+library(cem); library(data.table); library(plyr); library(dplyr); library(tidyr); library(rlang); library(rlist)
+library(nnet); library(locfit); library(splitstackshape); library(ggplot2); library(glue)
+library(Matching); library(sandwich); library(clubSandwich); library(lmtest); library(mgsub)
+########################################################################
+
+########################################################################
+# source for data NSW_data_analysis
+setwd("~/A matching framework for truncation by death problems")
+source("Data_analysis/data_processing_and_eda_funcs.R")
+source("Simulations/naive_estimation.R")
+source("Simulations/sim_matching.R")
+source("Simulations/sim_post_matching_analysis.R")
+source("Simulations/sim_regression_estimators.R")
+source("Data_analysis/data_sensitivity_analyses/data_SA_regression_funcs.R")
+source("Data_analysis/data_sensitivity_analyses/data_SA_parameters_bounds.R")
+source("EM/EM_seq.R")
+########################################################################
+
+########################################################################
+# data file
+data(LL, package = "cem") # LaLonde dataset 
+########################################################################
+
+########################################################################
+data_bool = "LL" 
+# EM parameters
+# two_log_est_EM=FALSE: S(0)=1, is estimated within A=0, with label according to S, before the EM process.
+two_log_est_EM = FALSE
+iterations_EM = 500; epsilon_EM = 1e-06
+
+covariates_PS =    c("age", "black", "hispanic", "married", "re75", "emp75") 
+# adding intercept is for keeping the format of vars_names[-1] as in the simulations, since X1 in the simulations is the intercept
+covariates_mahal = c("intercept", "age", "education", "re75")
+reg_after_match =  c("intercept", "age", "education", "black", "hispanic", "married", "re75")
+reg_BC =           c("intercept", "age", "education", "black", "hispanic", "married", "re75") 
+
+# parameters and variables for matching and regressions ####
+caliper_variable = "pi_tilde_as1"  
+caliper = 0.4
+######################################################################## 
+
+######################################################################## 
+# adjust data  ####
+data = LL
+data = adjust_data(data=data, divide_salary=1000, data_bool=data_bool) 
+variables = setdiff(colnames(data), c("id", "A", "S", "Y", "OBS", "emp_74_75", "g"))
+######################################################################## 
+
 #########################################################################################
 # sensitivity parameters ####
 # data and m_data from data_main script
@@ -11,7 +61,7 @@ xi_SA_mono_vec[length(xi_SA_mono_vec)] = 0.48 #round(up_bound_xi,2)
 xi_SA_mono_names = paste0("xi_mono_", round(xi_SA_mono_vec, 2))
 
 # bounds for alpha0 
-alpha0_bounds = alpha_bounds(dataset_arm = m_data %>% filter(A==0), 
+alpha0_bounds = alpha_bounds(dataset_arm = data %>% filter(A==0 & S==1), 
                              reg_variables = reg_after_match[-1])
 
 # alpha0 values
@@ -48,10 +98,6 @@ for (j in 1:length(xi_SA_mono_names)) {
   tmp = data.table(subset(tmp, select = -c(pi_tilde_as1, pi_tilde_as0)),  subset(tmp, select = c(pi_tilde_as1, pi_tilde_as0))) # pi_tilde_as0 == 1/(1+xi)
   
   # matching for the current xi ####
-  # set.seed because otherwise the matching procedure will not yield the same results when alpha_0=1 under all values of xi, during the SA for monotonicity (for mahalanobis measure) 
-  # Actually, even when we seed here, matching on mahalanobis alone yields different results. Need to set.seed before every matching procedure for the same results
-  # also, if not seed, when xi=0 in SA for monotonicity results will not be similar to results when alpha_1=1 in SA for PPI (for mahalanobis measure)
-  
   # seed for xi=0 to be equal to SA_PPI when alpha1=1
   if(j == 1){ set.seed(101) }
   matching_lst = matching_all_measures_func(m_data=tmp[S==1], match_on=caliper_variable, 
@@ -68,7 +114,6 @@ for (j in 1:length(xi_SA_mono_names)) {
   
   # run on all distance metrics # names(reg_matched_lst)
   for(ind_matched_set in c(1:length(reg_matched_lst))){ 
-    #matched_data = matched_data_lst[[ind_matched_set]]
     reg_data_matched_SA = reg_matched_lst[[ind_matched_set]]
     print(paste0("unique weights for control are really = ", unique(filter(reg_data_matched_SA, A==0)$w)))
     
@@ -98,9 +143,6 @@ for (j in 1:length(xi_SA_mono_names)) {
 
 #########################################################################################\
 # process before plotting ####
-keep_reg_SA_mono = reg_SA_mono
-#reg_SA_mono[10, -c(1:3)] == reg_SA_PPI[10, -c(1:2)]
-
 reg_SA_mono = data.frame(reg_SA_mono)
 reg_SA_mono[,-1] = apply(reg_SA_mono[,-1] , 2, as.numeric)
 reg_SA_mono[,-c(1,2,3)] = round(reg_SA_mono[,-c(1,2,3)])
@@ -119,12 +161,12 @@ reg_SA_mono$Estimator = mgsub(reg_SA_mono$Estimator,
 #reg_SA_mono$Estimator = factor(reg_SA_mono$Estimator, levels = legend_levels)
 reg_SA_mono$measure = mgsub(reg_SA_mono$measure, names(reg_matched_lst), c("PS", "Mahal", "Mahal cal"))
 #reg_SA_mono$measure = factor(reg_SA_mono$measure, levels = c("Mahal_PS_cal", "Mahal", "PS"))
-reg_SA_mono$set = data_bool
 reg_SA_mono = filter(reg_SA_mono, xi != 0)
 
 # SACE bounds 
-min(filter(reg_SA_mono, measure == "Mahal cal" & Estimator == "WLS")$Estimate)
-max(filter(reg_SA_mono, measure == "Mahal cal" & Estimator == "WLS")$Estimate)
+lower_bound_SACE = min(filter(reg_SA_mono, measure == "Mahal cal" & Estimator == "WLS")$Estimate)
+upper_bound_SACE = max(filter(reg_SA_mono, measure == "Mahal cal" & Estimator == "WLS")$Estimate)
+bounds_SACE_wout_monotonicity = c(lower_bound_SACE, upper_bound_SACE)
 #########################################################################################
 
 #########################################################################################
@@ -196,15 +238,6 @@ plot_SA_by_measure = plot_SA_by_measure +
     axis.text.x=element_text(size=10),  # X axis text
     axis.text.y=element_text(size=10)
   ) 
-
-# plot_SA_mono_byMetric = plot_SA_mono + facet_wrap(~ Metric, ncol=3)
-
-# EXTRACT LEGEND
-library(cowplot); library(ggpubr)
-lgnd_plt <- get_legend(plot_SA_by_measure) 
-# Convert to a ggplot and print
-as_ggplot(lgnd_plt)
-plot_SA_woutLGND = plot_SA_by_measure + theme(legend.position = 'none') 
 #########################################################################################
 
 

@@ -1,11 +1,82 @@
-#################################################################################################################
-#(1) use matching_datasets_lst from the data_main script:
-#reg_matched_lst = lapply(matching_datasets_lst[[2]][1:3], "[[", "matched_data")
-#OR, (2) run matching_all_measures_func again, using m_data from th main script
-#seed because otherwise, when xi=0 in SA for monotonicity, results will not be similar to results when alpha_1=1 in SA for PPI (for mahalanobis measure)
+# libraries for SA
+########################################################################
+library(cem); library(data.table); library(plyr); library(dplyr); library(tidyr); library(rlang); library(rlist)
+library(nnet); library(locfit); library(splitstackshape); library(ggplot2); library(glue)
+library(Matching); library(sandwich); library(clubSandwich); library(lmtest); library(mgsub)
+########################################################################
 
+########################################################################
+# source for data NSW_data_analysis
+setwd("~/A matching framework for truncation by death problems")
+source("Data_analysis/data_processing_and_eda_funcs.R")
+source("Simulations/naive_estimation.R")
+source("Simulations/sim_matching.R")
+source("Simulations/sim_post_matching_analysis.R")
+source("Simulations/sim_regression_estimators.R")
+source("Data_analysis/data_sensitivity_analyses/data_SA_regression_funcs.R")
+source("Data_analysis/data_sensitivity_analyses/data_SA_parameters_bounds.R")
+source("EM/EM_seq.R")
+########################################################################
+
+########################################################################
+# data file
+data(LL, package = "cem") # LaLonde dataset 
+########################################################################
+
+set.seed(101)
+########################################################################
+data_bool = "LL" 
+# EM parameters
+# two_log_est_EM=FALSE: S(0)=1, is estimated within A=0, with label according to S, before the EM process.
+two_log_est_EM = FALSE
+iterations_EM = 500; epsilon_EM = 1e-06
+
+covariates_PS =    c("age", "black", "hispanic", "married", "re75", "emp75") 
+# adding intercept is for keeping the format of vars_names[-1] as in the simulations, since X1 in the simulations is the intercept
+covariates_mahal = c("intercept", "age", "education", "re75")
+reg_after_match =  c("intercept", "age", "education", "black", "hispanic", "married", "re75")
+reg_BC =           c("intercept", "age", "education", "black", "hispanic", "married", "re75") 
+
+# parameters and variables for matching and regressions ####
+caliper_variable = "pi_tilde_as1"  
+caliper = 0.4
+######################################################################## 
+
+######################################################################## 
+# adjust data  ####
+data = LL
+data = adjust_data(data=data, divide_salary=1000, data_bool=data_bool) 
+variables = setdiff(colnames(data), c("id", "A", "S", "Y", "OBS", "emp_74_75", "g"))
+######################################################################## 
+
+######################################################################## 
+# EM algorithm ####
+if(two_log_est_EM == FALSE){
+  #S(0)=1: Logistic regression S(0)=1 on X, using S|A=0
+  fit_S0_in_A0 =
+    glm(as.formula(paste0("S ~ ",paste(covariates_PS, collapse="+"))), data=filter(data, A==0), family="binomial")
+  beta_S0 = fit_S0_in_A0$coefficients
+}else{beta_S0=NULL}
+est_ding_lst = xi_2log_PSPS_M_weighting(Z=data$A, D=data$S,
+                                        X=as.matrix(subset(data, select = covariates_PS)), Y=data$Y,
+                                        xi_est=0, beta.S0=beta_S0, beta.ah=NULL, beta.c=NULL,
+                                        iter.max=iterations_EM, error0=epsilon_EM)
+######################################################################## 
+
+######################################################################## 
+PS_est = data.frame(est_ding_lst$ps.score)
+# add the principal scores to the data
+data_with_PS = data.table(data, PS_est)
+data_with_PS$pi_tilde_as1 = data_with_PS$EMest_p_as / (data_with_PS$EMest_p_as + data_with_PS$EMest_p_pro)
+######################################################################## 
+
+######################################################################## 
+# matching ####
+m_data=data_with_PS[S==1]
+
+#################################################################################################################
 # m_data from data_main script
-set.seed(101) 
+#set.seed(101) 
 matching_lst = matching_all_measures_func(m_data=m_data, match_on=caliper_variable, 
                            covariates_mahal=covariates_mahal, reg_BC=reg_BC, X_sub_cols=variables, 
                            M=1, replace=TRUE, estimand="ATC", caliper=caliper)
@@ -65,11 +136,11 @@ legend_levels = c("Crude", "WLS", "WLS inter")
 reg_SA_PPI$Estimator = mgsub(reg_SA_PPI$Estimator,
           c("crude_est_adj", "SACE_1LEARNER_adj", "SACE_LEARNER_inter_adj"), legend_levels)
 reg_SA_PPI$measure = mgsub(reg_SA_PPI$measure, names(reg_matched_lst), c("PS", "Mahal", "Mahal cal"))
-reg_SA_PPI$set = data_bool
 
 # SACE bounds 
-min(filter(reg_SA_PPI, measure == "Mahal cal" & Estimator == "WLS")$Estimate)
-max(filter(reg_SA_PPI, measure == "Mahal cal" & Estimator == "WLS")$Estimate)
+lower_bound_SACE = min(filter(reg_SA_PPI, measure == "Mahal cal" & Estimator == "WLS")$Estimate)
+upper_bound_SACE = max(filter(reg_SA_PPI, measure == "Mahal cal" & Estimator == "WLS")$Estimate)
+bounds_SACE_wout_SPPI = c(lower_bound_SACE, upper_bound_SACE)
 #########################################################################################
 
 #########################################################################################
