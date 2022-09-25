@@ -22,8 +22,8 @@ while setting the parameter scen to 2, i.e. $\pi_{as} = 0.75$, enables to obtain
 
 The matrix argument_mat includes the following arguments: AX_interactions, misspec_PS, misspec_outcome, xi, and xi_assm. 
 AX_interactions equals TRUE if the outcome model includes all A-X interactions, and FALSE otherwise.
-The parameters misspec_PS and misspec_outcome equal zero under a correctly specified model,
-and two under a misspecified model.
+The parameters misspec_PS and misspec_outcome equal zero for a correct specification of the relevant model,
+and two for a misspecified model.
 
 
 (2) Simulations_figures:
@@ -36,7 +36,7 @@ and to save the figures as pdf files within the folder Figures_pdf.
 (3) EM:
 ----------------------------------
 
-A folder containing scripts for the EM procedures, under the following situations: 
+A folder containing the scripts for the EM procedures, under the following situations: 
 (1) EM algorithm for the sequential logistic regression model for the principal strata (DGM-seq);
 (2) EM algorithm for the multinomial logistic regression model for the principal strata (DGM-multi) under monotonicity , and  
 (3) EM algorithm for the multinomial logistic regression model for the principal strata without monotonicity.
@@ -49,8 +49,8 @@ Details are provided in Section B of the Web Appendix.
 Analysis of the National Supported Work Demonstration.
 Results of the data analysis are presented in Table 3 and Figure 2 of the main text, and Tables D14--D19 and Figures D7--D8 of the Web Appendix.
 
-The main data analysis can be ran through "data_main" file.
-The sensitivity analyses procedures for monotonicity (i.e. assuming CPSR and PPI) and SPPI (i.e. assuming monotonicity) can be ran through through data_SA_mono and data_SA_SPPI files, respectively.
+The main data analysis can be ran through 'data_main' file.
+The sensitivity analyses procedures for monotonicity (i.e. assuming CPSR and PPI) and SPPI (i.e. assuming monotonicity) can be ran through using 'data_SA_mono' and 'data_SA_SPPI' files, respectively.
 
 
 (5). Sim_results:
