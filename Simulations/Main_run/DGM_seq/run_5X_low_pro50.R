@@ -358,8 +358,9 @@ num_iterations_EM_not_conv = results_summary$num_iterations_EM_not_conv
 ########################################################################
 # save ####
 # specify a user-specific path
-#main_path = 
+# main_path = specify a user-specific path
 path_data = paste0(main_path, "Data/") 
+
 path = paste0(path_data, 
               ifelse(DGM_seq_bool==TRUE, "Data_DGM_seq/", "Data_DGM_multi/"),
               "N=", param_n, 

@@ -196,12 +196,10 @@ for (measure in names(data_pairs_lst)) {
 ######################################################################## 
 
 ######################################################################## 
-# print to LateX
-# EM_coeffs ###
+# print to LateX EM_coeffs
 print(EM_coeffs %>% xtable(), size="\\fontsize{9pt}{9pt}\\selectfont", include.rownames=F)
 
 # balance  ####
-
 # balance in the full dataset
 balance_full_data = covarites_descriptive_table_cont_disc(dat=data_with_PS, cov_descr=variables)
 # balance in the survivors (employed)
@@ -239,6 +237,8 @@ BALANCE_TABLE_with = arrange_balance_table(balance_before_matching=balance_befor
 
 balance_match_wout_measures = balance_match_wout[match(variables_names_balance, balance_match_wout$Variable), ] %>% na.omit
 balance_match_with_measures = balance_match_with[match(variables_names_balance, balance_match_with$Variable), ] %>% na.omit
+
+# print to LateX
 
 print(BALANCE_TABLE_wout %>% xtable(caption = paste0("Matched data-set means, ", data_bool ," Sample.")), size="\\fontsize{6pt}{6pt}\\selectfont", include.rownames=F)
 print(BALANCE_TABLE_with %>% xtable(caption = paste0("Matched data-set means, ", data_bool ," Sample.")), size="\\fontsize{6pt}{6pt}\\selectfont", include.rownames=F)

@@ -9,8 +9,7 @@ path_func = function(param_n, xi_assm, xi, AX_interactions, misspec_outcome, mis
   # local
   main_path = "~/A matching framework for truncation by death problems/"
   
-  path_data = paste0(main_path, "Simulation_results_files/")
-  #path_data_docs = "C:/Users/tamir/Documents/תזה/cluster/MatchingSACE/Simulation_studies/Data/"
+  path_data = paste0(main_path, "Sim_results/")
   path = paste0(path_data, "Data_DGM_seq/N=", param_n, "/",
         ifelse(AX_interactions==T, "True_outcome_with_interactions/", "True_outcome_wout_interactions/"),
         ifelse(misspec_outcome==0, "Correct_spec_outcome/", "Mis_spec_outcome/"),
@@ -95,7 +94,6 @@ combine_small_large_pro_func = function(param_n, xi_values, mis_xi, AX_interacti
     
     ##################################################################################################
     # create a combined table for the figure ####
-    # l is actually k, but I used k for the row in mat_gamma
     small_pro = rbind(
       add_bias_tables(res_tab = data.frame(table_small_pro_small_as_3, pi_as=0.5, l = 1),  
                       estimators_vec = estimators_vec, N = param_n, num_of_x = 3),

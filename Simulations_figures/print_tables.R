@@ -92,7 +92,7 @@ tab3 = paper_table_func( crct_ps_crct_y = crct_ps_crct_y_wrong_xi %>%
 
 
 ############################################################################
-'''estimators_vec = c("SACE", "mahal_cal_rep_FALSE", "mahal_crude_No_rep", "PS_rep_FALSE", "mahal_cal_OLS", "mahal_cal_OLS_int", 
-    "maha_cal_rep_TRUE", "mahal_crude_Yes_rep", "PS_rep_TRUE", "mahal_cal_BC_Yes_rep", "PS_BC_Yes_rep",
-    "mahal_cal_WLS", "mahal_cal_WLS_int", "PS_WLS", "PS_WLS_int", "composite_naive", "surv_naive", "DL_MA_est")'''
+# estimators_vec = c("SACE", "mahal_cal_rep_FALSE", "mahal_crude_No_rep", "PS_rep_FALSE", "mahal_cal_OLS", "mahal_cal_OLS_int", 
+#     "maha_cal_rep_TRUE", "mahal_crude_Yes_rep", "PS_rep_TRUE", "mahal_cal_BC_Yes_rep", "PS_BC_Yes_rep",
+#     "mahal_cal_WLS", "mahal_cal_WLS_int", "PS_WLS", "PS_WLS_int", "composite_naive", "surv_naive", "DL_MA_est")
 ############################################################################

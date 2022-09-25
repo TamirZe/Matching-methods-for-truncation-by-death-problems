@@ -4,7 +4,7 @@
 .Ruserdata
 
 Data_cluster/
-Simulation_results_files/
+#Simulation_results_files/
 #Data_new/
 Extra_code/
 Simulations_studies/

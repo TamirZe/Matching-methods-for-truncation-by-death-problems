@@ -23,13 +23,12 @@ colors_arg_gnrl = c("red4", "darkorange2", "dodgerblue3", "#330033", "darkblue",
 shapes_arg_gnrl = c(17, 15, 16, 6, 20, 18)
 
 ##################################################################################################
-grid = expand.grid(AX_interactions = AX_interactions_vec, misspec_outcome = c(0,2), misspec_PS = c(0,2)) %>%
+grid = expand.grid(AX_interactions = c(TRUE,FALSE), misspec_outcome = c(0,2), misspec_PS = c(0,2)) %>%
   arrange(-AX_interactions, misspec_outcome )
 SACE_values_by_dim_x_lst = list(); SACE_values_by_xi_lst = list(list(), list())
 
 max_vec = c(); min_vec = c() 
-for (i in 1:nrow(grid)){ # length(AX_interactions_vec) # length(grid)
-  #AX_interactions = AX_interactions_vec[i]
+for (i in 1:nrow(grid)){ 
   AX_interactions = grid[i,"AX_interactions"]
   misspec_outcome = grid[i,"misspec_outcome"]
   misspec_PS = grid[i,"misspec_PS"]
@@ -54,7 +53,7 @@ for (i in 1:nrow(grid)){ # length(AX_interactions_vec) # length(grid)
   
   figure_name = paste0(ifelse(mis_xi, "Mis_xi", "Crct_xi"), "_Yinteractions=",
                        AX_interactions, "_misY=", misspec_outcome, "_misPS=", misspec_PS, "_N", param_n)
-  pdf(file = paste0("~/A matching framework for truncation by death problems/Figures_pdf/Set1/Bias_GENERAL_",
+  pdf(file = paste0("~/A matching framework for truncation by death problems/Simulations_figures/Figures_pdf/Set1/Bias_GENERAL_",
                    figure_name, ".pdf")) 
   figure = plot_tables_func_by_dimx_paperStyle(small_large_pro=small_large_pro, param_n=param_n, mis_xi=mis_xi
      ,AX_interactions=AX_interactions, misspec_outcome=misspec_outcome, misspec_PS=misspec_PS
@@ -80,7 +79,7 @@ for (i in 1:nrow(grid)){ # length(AX_interactions_vec) # length(grid)
       
       figure_name = paste0(ifelse(mis_xi, "Mis_xi", "Crct_xi"), "_Yinteractions=",
                            AX_interactions, "_misY=", misspec_outcome, "_misPS=", misspec_PS, "_N", param_n)
-      pdf(file = paste0("~/A matching framework for truncation by death problems/Figures_pdf/",
+      pdf(file = paste0("~/A matching framework for truncation by death problems/Simulations_figures/Figures_pdf/",
                       ifelse(mis_xi==0, "Set2/", "Set3/"), "Bias_GENERAL_", figure_name, ".pdf")) 
       figure = plot_tables_func_by_xi_paperStyle(small_large_pro=small_large_pro, param_n=param_n, mis_xi=mis_xi
          ,AX_interactions=AX_interactions, misspec_outcome=misspec_outcome, misspec_PS=misspec_PS
@@ -94,22 +93,3 @@ max(max_vec[1:12]); min(min_vec[1:12])
 max(max_vec[13:24]); min(min_vec[13:24])
 ##################################################################################################
 
-##################################################################################################
-#1. main version ####
-'''estimators_vec_gnrl = c("mahal_cal_crude_Yes_rep", "PS_crude_Yes_rep", "mahal_cal_OLS_int", "mahal_cal_WLS_int", "DL_MA_est")
-#first option
-legend_labels_gnrl = c("Matching:Crude", "Matching:PScrude", "Matching:RegressionOLS", "Matching:RegressionWLS", "Weighting")
-colors_arg_gnrl = c("palevioletred3", "yellow", "dodgerblue3", "red4", "forestgreen", "forestgreen")
-shapes_arg_gnrl = c(15, 15, 16, 17, 18, 18)
-#second option
-legend_labels_gnrl = c("Matching:Crude", "Matching:PScrude", "Matching:OLS",  "Matching:WLS", "Weighting")
-colors_arg_gnrl = c("palevioletred3", "#330033", "dodgerblue3", "red4", "forestgreen")
-shapes_arg_gnrl = c(15, 0, 16, 17, 18)'''
-
-#2. second version ####
-'''estimators_vec_gnrl = c("mahal_crude_Yes_rep", "mahal_OLS_int", "mahal_WLS_int", "mahal_BC_Yes_rep", #"mahal_BC_Yes_rep",
-                       "PS_crude_Yes_rep", "PS_OLS_int",  "PS_WLS_int", "PS_BC_Yes_rep", "DL_MA_est") # "PS_BC_Yes_rep"
-legend_labels_gnrl = c("Mahal:crude", "Mahal:OLS", "Mahal:WLS", "PS:crude", "PS:OLS", "PS:WLS", "DL")
-colors_arg_gnrl = c("#330033", "dodgerblue3", "red4",  "yellow", "darkblue", "darkorange2", "forestgreen")
-shapes_arg_gnrl = c(15, 6, 17, 15, 10, 16, 18)'''
-##################################################################################################
