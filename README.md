@@ -10,7 +10,7 @@ This repository includes four main folders, and an additional folder with simula
 (1) Simulations:
 -----------------
 
-The scripts that were used for running the simulation study.
+The scripts that were used for conducting the simulation study.
 Details regarding the simulation parameters and strata proportions of each Scenario are given in Tables C2-C8 in the Web Appendix.
 Results of the simulation study are presented in Figure 1 and Table 2 of the main text, and in Tables C9-C13 and Figures C1-C6 of the Web Appendix.
 
