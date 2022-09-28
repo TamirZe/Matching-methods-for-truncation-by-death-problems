@@ -43,10 +43,10 @@ Details are provided in Section B of the Web Appendix.
 
 Analysis of the National Supported Work Demonstration.
 The scripts in this folder were used to create the results of the data analysis,
-presented in Table 3 and Figure 2 of the main text, and Tables D14--D19 and Figures D7--D8 of the Web Appendix.
+presented in Table 3 and Figure 2 of the main text, and in Tables D14--D19 and Figures D7--D8 of the Web Appendix.
 
-The main data analysis can be ran through 'data_main' file.
-The sensitivity analyses procedures for SPPI and for monotonicity can be ran using 'data_SA_mono' and 'data_SA_SPPI' files, respectively, which are located in the data_sensitivity_analyses sub folder.
+The main data analysis can be ran using the 'data_main' file.
+The sensitivity analyses procedures for SPPI and for monotonicity can be ran using the files in the data_sensitivity_analyses sub folder, 'data_SA_SPPI' and 'data_SA_mono', respectively.
 
 
 (5). Sim_results:
