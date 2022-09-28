@@ -1,11 +1,9 @@
 # libraries for data analysis
 ########################################################################
-library(rlist); library(locfit); library(plyr); library(nnet); library(xtable); library(rlang);library(glue); library(gridExtra)
-library(ggplot2); library(rockchalk); library(nnet); library(stats); library(rlist); library(mgsub); library(reshape2); library(gridExtra)
-library(optmatch); library(DOS); library(Matching); library(sandwich); library(rmutil); library(clubSandwich); library(Hmisc)
-library(sandwich); library(rmutil);  library(caret); library(splitstackshape); library(MatchIt); library(PerformanceAnalytics)
-library(tidyr); library(dplyr); library(data.table); library(tidyr); library(tableone); library(lmtest)
-library(readstata13); library(cem) # reading NSW datasets
+library(rlist); library(locfit); library(plyr); library(dplyr); library(tidyr); library(data.table)
+library(nnet); library(xtable); library(rlang);library(gridExtra); library(tableone); library(eeshape2)
+library(Matching); library(sandwich); library(clubSandwich); library(lmtest); library(splitstackshape)
+library(glue); library(mgsub)
 ########################################################################
 
 ########################################################################
@@ -19,14 +17,11 @@ source("Simulations/sim_regression_estimators.R")
 source("Data_analysis/data_aligned_ranktest.R")
 source("Data_analysis/data_sensitivity_analyses/data_SA_regression_funcs.R")
 source("EM/EM_seq.R")
-#source("Simulations/PS_M_weighting.R")
-#source("Simulations/PS_M_weighting_SA_CPSR")
 source("Data_analysis/DL_SE_boot.R")
 ########################################################################
 
-# data files
 ########################################################################
-nsw <- read.dta13("NSW_data_analysis/data_files/LL_DW_datasets/nsw_dw.dta") # dehejia and wahba dataset
+# data file
 data(LL, package = "cem") # LaLonde dataset 
 ########################################################################
 
@@ -34,17 +29,13 @@ set.seed(101)
 ########################################################################
 data_bool = "LL" # "DW" for dehejia and wahba dataset # "LL" for LaLonde dataset 
 # EM parameters
-# EM-seq or EM-multi
-EM_est_seq = TRUE
 # two_log_est_EM=FALSE: S(0)=1, is estimated within A=0, with label according to S, before the EM process.
 two_log_est_EM = FALSE
 iterations_EM = 500; epsilon_EM = 1e-06
 
-covariates_PS =    c("age", "black", "hispanic", "married", "re75", "emp75") # "re75_square", # age_square
+covariates_PS =    c("age", "black", "hispanic", "married", "re75", "emp75") 
 # adding intercept is for keeping the format of vars_names[-1] as in the simulations, since X1 in the simulations is the intercept
 covariates_mahal = c("intercept", "age", "education", "re75")
-#covariates_mahal = c("intercept", "age", "education", "married", "re75")
-#covariates_mahal = c("intercept", "age", "education", "re75", "black", "hispanic", "married", "nodegree", "emp75")
 reg_after_match =  c("intercept", "age", "education", "black", "hispanic", "married", "re75")
 reg_BC =           c("intercept", "age", "education", "black", "hispanic", "married", "re75") 
 
@@ -55,29 +46,8 @@ caliper_variable = "pi_tilde_as1"
 ######################################################################## 
 # adjust data  ####
 data = LL
-data = adjust_data(data=data, divide_salary=1000, data_bool=data_bool) #DW #LL
-#data$re75_square = data$re75^2
+data = adjust_data(data=data, divide_salary=1000, data_bool=data_bool) 
 variables = setdiff(colnames(data), c("id", "A", "S", "Y", "OBS", "emp_74_75", "g"))
-######################################################################## 
-
-######################################################################## 
-# pi estimation ####
-pis_est = pis_est_func(data, xi_est=0)
-# effect of A on S
-S_on_A_test = prop.test(x = c( sum(filter(data, A==1)$S), sum(filter(data, A==0)$S)),
-                        n = c( nrow(filter(data, A==1)), nrow(filter(data, A==0)) ), p = NULL, alternative = "greater", correct = FALSE)
-######################################################################## 
-
-######################################################################## 
-# naive estimators ####
-# composite naive
-# naive estimators
-naive_sace_estimation = naive_sace_estimation_func(data)
-naive_estimators = c(composite_naive = naive_sace_estimation$composite_naive_est, surv_naive = naive_sace_estimation$sur_naive_est)
-naive_estimators_SE = c(composite_naive = naive_sace_estimation$composite_naive_se, surv_naive = naive_sace_estimation$sur_naive_se)
-naive_estimators_CI = naive_sace_estimation$CI_naive_before_matching
-CI_naives_before_matching = data.frame(naive_estimators_CI$composite_naive, naive_estimators_CI$composite_naive)
-colnames(CI_naives_before_matching) = c("naive_without_matching", "survivors_naive_without_matching")
 ######################################################################## 
 
 ######################################################################## 
@@ -107,13 +77,6 @@ PS_est = data.frame(est_ding_lst$ps.score)
 # add the principal scores to the data
 data_with_PS = data.table(data, PS_est)
 data_with_PS$pi_tilde_as1 = data_with_PS$EMest_p_as / (data_with_PS$EMest_p_as + data_with_PS$EMest_p_pro)
-######################################################################## 
-
-######################################################################## 
-# Ding and Lu estimators ####
-DL_est = c(DL_est = est_ding_lst$AACE, DL_MA_est = est_ding_lst$AACE.reg)
-# bootstrap for DL estimator
-#boosting_results = run_boosting(data, BS=500, seed=19, iter.max=iterations, error0=epsilon_EM)
 ######################################################################## 
 
 ######################################################################## 
@@ -168,14 +131,11 @@ for (i in 1:length(caliper_values)){
   }
   ######################################################################## 
   
-  ######################################################################## 
-  estimators = c(naive_estimators, DL_est, matching_estimators)
+  estimators = matching_estimators
   # estimated SE of matching estimators
-  DL_na = -101 # DL estimators do not include SE and CI
-  SE = c(naive_estimators_SE, c(DL_est=DL_na, DL_MA_est=DL_na), matching_estimators_SE)
+  SE = matching_estimators_SE
   # CI of matching estimators
-  CI = c(unlist(naive_estimators_CI), c(DL_est=DL_na, DL_MA_est=DL_na), matching_estimators_CI)
-  ######################################################################## 
+  CI = matching_estimators_CI
   
   ######################################################################## 
   # balance  ####

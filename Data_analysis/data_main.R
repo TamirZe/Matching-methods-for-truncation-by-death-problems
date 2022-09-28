@@ -1,6 +1,5 @@
 # libraries for data analysis
 ########################################################################
-library(cem) # reading NSW datasets
 library(rlist); library(locfit); library(plyr); library(dplyr); library(tidyr); library(data.table)
 library(nnet); library(xtable); library(rlang);library(gridExtra); library(tableone); library(eeshape2)
 library(Matching); library(sandwich); library(clubSandwich); library(lmtest); library(splitstackshape)
