@@ -2,9 +2,9 @@ Matching methods for truncation by death problems
 ================
 
 
-Reproducibility of simulations results and data analysis associated with the paper "Matching methods for truncation by death problems" by Zehavi and Nevo.
+Reproducibility of simulation results and data analysis associated with the paper "Matching methods for truncation by death problems" by Zehavi and Nevo.
 
-This repository includes four main folders, and an additional folder with simulations results.
+This repository includes four main folders, and an additional folder with simulation results files.
 
 
 (1) Simulations:
@@ -19,11 +19,6 @@ The arguments in argument_mat and the other parameters can be changed, to obtain
 For instance, choosing row 49 of argument_mat enables running the same Scenario,
 where both the principal score and the outcome model are misspecified (as in the right side of Table 2), 
 while setting the parameter scen to 2, i.e. $\pi_{as} = 0.75$, enables to obtain results for Scenario B of Table 2.
-
-The matrix argument_mat includes the following arguments: AX_interactions, misspec_PS, misspec_outcome, xi, and xi_assm. 
-AX_interactions equals TRUE if the outcome model includes all A-X interactions, and FALSE otherwise.
-The parameters misspec_PS and misspec_outcome equal zero for a correct specification of the relevant model,
-and two for a misspecified model.
 
 
 (2) Simulations_figures:
@@ -47,10 +42,11 @@ Details are provided in Section B of the Web Appendix.
 ----------------------------------
 
 Analysis of the National Supported Work Demonstration.
-Results of the data analysis are presented in Table 3 and Figure 2 of the main text, and Tables D14--D19 and Figures D7--D8 of the Web Appendix.
+The scripts in this folder were used to create the results of the data analysis,
+presented in Table 3 and Figure 2 of the main text, and Tables D14--D19 and Figures D7--D8 of the Web Appendix.
 
 The main data analysis can be ran through 'data_main' file.
-The sensitivity analyses procedures for monotonicity (i.e. assuming CPSR and PPI) and SPPI (i.e. assuming monotonicity) can be ran through using 'data_SA_mono' and 'data_SA_SPPI' files, respectively.
+The sensitivity analyses procedures for SPPI and for monotonicity can be ran using 'data_SA_mono' and 'data_SA_SPPI' files, respectively, which are located in the data_sensitivity_analyses folder.
 
 
 (5). Sim_results:
