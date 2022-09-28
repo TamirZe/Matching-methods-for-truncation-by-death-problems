@@ -31,7 +31,7 @@ data_bool = "LL" # "DW" for dehejia and wahba dataset # "LL" for LaLonde dataset
 # EM parameters
 # two_log_est_EM=FALSE: S(0)=1, is estimated within A=0, with label according to S, before the EM process.
 two_log_est_EM = FALSE
-iterations_EM = 500; epsilon_EM = 1e-06
+iterations_EM = 500; epsilon_EM = 5e-06
 
 covariates_PS =    c("age", "black", "hispanic", "married", "re75", "emp75") 
 # adding intercept is for keeping the format of vars_names[-1] as in the simulations, since X1 in the simulations is the intercept
