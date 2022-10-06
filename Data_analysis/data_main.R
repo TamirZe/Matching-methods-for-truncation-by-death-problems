@@ -35,7 +35,7 @@ data_bool = "LL"
 # EM parameters
 # two_log_est_EM=FALSE: S(0)=1, is estimated within A=0, with label according to S, before the EM process.
 two_log_est_EM = FALSE
-# epsilon_EM was chosen in order to obtain 500 iterations of the EM algorithm, although the resulting error is bit larger than epsilon_EM
+# epsilon_EM was chosen to obtain 500 iterations of the EM algorithm, although the resulting error is bit larger than epsilon_EM
 iterations_EM = 500; epsilon_EM = 5e-06
 
 covariates_PS =    c("age", "black", "hispanic", "married", "re75", "emp75") 
