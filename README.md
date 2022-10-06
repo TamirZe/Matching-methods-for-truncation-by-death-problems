@@ -3,7 +3,7 @@ Matching methods for truncation by death problems
 
 
 Reproducibility of simulation results and data analysis associated with the paper "Matching methods for truncation by death problems" by Zehavi and Nevo (https://arxiv.org/abs/2110.10186).
-\href{https://arxiv.org/abs/2110.10186}{Matching methods for truncation by death problems}.
+[Matching methods for truncation by death problems](https://arxiv.org/abs/2110.10186)
 
 This repository includes four main folders, and an additional folder with simulation results files.
 
