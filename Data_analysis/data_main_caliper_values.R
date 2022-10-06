@@ -8,16 +8,15 @@ library(glue); library(mgsub)
 
 ########################################################################
 # source for data NSW_data_analysis
-setwd("~/A matching framework for truncation by death problems")
+main_path = # specify a user-specific path 
+# e.g.  main_path = "~/Matching_methods_for_truncation_by_death_problems/"
+setwd(main_path)
 source("Data_analysis/data_processing_and_eda_funcs.R")
 source("Simulations/naive_estimation.R")
 source("Simulations/sim_matching.R")
 source("Simulations/sim_post_matching_analysis.R")
 source("Simulations/sim_regression_estimators.R")
-source("Data_analysis/data_aligned_ranktest.R")
-source("Data_analysis/data_sensitivity_analyses/data_SA_regression_funcs.R")
 source("EM/EM_seq.R")
-source("Data_analysis/DL_SE_boot.R")
 ########################################################################
 
 ########################################################################

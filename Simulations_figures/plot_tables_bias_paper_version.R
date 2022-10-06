@@ -1,6 +1,9 @@
 library(data.table); library(plyr); library(dplyr); library(rlang); library(rlist);library(ggplot2); library(mgsub)
 library(cowplot); library(ggpubr); library(textclean)
-setwd("~/A matching framework for truncation by death problems")
+main_path = # specify a user-specific path 
+# e.g.  main_path = "~/Matching_methods_for_truncation_by_death_problems/"
+# e.g. main_path =  "~/A matching framework for truncation by death problems/"
+setwd(main_path)
 source("Simulations_figures/plot_tables_functions.R")
 
 ##################################################################################################

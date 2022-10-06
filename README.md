@@ -38,7 +38,7 @@ A folder containing the scripts for the EM procedures, under the following situa
 Details are provided in Section B of the Web Appendix.
 
 
-(4). Data_analysis:
+(4) Data_analysis:
 ----------------------------------
 
 Analysis of the National Supported Work Demonstration.
@@ -49,7 +49,7 @@ The main data analysis can be ran using the 'data_main' file.
 The sensitivity analyses procedures for SPPI and for monotonicity can be ran using the files in the data_sensitivity_analyses sub folder, 'data_SA_SPPI' and 'data_SA_mono', respectively.
 
 
-(5). Sim_results:
+(5) Sim_results:
 ----------------------------------
 A folder containing Rdata files with the simulation results.
 This folder will be provided on demand by the first author. 

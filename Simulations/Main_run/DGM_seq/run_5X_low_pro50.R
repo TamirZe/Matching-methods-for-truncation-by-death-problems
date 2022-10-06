@@ -6,7 +6,9 @@ library(Matching); library(sandwich); library(clubSandwich); library(lmtest); li
 
 ########################################################################
 # source for Simulations_studies
-setwd("~/A matching framework for truncation by death problems")
+main_path = # specify a user-specific path for the project
+# e.g  main_path = "~/Matching_methods_for_truncation_by_death_problems/"
+setwd(main_path)
 source("Simulations/sim_set_parameters.R")
 source("Simulations/sim_check_pis_and_covariates.R")
 source("Simulations/DGM_CPSR.R")
@@ -357,9 +359,7 @@ num_iterations_EM_not_conv = results_summary$num_iterations_EM_not_conv
 
 ########################################################################
 # save ####
-# specify a user-specific path
-# main_path = specify a user-specific path
-path_data = paste0(main_path, "Data/") 
+path_data = paste0(main_path, "Sim_results/") 
 
 path = paste0(path_data, 
               ifelse(DGM_seq_bool==TRUE, "Data_DGM_seq/", "Data_DGM_multi/"),

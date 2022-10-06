@@ -2,13 +2,10 @@
 ##################################################################################################
 # path to results_tables ####
 path_func = function(param_n, xi_assm, xi, AX_interactions, misspec_outcome, misspec_PS){
-  # Cluster/GH
-  #main_path = "/a/home/cc/stud_math/tamirzehavi/MatchingSACE/Simulation_studies/"
-  #path_data = paste0(main_path, "Data/")
   
-  # local
-  main_path = "~/A matching framework for truncation by death problems/"
-  
+  #main_path = # specify a user-specific path 
+  # e.g  main_path = "~/Matching_methods_for_truncation_by_death_problems"
+  setwd(main_path)
   path_data = paste0(main_path, "Sim_results/")
   path = paste0(path_data, "Data_DGM_seq/N=", param_n, "/",
         ifelse(AX_interactions==T, "True_outcome_with_interactions/", "True_outcome_wout_interactions/"),
