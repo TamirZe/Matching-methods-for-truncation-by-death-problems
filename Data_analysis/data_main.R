@@ -9,6 +9,7 @@ library(glue)
 ########################################################################
 # source for data NSW_data_analysis
 main_path = # specify a user-specific path 
+main_path = "~/A matching framework for truncation by death problems"
 # e.g.  main_path = "~/Matching_methods_for_truncation_by_death_problems/"
 setwd(main_path)
 source("Data_analysis/data_processing_and_eda_funcs.R")
@@ -34,6 +35,7 @@ data_bool = "LL"
 # EM parameters
 # two_log_est_EM=FALSE: S(0)=1, is estimated within A=0, with label according to S, before the EM process.
 two_log_est_EM = FALSE
+# epsilon_EM was chosen in order to obtain 500 iterations of the EM algorithm, although the resulting error is bit larger than epsilon_EM
 iterations_EM = 500; epsilon_EM = 5e-06
 
 covariates_PS =    c("age", "black", "hispanic", "married", "re75", "emp75") 
